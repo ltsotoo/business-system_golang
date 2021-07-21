@@ -1,0 +1,10 @@
+server:
+  mode : debug
+  port : 8081
+
+mysql:
+  user : zyhk
+  password : zyhk
+  host : 192.168.61.128
+  port : 3306
+  name : zyhk
