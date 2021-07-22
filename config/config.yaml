@@ -1,10 +1,12 @@
 server:
-  mode : debug
-  port : 8081
+  #debug开发模式 release生产模式
+  mode : 'debug'
+  port : ':8088'
 
-mysql:
-  user : zyhk
-  password : zyhk
-  host : 192.168.61.128
-  port : 3306
-  name : zyhk
+db:
+  type : 'mysql'
+  username : 'zyhk'
+  password : 'zyhk'
+  host : '192.168.61.128'
+  port : '3306'
+  name : 'zyhk'
