@@ -2,6 +2,7 @@ package model
 
 import "gorm.io/gorm"
 
+// 供应商 Model
 type Supplier struct {
 	gorm.Model
 	Name     string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`

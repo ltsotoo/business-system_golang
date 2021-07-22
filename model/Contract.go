@@ -18,6 +18,6 @@ type Contract struct {
 	Remarks               string `gorm:"type:varchar(20);comment:备注" json:"remarks"`
 	Status                int    `gorm:"type:int;comment:状态;not null" json:"status"`
 
-	Tasks           []Product `gorm:"many2many:contract_task" json:"tasks"`
-	NoEntryCustomer Customer  `gorm:"-"`
+	Tasks           []Task   `json:"tasks"`
+	NoEntryCustomer Customer `gorm:"-"`
 }
