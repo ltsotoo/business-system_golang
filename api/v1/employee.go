@@ -16,8 +16,7 @@ func EntryEmployee(c *gin.Context) {
 	_ = c.ShouldBindJSON(&employee)
 	code = model.CheckEmployeePhone(employee.Phone)
 	if code == msg.ERROR_EMPLOYEE_NOT_EXIST {
-		model.CreateEmployee(&employee)
-		code = msg.SUCCESS
+		code = model.CreateEmployee(&employee)
 	}
 	msg.Message(c, code, employee)
 }
@@ -32,7 +31,7 @@ func DelEmployee(c *gin.Context) {
 //编辑员工信息
 func EditEmployee(c *gin.Context) {
 	var employee model.Employee
-	c.ShouldBindJSON(&employee)
+	_ = c.ShouldBindJSON(&employee)
 	code = model.UpdateEmployee(&employee)
 	msg.Message(c, code, employee)
 }
@@ -47,7 +46,6 @@ func QueryEmployee(c *gin.Context) {
 
 //查询员工列表
 func QueryEmployees(c *gin.Context) {
-
 	var employees []model.Employee
 	var total int64
 
@@ -59,6 +57,7 @@ func QueryEmployees(c *gin.Context) {
 	if pageNoErr != nil || pageNo <= 0 {
 		pageNo = 1
 	}
+
 	employees, code, total = model.SelectEmployees(pageSize, pageNo)
 	msg.MessageForList(c, msg.SUCCESS, employees, pageSize, pageNo, total)
 }

@@ -1,6 +1,10 @@
 package model
 
-import "gorm.io/gorm"
+import (
+	"business-system_golang/utils/msg"
+
+	"gorm.io/gorm"
+)
 
 // 产品 Model
 type Product struct {
@@ -15,4 +19,52 @@ type Product struct {
 	StandardPrice  int    `gorm:"type:int;comment:标准价格(元);not null" json:"standardPrice"`
 	DeliveryCycle  string `gorm:"type:varchar(20);comment:供货周期;not null" json:"deliveryCycle"`
 	Remarks        string `gorm:"type:varchar(200);comment:备注" json:"remarks"`
+}
+
+func CreateProduct(product *Product) (code int) {
+	err = db.Create(&product).Error
+	if err != nil {
+		return msg.ERROR
+	}
+	return msg.SUCCESS
+}
+
+func DeleteProduct(id int) (code int) {
+	err = db.Where("id = ?", id).Delete(&Product{}).Error
+	if err != nil {
+		return msg.ERROR
+	}
+	return msg.SUCCESS
+}
+
+func UpdateProduct(product *Product) (code int) {
+	var maps = make(map[string]interface{})
+	maps["Remarks"] = product.Remarks
+	err = db.Model(&product).Updates(maps).Error
+	if err != nil {
+		return msg.ERROR
+	}
+	return msg.SUCCESS
+}
+
+func SelectProduct(id int) (product Product, code int) {
+	err = db.First(&product, id).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return product, msg.ERROR_PRODUCT_NOT_EXIST
+		} else {
+			return product, msg.ERROR
+		}
+	}
+	return product, msg.SUCCESS
+}
+
+func SelectProducts(pageSize int, pageNo int) (products []Product, code int, total int64) {
+	err = db.Limit(pageSize).Offset((pageNo - 1) * pageSize).Find(&products).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return nil, msg.ERROR, 0
+	}
+	db.Model(&products).Count(&total)
+	return products, msg.SUCCESS, total
+
 }

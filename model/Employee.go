@@ -18,8 +18,8 @@ type Employee struct {
 	Email    string `gorm:"type:varchar(20);comment:邮箱" json:"email"`
 }
 
-//查询手机号是否注册
-func CheckEmployeePhone(phone string) int {
+//查询员工(手机号)是否录入
+func CheckEmployeePhone(phone string) (code int) {
 	var employee Employee
 	db.Where("phone = ?", phone).First(&employee)
 	if employee.ID > 0 {
@@ -28,8 +28,7 @@ func CheckEmployeePhone(phone string) int {
 	return msg.ERROR_EMPLOYEE_NOT_EXIST
 }
 
-//增加员工
-func CreateEmployee(employee *Employee) int {
+func CreateEmployee(employee *Employee) (code int) {
 	err = db.Create(&employee).Error
 	if err != nil {
 		return msg.ERROR
@@ -37,18 +36,15 @@ func CreateEmployee(employee *Employee) int {
 	return msg.SUCCESS
 }
 
-//删除员工
-func DeleteEmployee(id int) int {
-	var employee Employee
-	err = db.Where("id = ?", id).Delete(&employee).Error
+func DeleteEmployee(id int) (code int) {
+	err = db.Where("id = ?", id).Delete(&Employee{}).Error
 	if err != nil {
 		return msg.ERROR
 	}
 	return msg.SUCCESS
 }
 
-//编辑员工
-func UpdateEmployee(employee *Employee) int {
+func UpdateEmployee(employee *Employee) (code int) {
 	var maps = make(map[string]interface{})
 	maps["WechatID"] = employee.WechatID
 	maps["Email"] = employee.Email
@@ -59,9 +55,7 @@ func UpdateEmployee(employee *Employee) int {
 	return msg.SUCCESS
 }
 
-//查询员工
-func SelectEmployee(id int) (Employee, int) {
-	var employee Employee
+func SelectEmployee(id int) (employee Employee, code int) {
 	err = db.First(&employee, id).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -73,10 +67,7 @@ func SelectEmployee(id int) (Employee, int) {
 	return employee, msg.SUCCESS
 }
 
-//查询员工列表
-func SelectEmployees(pageSize int, pageNo int) ([]Employee, int, int64) {
-	var employees []Employee
-	var total int64
+func SelectEmployees(pageSize int, pageNo int) (employees []Employee, code int, total int64) {
 	err = db.Limit(pageSize).Offset((pageNo - 1) * pageSize).Find(&employees).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return nil, msg.ERROR, 0

@@ -1,6 +1,10 @@
 package model
 
-import "gorm.io/gorm"
+import (
+	"business-system_golang/utils/msg"
+
+	"gorm.io/gorm"
+)
 
 // 合同 Model
 type Contract struct {
@@ -18,6 +22,55 @@ type Contract struct {
 	Remarks               string `gorm:"type:varchar(20);comment:备注" json:"remarks"`
 	Status                int    `gorm:"type:int;comment:状态;not null" json:"status"`
 
-	Tasks           []Task   `json:"tasks"`
+	Tasks           []Task   `gorm:"foreignKey:ContractId" json:"tasks"`
 	NoEntryCustomer Customer `gorm:"-"`
+}
+
+func CreateContract(contract *Contract) (code int) {
+	err = db.Create(&contract).Error
+	if err != nil {
+		return msg.ERROR
+	}
+	return msg.SUCCESS
+}
+
+func DeleteContract(id int) (code int) {
+	var contract Contract
+	contract.ID = uint(id)
+	err = db.Select("Tasks").Delete(&contract).Error
+	if err != nil {
+		return msg.ERROR
+	}
+	return msg.SUCCESS
+}
+
+func UpdateContract(contract *Contract) (code int) {
+	var maps = make(map[string]interface{})
+	maps["Remarks"] = contract.Remarks
+	err = db.Model(&contract).Updates(maps).Error
+	if err != nil {
+		return msg.ERROR
+	}
+	return msg.SUCCESS
+}
+
+func SelectContract(id int) (contract Contract, code int) {
+	err = db.First(&contract, id).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return contract, msg.ERROR_CONTRACT_NOT_EXIST
+		} else {
+			return contract, msg.ERROR
+		}
+	}
+	return contract, msg.SUCCESS
+}
+
+func SelectContracts(pageSize int, pageNo int) (contracts []Contract, code int, total int64) {
+	err = db.Limit(pageSize).Offset((pageNo - 1) * pageSize).Find(&contracts).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return nil, msg.ERROR, 0
+	}
+	db.Model(&contracts).Count(&total)
+	return contracts, msg.SUCCESS, total
 }
