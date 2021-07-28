@@ -3,6 +3,7 @@ package routes
 import (
 	v1 "business-system_golang/api/v1"
 	"business-system_golang/config"
+	"business-system_golang/middleware"
 
 	"github.com/gin-gonic/gin"
 )
@@ -10,6 +11,11 @@ import (
 func InitRouter() {
 	gin.SetMode(config.SystemConfig.Server.Mode)
 	r := gin.Default()
+
+	r.Use(middleware.Cors())
+	// corsConfig := cors.DefaultConfig()
+	// corsConfig.AllowOrigins = []string{"*"}
+	// r.Use(cors.New(corsConfig))
 
 	routeV1 := r.Group("api/v1")
 	{
@@ -37,14 +43,17 @@ func InitRouter() {
 		routeV1.DELETE("product/:id", v1.DelProduct)
 		routeV1.PUT("product", v1.EditProduct)
 		routeV1.GET("product/:id", v1.QueryProduct)
-		routeV1.GET("products", v1.QueryProducts)
+		routeV1.POST("products", v1.QueryProducts)
 		//供应商模块接口
 		routeV1.POST("supplier", v1.EntrySupplier)
 		routeV1.DELETE("supplier/:id", v1.DelSupplier)
 		routeV1.PUT("supplier", v1.EditSupplier)
 		routeV1.GET("supplier/:id", v1.QuerySupplier)
 		routeV1.GET("suppliers", v1.QuerySuppliers)
+		//字典表模块
+		routeV1.GET("systemDictionaryValuesByKeyId", v1.QuerySystemDictionaryValuesByKeyId)
+		routeV1.GET("systemDictionaryValuesByParentId", v1.QuerySystemDictionaryValuesByParentId)
 	}
 
-	r.Run(config.SystemConfig.Server.Port)
+	_ = r.Run(config.SystemConfig.Server.Port)
 }

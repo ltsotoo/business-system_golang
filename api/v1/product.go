@@ -43,9 +43,13 @@ func QueryProduct(c *gin.Context) {
 func QueryProducts(c *gin.Context) {
 	var products []model.Product
 	var total int64
+	var productQuery model.ProductQuery
 
 	pageSize, pageSizeErr := strconv.Atoi(c.Query("pageSize"))
 	pageNo, pageNoErr := strconv.Atoi(c.Query("pageNo"))
+
+	_ = c.ShouldBindJSON(&productQuery)
+
 	if pageSizeErr != nil || pageSize <= 0 {
 		pageSize = 10
 	}
@@ -53,6 +57,6 @@ func QueryProducts(c *gin.Context) {
 		pageNo = 1
 	}
 
-	products, code, total = model.SelectProducts(pageSize, pageNo)
+	products, code, total = model.SelectProducts(pageSize, pageNo, productQuery)
 	msg.MessageForList(c, msg.SUCCESS, products, pageSize, pageNo, total)
 }

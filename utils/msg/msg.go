@@ -30,8 +30,8 @@ const (
 )
 
 var codeMsg = map[int]string{
-	SUCCESS: "成功",
-	ERROR:   "失败",
+	SUCCESS: "请求成功",
+	ERROR:   "请求失败",
 
 	//员工模块
 	ERROR_EMPLOYEE_EXIST:      "员工已录入",

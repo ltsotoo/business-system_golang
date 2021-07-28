@@ -37,6 +37,8 @@ func InitDb() {
 		&Product{},
 		&Supplier{},
 		&Task{},
+		&SystemDictionaryKey{},
+		&SystemDictionaryValue{},
 	)
 
 	sqlDB, _ := db.DB()
