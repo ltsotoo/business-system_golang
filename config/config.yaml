@@ -4,9 +4,9 @@ server:
   port : ':8088'
 
 db:
-  type : 'mysql'
+  type : 'mariadb'
   username : 'zyhk'
   password : 'zyhk'
-  host : '192.168.61.128'
+  host : '192.168.60.233'
   port : '3306'
   name : 'zyhk'

@@ -19,7 +19,7 @@ type Product struct {
 	StandardPrice  int    `gorm:"type:int;comment:标准价格(元);not null" json:"standardPrice"`
 	DeliveryCycle  string `gorm:"type:varchar(20);comment:供货周期;not null" json:"deliveryCycle"`
 	Remarks        string `gorm:"type:varchar(200);comment:备注" json:"remarks"`
-	SourceType     uint   `gorm:"type:int;comment:来源类型;not null" json:"sourceTypeId"`
+	SourceType     uint   `gorm:"type:int;comment:来源类型;not null" json:"sourceType"`
 	Subtype        uint   `gorm:"type:int;comment:子类型;not null" json:"subtype"`
 }
 
