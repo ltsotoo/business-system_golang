@@ -8,24 +8,29 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+//查询所有的区域
+func QueryAreas(c *gin.Context) {
+	var areas []model.Area
+	areas, code = model.SelectAreas()
+	msg.Message(c, code, areas)
+}
+
 //通过KeyId查询某一类别下的所有字典数据
 func QuerySystemDictionaryValuesByKeyId(c *gin.Context) {
-	keyId, keyIdErr := strconv.Atoi(c.Query("keyId"))
+	keyID, keyIDErr := strconv.Atoi(c.Query("keyID"))
 	var systemDictionaryValues []model.SystemDictionaryValue
-	var code int
-	if keyIdErr == nil {
-		systemDictionaryValues, code = model.SelectValuesBykeyId(keyId)
+	if keyIDErr == nil {
+		systemDictionaryValues, code = model.SelectValuesBykeyID(keyID)
 	}
 	msg.Message(c, code, systemDictionaryValues)
 }
 
 //通过ParentId查询某一类别下的所有字典数据
 func QuerySystemDictionaryValuesByParentId(c *gin.Context) {
-	parentId, parentIdErr := strconv.Atoi(c.Query("parentId"))
+	parentID, parentIDErr := strconv.Atoi(c.Query("parentID"))
 	var systemDictionaryValues []model.SystemDictionaryValue
-	var code int
-	if parentIdErr == nil {
-		systemDictionaryValues, code = model.SelectValuesByParentId(parentId)
+	if parentIDErr == nil {
+		systemDictionaryValues, code = model.SelectValuesByParentID(parentID)
 	}
 	msg.Message(c, code, systemDictionaryValues)
 }

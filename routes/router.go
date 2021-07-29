@@ -13,9 +13,6 @@ func InitRouter() {
 	r := gin.Default()
 
 	r.Use(middleware.Cors())
-	// corsConfig := cors.DefaultConfig()
-	// corsConfig.AllowOrigins = []string{"*"}
-	// r.Use(cors.New(corsConfig))
 
 	routeV1 := r.Group("api/v1")
 	{
@@ -37,7 +34,10 @@ func InitRouter() {
 		routeV1.DELETE("customer/:id", v1.DelCustomer)
 		routeV1.PUT("customer", v1.EditCustomer)
 		routeV1.GET("customer/:id", v1.QueryCustomer)
-		routeV1.GET("customers", v1.QueryCustomers)
+		routeV1.POST("customers", v1.QueryCustomers)
+		//客户模块接口ADD
+		routeV1.GET("companys", v1.QueryCompanys)
+		routeV1.GET("researchGroupsByCompanyID", v1.QueryResearchGroupsByCompanyID)
 		//产品模块接口
 		routeV1.POST("product", v1.EntryProduct)
 		routeV1.DELETE("product/:id", v1.DelProduct)
@@ -50,9 +50,10 @@ func InitRouter() {
 		routeV1.PUT("supplier", v1.EditSupplier)
 		routeV1.GET("supplier/:id", v1.QuerySupplier)
 		routeV1.GET("suppliers", v1.QuerySuppliers)
-		//字典表模块
-		routeV1.GET("systemDictionaryValuesByKeyId", v1.QuerySystemDictionaryValuesByKeyId)
-		routeV1.GET("systemDictionaryValuesByParentId", v1.QuerySystemDictionaryValuesByParentId)
+		//系统模块
+		routeV1.GET("areas", v1.QueryAreas)
+		routeV1.GET("systemDictionaryValuesByKeyID", v1.QuerySystemDictionaryValuesByKeyId)
+		routeV1.GET("systemDictionaryValuesByParentID", v1.QuerySystemDictionaryValuesByParentId)
 	}
 
 	_ = r.Run(config.SystemConfig.Server.Port)

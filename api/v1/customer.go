@@ -43,6 +43,9 @@ func QueryCustomer(c *gin.Context) {
 func QueryCustomers(c *gin.Context) {
 	var customers []model.Customer
 	var total int64
+	var customerQuery model.CustomerQuery
+
+	_ = c.ShouldBindJSON(&customerQuery)
 
 	pageSize, pageSizeErr := strconv.Atoi(c.Query("pageSize"))
 	pageNo, pageNoErr := strconv.Atoi(c.Query("pageNo"))
@@ -53,6 +56,23 @@ func QueryCustomers(c *gin.Context) {
 		pageNo = 1
 	}
 
-	customers, code, total = model.SelectCustomers(pageSize, pageNo)
+	customers, code, total = model.SelectCustomers(pageSize, pageNo, customerQuery)
 	msg.MessageForList(c, msg.SUCCESS, customers, pageSize, pageNo, total)
+}
+
+//查询客户公司列表
+func QueryCompanys(c *gin.Context) {
+	var companys []model.Company
+	companys, code = model.SelectCompanys()
+	msg.Message(c, code, companys)
+}
+
+//查询客户公司课题组列表
+func QueryResearchGroupsByCompanyID(c *gin.Context) {
+	var researchGroups []model.ResearchGroup
+	companyID, companyIDErr := strconv.Atoi(c.Query("companyID"))
+	if companyIDErr == nil {
+		researchGroups, code = model.SelectResearchGroupsByCompanyID(companyID)
+	}
+	msg.Message(c, code, researchGroups)
 }

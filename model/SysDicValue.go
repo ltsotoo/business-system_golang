@@ -9,21 +9,21 @@ import (
 // 字典表
 type SystemDictionaryValue struct {
 	gorm.Model
-	KeyId    uint   `gorm:"type:int;comment:编号;not null" json:"keyId"`
-	ParentId uint   `gorm:"type:int;comment:父ID" json:"parentId"`
+	KeyID    uint   `gorm:"type:int;comment:编号;not null" json:"keyID"`
+	ParentID uint   `gorm:"type:int;comment:父ID" json:"parentID"`
 	Name     string `gorm:"type:varchar(20);comment:名称" json:"name"`
 }
 
-func SelectValuesBykeyId(keyId int) (systemDictionaryValues []SystemDictionaryValue, code int) {
-	err = db.Where("key_id = ?", keyId).Find(&systemDictionaryValues).Error
+func SelectValuesBykeyID(keyID int) (systemDictionaryValues []SystemDictionaryValue, code int) {
+	err = db.Where("key_id = ?", keyID).Find(&systemDictionaryValues).Error
 	if err != nil {
 		return nil, msg.ERROR
 	}
 	return systemDictionaryValues, msg.SUCCESS
 }
 
-func SelectValuesByParentId(parentId int) (systemDictionaryValues []SystemDictionaryValue, code int) {
-	err = db.Where("parent_id = ?", parentId).Find(&systemDictionaryValues).Error
+func SelectValuesByParentID(parentID int) (systemDictionaryValues []SystemDictionaryValue, code int) {
+	err = db.Where("parent_id = ?", parentID).Find(&systemDictionaryValues).Error
 	if err != nil {
 		return nil, msg.ERROR
 	}

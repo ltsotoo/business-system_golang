@@ -45,10 +45,10 @@ func QueryProducts(c *gin.Context) {
 	var total int64
 	var productQuery model.ProductQuery
 
+	_ = c.ShouldBindJSON(&productQuery)
+
 	pageSize, pageSizeErr := strconv.Atoi(c.Query("pageSize"))
 	pageNo, pageNoErr := strconv.Atoi(c.Query("pageNo"))
-
-	_ = c.ShouldBindJSON(&productQuery)
 
 	if pageSizeErr != nil || pageSize <= 0 {
 		pageSize = 10

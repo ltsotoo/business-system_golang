@@ -12,7 +12,7 @@ type Product struct {
 	Name           string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
 	Brand          string `gorm:"type:varchar(20);comment:品牌;not null" json:"brand"`
 	Specification  string `gorm:"type:varchar(50);comment:规格;not null" json:"specification"`
-	SupplierId     uint   `gorm:"type:int;comment:供应商ID;not null" json:"supplierId"`
+	SupplierID     uint   `gorm:"type:int;comment:供应商ID;not null" json:"supplierID"`
 	Number         int    `gorm:"type:int;comment:数量;not null" json:"number"`
 	Unit           string `gorm:"type:varchar(20);comment:单位;not null" json:"unit"`
 	PurchasedPrice int    `gorm:"type:int;comment:采购价格(元);not null" json:"purchasedPrice"`
@@ -62,11 +62,18 @@ func SelectProduct(id int) (product Product, code int) {
 }
 
 func SelectProducts(pageSize int, pageNo int, productQuery ProductQuery) (products []Product, code int, total int64) {
-	err = db.Limit(pageSize).Offset((pageNo-1)*pageSize).Where("source_type = ? AND subtype = ? AND name LIKE ? AND specification LIKE ?", productQuery.SourceType, productQuery.Subtype, "%"+productQuery.Name+"%", "%"+productQuery.Specification+"%").Find(&products).Error
+	var maps = make(map[string]interface{})
+	if productQuery.SourceType != 0 {
+		maps["source_type"] = productQuery.SourceType
+	}
+	if productQuery.Subtype != 0 {
+		maps["subtype"] = productQuery.Subtype
+	}
+
+	err = db.Limit(pageSize).Offset((pageNo-1)*pageSize).Where(maps).Where("name LIKE ? AND specification LIKE ?", "%"+productQuery.Name+"%", "%"+productQuery.Specification+"%").Find(&products).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return nil, msg.ERROR, 0
 	}
-	db.Model(&products).Where("source_type = ? AND subtype = ? AND name LIKE ? AND specification LIKE ?", productQuery.SourceType, productQuery.Subtype, "%"+productQuery.Name+"%", "%"+productQuery.Specification+"%").Count(&total)
+	db.Model(&products).Where(maps).Where("name LIKE ? AND specification LIKE ?", "%"+productQuery.Name+"%", "%"+productQuery.Specification+"%").Count(&total)
 	return products, msg.SUCCESS, total
-
 }

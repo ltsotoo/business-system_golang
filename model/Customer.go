@@ -9,13 +9,12 @@ import (
 // 客户 Model
 type Customer struct {
 	gorm.Model
-	Name          string `gorm:"type:varchar(20);comment:姓名;not null" json:"name"`
-	Address       string `gorm:"type:varchar(20);comment:地址;not null" json:"address"`
-	Company       string `gorm:"type:varchar(20);comment:公司;not null" json:"company"`
-	ResearchGroup string `gorm:"type:varchar(20);comment:课题组;not null" json:"researchGroup"`
-	Phone         string `gorm:"type:varchar(20);comment:电话;not null" json:"phone"`
-	WechatID      string `gorm:"type:varchar(20);comment:微信号" json:"wechatID"`
-	Email         string `gorm:"type:varchar(20);comment:邮箱" json:"email"`
+	Name            string `gorm:"type:varchar(20);comment:姓名;not null" json:"name"`
+	CompanyID       uint   `gorm:"type:int;comment:公司ID;not null" json:"companyID"`
+	ResearchGroupID uint   `gorm:"type:int;comment:课题组ID;not null" json:"researchGroupID"`
+	Phone           string `gorm:"type:varchar(20);comment:电话;not null" json:"phone"`
+	WechatID        string `gorm:"type:varchar(20);comment:微信号" json:"wechatID"`
+	Email           string `gorm:"type:varchar(20);comment:邮箱" json:"email"`
 }
 
 func CreateCustomer(customer *Customer) (code int) {
@@ -57,11 +56,20 @@ func SelectCustomer(id int) (customer Customer, code int) {
 	return customer, msg.SUCCESS
 }
 
-func SelectCustomers(pageSize int, pageNo int) (customers []Customer, code int, total int64) {
-	err = db.Limit(pageSize).Offset((pageNo - 1) * pageSize).Find(&customers).Error
+func SelectCustomers(pageSize int, pageNo int, customerQuery CustomerQuery) (customers []Customer, code int, total int64) {
+
+	var maps = make(map[string]interface{})
+	if customerQuery.CompanyID != 0 {
+		maps["company_id"] = customerQuery.CompanyID
+	}
+	if customerQuery.ResearchGroupID != 0 {
+		maps["research_group_id"] = customerQuery.ResearchGroupID
+	}
+
+	err = db.Limit(pageSize).Offset((pageNo-1)*pageSize).Where(maps).Where("name LIKE ?", "%"+customerQuery.Name+"%").Find(&customers).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return nil, msg.ERROR, 0
 	}
-	db.Model(&customers).Count(&total)
+	db.Model(&customers).Where(maps).Where("name LIKE ?", "%"+customerQuery.Name+"%").Count(&total)
 	return customers, msg.SUCCESS, total
 }
