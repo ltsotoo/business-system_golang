@@ -11,7 +11,7 @@ type Supplier struct {
 	gorm.Model
 	Name     string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
 	Address  string `gorm:"type:varchar(20);comment:地址;not null" json:"address"`
-	Linkman  string `gorm:"type:varchar(20);comment:联系人名称;not null" json:"linkman"`
+	Linkman  string `gorm:"type:varchar(20);comment:联系人;not null" json:"linkman"`
 	Phone    string `gorm:"type:varchar(20);comment:联系电话;not null" json:"phone"`
 	WechatID string `gorm:"type:varchar(20);comment:微信号" json:"wechatID"`
 	Email    string `gorm:"type:varchar(20);comment:邮箱" json:"email"`
@@ -56,12 +56,11 @@ func SelectSupplier(id int) (supplier Supplier, code int) {
 	return supplier, msg.SUCCESS
 }
 
-func SelectSuppliers(pageSize int, pageNo int) (suppliers []Supplier, code int, total int64) {
-	err = db.Limit(pageSize).Offset((pageNo - 1) * pageSize).Find(&suppliers).Error
+func SelectSuppliers(pageSize int, pageNo int, supplierQuery SupplierQuery) (suppliers []Supplier, code int, total int64) {
+	err = db.Limit(pageSize).Offset((pageNo-1)*pageSize).Where("name LIKE ? AND linkman LIKE ? AND phone LIKE ?", "%"+supplierQuery.Name+"%", "%"+supplierQuery.Linkman+"%", "%"+supplierQuery.Phone+"%").Find(&suppliers).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return nil, msg.ERROR, 0
 	}
-	db.Model(&suppliers).Count(&total)
+	db.Model(&suppliers).Where("name LIKE ? AND linkman LIKE ? AND phone LIKE ?", "%"+supplierQuery.Name+"%", "%"+supplierQuery.Linkman+"%", "%"+supplierQuery.Phone+"%").Count(&total)
 	return suppliers, msg.SUCCESS, total
-
 }

@@ -1,5 +1,11 @@
 package model
 
+type ContractQuery struct {
+	AreaID      uint   `json:"areaID"`
+	No          string `json:"no"`
+	CompanyName string `json:"companyName"`
+}
+
 type CustomerQuery struct {
 	AreaID          uint   `json:"areaID"`
 	CompanyID       uint   `json:"companyID"`
@@ -12,4 +18,10 @@ type ProductQuery struct {
 	Subtype       uint   `json:"subtype"`
 	Name          string `json:"name"`
 	Specification string `json:"specification"`
+}
+
+type SupplierQuery struct {
+	Name    string `json:"name"`
+	Linkman string `json:"linkman"`
+	Phone   string `json:"phone"`
 }

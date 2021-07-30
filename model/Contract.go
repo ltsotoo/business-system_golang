@@ -10,15 +10,16 @@ import (
 type Contract struct {
 	gorm.Model
 	No                    string `gorm:"type:varchar(20);comment:合同编号;not null" json:"no"`
-	AreaId                uint   `gorm:"type:int;comment:所属区域ID;not null" json:"areaId"`
-	EmployeeId            uint   `gorm:"type:int;comment:业务员ID;not null" json:"employeeId"`
+	AreaID                uint   `gorm:"type:int;comment:所属区域ID;not null" json:"areaID"`
+	EmployeeID            uint   `gorm:"type:int;comment:业务员ID;not null" json:"employeeID"`
 	IsEntryCustomer       bool   `gorm:"type:boolean;comment:客户是否录入;not null" json:"isEntryCustomer"`
-	CustomerId            int    `gorm:"type:int;comment:客户ID" json:"customerId"`
+	CustomerID            int    `gorm:"type:int;comment:客户ID" json:"customerID"`
 	EstimatedDeliveryDate string `gorm:"type:varchar(20);comment:合同交货日期;not null" json:"estimatedDeliveryDate"`
 	EndDeliveryDate       string `gorm:"type:varchar(20);comment:实际交货日期" json:"endDeliveryDate"`
 	InvoiceType           int    `gorm:"type:int;comment:开票类型;not null" json:"invoiceType"`
 	InvoiceContent        string `gorm:"type:varchar(20);comment:开票内容" json:"invoiceContent"`
-	IsSpecial             bool   `gorm:"type:boolean;comment:是否是特殊合同;not null" json:"isSpecial"`
+	IsSpecial             bool   `gorm:"type:boolean;comment:特殊合同?;not null" json:"isSpecial"`
+	TotalAmount           int    `gorm:"type:int;comment:总金额(元);not null" json:"totalAmount"`
 	Remarks               string `gorm:"type:varchar(20);comment:备注" json:"remarks"`
 	Status                int    `gorm:"type:int;comment:状态;not null" json:"status"`
 
@@ -67,8 +68,8 @@ func SelectContract(id int) (contract Contract, code int) {
 	return contract, msg.SUCCESS
 }
 
-func SelectContracts(pageSize int, pageNo int) (contracts []Contract, code int, total int64) {
-	err = db.Limit(pageSize).Offset((pageNo - 1) * pageSize).Find(&contracts).Error
+func SelectContracts(pageSize int, pageNo int, contractQuery ContractQuery) (contracts []Contract, code int, total int64) {
+	err = db.Limit(pageSize).Offset((pageNo-1)*pageSize).Where("no LIKE ?", "%"+contractQuery.No+"%").Find(&contracts).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return nil, msg.ERROR, 0
 	}

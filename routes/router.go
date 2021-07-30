@@ -27,7 +27,7 @@ func InitRouter() {
 		routeV1.DELETE("contract/:id", v1.DelContract)
 		routeV1.PUT("contract", v1.EditContract)
 		routeV1.GET("contract/:id", v1.QueryContract)
-		routeV1.GET("contracts", v1.QueryContracts)
+		routeV1.POST("contracts", v1.QueryContracts)
 		//任务模块接口
 		//客户模块接口
 		routeV1.POST("customer", v1.EntryCustomer)
@@ -49,7 +49,7 @@ func InitRouter() {
 		routeV1.DELETE("supplier/:id", v1.DelSupplier)
 		routeV1.PUT("supplier", v1.EditSupplier)
 		routeV1.GET("supplier/:id", v1.QuerySupplier)
-		routeV1.GET("suppliers", v1.QuerySuppliers)
+		routeV1.POST("suppliers", v1.QuerySuppliers)
 		//系统模块
 		routeV1.GET("areas", v1.QueryAreas)
 		routeV1.GET("systemDictionaryValuesByKeyID", v1.QuerySystemDictionaryValuesByKeyId)

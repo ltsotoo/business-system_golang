@@ -43,6 +43,9 @@ func QueryContract(c *gin.Context) {
 func QueryContracts(c *gin.Context) {
 	var contracts []model.Contract
 	var total int64
+	var contractQuery model.ContractQuery
+
+	_ = c.ShouldBindJSON(&contractQuery)
 
 	pageSize, pageSizeErr := strconv.Atoi(c.Query("pageSize"))
 	pageNo, pageNoErr := strconv.Atoi(c.Query("pageNo"))
@@ -53,6 +56,6 @@ func QueryContracts(c *gin.Context) {
 		pageNo = 1
 	}
 
-	contracts, code, total = model.SelectContracts(pageSize, pageNo)
+	contracts, code, total = model.SelectContracts(pageSize, pageNo, contractQuery)
 	msg.MessageForList(c, msg.SUCCESS, contracts, pageSize, pageNo, total)
 }

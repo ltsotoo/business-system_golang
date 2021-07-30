@@ -9,7 +9,7 @@ import (
 // 字典表
 type SystemDictionaryValue struct {
 	gorm.Model
-	KeyID    uint   `gorm:"type:int;comment:编号;not null" json:"keyID"`
+	KeyID    uint   `gorm:"type:int;comment:编号" json:"keyID"`
 	ParentID uint   `gorm:"type:int;comment:父ID" json:"parentID"`
 	Name     string `gorm:"type:varchar(20);comment:名称" json:"name"`
 }

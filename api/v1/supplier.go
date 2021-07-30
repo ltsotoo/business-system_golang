@@ -43,6 +43,9 @@ func QuerySupplier(c *gin.Context) {
 func QuerySuppliers(c *gin.Context) {
 	var suppliers []model.Supplier
 	var total int64
+	var supplierQuery model.SupplierQuery
+
+	_ = c.ShouldBindJSON(&supplierQuery)
 
 	pageSize, pageSizeErr := strconv.Atoi(c.Query("pageSize"))
 	pageNo, pageNoErr := strconv.Atoi(c.Query("pageNo"))
@@ -53,7 +56,7 @@ func QuerySuppliers(c *gin.Context) {
 		pageNo = 1
 	}
 
-	suppliers, code, total = model.SelectSuppliers(pageSize, pageNo)
+	suppliers, code, total = model.SelectSuppliers(pageSize, pageNo, supplierQuery)
 	msg.MessageForList(c, msg.SUCCESS, suppliers, pageSize, pageNo, total)
 
 }
