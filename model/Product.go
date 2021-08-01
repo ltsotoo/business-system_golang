@@ -19,8 +19,8 @@ type Product struct {
 	StandardPrice  int    `gorm:"type:int;comment:标准价格(元);not null" json:"standardPrice"`
 	DeliveryCycle  string `gorm:"type:varchar(20);comment:供货周期;not null" json:"deliveryCycle"`
 	Remarks        string `gorm:"type:varchar(200);comment:备注" json:"remarks"`
-	SourceType     uint   `gorm:"type:int;comment:来源类型;not null" json:"sourceType"`
-	Subtype        uint   `gorm:"type:int;comment:子类型;not null" json:"subtype"`
+	SourceTypeID   uint   `gorm:"type:int;comment:来源类型;not null" json:"sourceTypeID"`
+	SubtypeID      uint   `gorm:"type:int;comment:子类型;not null" json:"subtypeID"`
 }
 
 func CreateProduct(product *Product) (code int) {
@@ -63,11 +63,11 @@ func SelectProduct(id int) (product Product, code int) {
 
 func SelectProducts(pageSize int, pageNo int, productQuery ProductQuery) (products []Product, code int, total int64) {
 	var maps = make(map[string]interface{})
-	if productQuery.SourceType != 0 {
-		maps["source_type"] = productQuery.SourceType
+	if productQuery.SourceTypeID != 0 {
+		maps["source_type_id"] = productQuery.SourceTypeID
 	}
-	if productQuery.Subtype != 0 {
-		maps["subtype"] = productQuery.Subtype
+	if productQuery.SubtypeID != 0 {
+		maps["subtype_id"] = productQuery.SubtypeID
 	}
 
 	err = db.Limit(pageSize).Offset((pageNo-1)*pageSize).Where(maps).Where("name LIKE ? AND specification LIKE ?", "%"+productQuery.Name+"%", "%"+productQuery.Specification+"%").Find(&products).Error

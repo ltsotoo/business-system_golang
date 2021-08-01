@@ -29,13 +29,15 @@ func InitRouter() {
 		routeV1.GET("contract/:id", v1.QueryContract)
 		routeV1.POST("contracts", v1.QueryContracts)
 		//任务模块接口
+		routeV1.DELETE("task/:id", v1.DelTask)
+		routeV1.GET("tasksByContractID", v1.QueryTasksByContractID)
 		//客户模块接口
 		routeV1.POST("customer", v1.EntryCustomer)
 		routeV1.DELETE("customer/:id", v1.DelCustomer)
 		routeV1.PUT("customer", v1.EditCustomer)
 		routeV1.GET("customer/:id", v1.QueryCustomer)
 		routeV1.POST("customers", v1.QueryCustomers)
-		//客户模块接口ADD
+		//客户模块接口+
 		routeV1.GET("companys", v1.QueryCompanys)
 		routeV1.GET("researchGroupsByCompanyID", v1.QueryResearchGroupsByCompanyID)
 		//产品模块接口
@@ -50,10 +52,8 @@ func InitRouter() {
 		routeV1.PUT("supplier", v1.EditSupplier)
 		routeV1.GET("supplier/:id", v1.QuerySupplier)
 		routeV1.POST("suppliers", v1.QuerySuppliers)
-		//系统模块
-		routeV1.GET("areas", v1.QueryAreas)
-		routeV1.GET("systemDictionaryValuesByKeyID", v1.QuerySystemDictionaryValuesByKeyId)
-		routeV1.GET("systemDictionaryValuesByParentID", v1.QuerySystemDictionaryValuesByParentId)
+		//字典表
+		routeV1.GET("dictionaries", v1.QueryDictionaries)
 	}
 
 	_ = r.Run(config.SystemConfig.Server.Port)

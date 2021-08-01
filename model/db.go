@@ -39,9 +39,7 @@ func InitDb() {
 		&Task{},
 		&Company{},
 		&ResearchGroup{},
-		&Area{},
-		&SystemDictionaryKey{},
-		&SystemDictionaryValue{},
+		&Dictionary{},
 	)
 
 	sqlDB, _ := db.DB()

@@ -14,8 +14,8 @@ type CustomerQuery struct {
 }
 
 type ProductQuery struct {
-	SourceType    uint   `json:"sourceType"`
-	Subtype       uint   `json:"subtype"`
+	SourceTypeID  uint   `json:"sourceTypeID"`
+	SubtypeID     uint   `json:"subtypeID"`
 	Name          string `json:"name"`
 	Specification string `json:"specification"`
 }
