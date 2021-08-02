@@ -16,6 +16,10 @@ func InitRouter() {
 
 	routeV1 := r.Group("api/v1")
 	{
+
+		//SYSTEM接口
+		routeV1.POST("login", v1.Login)
+		routeV1.GET("dictionaries", v1.QueryDictionaries)
 		//员工模块接口
 		routeV1.POST("employee", v1.EntryEmployee)
 		routeV1.DELETE("employee/:id", v1.DelEmployee)
@@ -52,8 +56,7 @@ func InitRouter() {
 		routeV1.PUT("supplier", v1.EditSupplier)
 		routeV1.GET("supplier/:id", v1.QuerySupplier)
 		routeV1.POST("suppliers", v1.QuerySuppliers)
-		//字典表
-		routeV1.GET("dictionaries", v1.QueryDictionaries)
+
 	}
 
 	_ = r.Run(config.SystemConfig.Server.Port)

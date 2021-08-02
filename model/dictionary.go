@@ -18,12 +18,8 @@ type Dictionary struct {
 
 func SelectDictionaries(name string, parentID int) (dictionaries []Dictionary, code int) {
 	var maps = make(map[string]interface{})
-	if name != "" {
-		maps["name"] = name
-	}
-	if parentID != 0 {
-		maps["parent_id"] = parentID
-	}
+	maps["name"] = name
+	maps["parent_id"] = parentID
 	err = db.Where(maps).Find(&dictionaries).Error
 	if err != nil {
 		return nil, msg.ERROR

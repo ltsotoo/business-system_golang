@@ -13,7 +13,9 @@ type Contract struct {
 	AreaID                uint   `gorm:"type:int;comment:所属区域ID;not null" json:"areaID"`
 	EmployeeID            uint   `gorm:"type:int;comment:业务员ID;not null" json:"employeeID"`
 	IsEntryCustomer       bool   `gorm:"type:boolean;comment:客户是否录入;not null" json:"isEntryCustomer"`
-	CustomerID            int    `gorm:"type:int;comment:客户ID" json:"customerID"`
+	CustomerID            uint   `gorm:"type:int;comment:客户ID" json:"customerID"`
+	ContractDate          string `gorm:"type:varchar(20);comment:签订日期;not null" json:"contractDate"`
+	ContractUnitID        uint   `gorm:"type:int;comment:签订单位;not null" json:"contractUnitID"`
 	EstimatedDeliveryDate string `gorm:"type:varchar(20);comment:合同交货日期;not null" json:"estimatedDeliveryDate"`
 	EndDeliveryDate       string `gorm:"type:varchar(20);comment:实际交货日期" json:"endDeliveryDate"`
 	InvoiceType           int    `gorm:"type:int;comment:开票类型;not null" json:"invoiceType"`
@@ -23,8 +25,8 @@ type Contract struct {
 	Remarks               string `gorm:"type:varchar(20);comment:备注" json:"remarks"`
 	Status                int    `gorm:"type:int;comment:状态;not null" json:"status"`
 
-	Tasks           []Task   `gorm:"foreignKey:ContractID" json:"tasks"`
-	NoEntryCustomer Customer `gorm:"-"`
+	Tasks    []Task   `gorm:"foreignKey:ContractID" json:"tasks"`
+	Customer Customer `gorm:"-"`
 }
 
 func CreateContract(contract *Contract) (code int) {
