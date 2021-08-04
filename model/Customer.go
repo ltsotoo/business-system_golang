@@ -73,3 +73,18 @@ func SelectCustomers(pageSize int, pageNo int, customerQuery CustomerQuery) (cus
 	db.Model(&customers).Where(maps).Where("name LIKE ?", "%"+customerQuery.Name+"%").Count(&total)
 	return customers, msg.SUCCESS, total
 }
+
+func SelectCustomersByCompanyIDAndResearchGroupID(companyID int, researchGroupID int) (customers []Customer, code int) {
+	var maps = make(map[string]interface{})
+	if companyID != 0 {
+		maps["company_id"] = companyID
+	}
+	if researchGroupID != 0 {
+		maps["research_group_id"] = researchGroupID
+	}
+	err = db.Where(maps).Find(&customers).Error
+	if err != nil {
+		return nil, msg.ERROR
+	}
+	return customers, msg.SUCCESS
+}

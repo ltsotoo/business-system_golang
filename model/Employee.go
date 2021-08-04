@@ -10,12 +10,14 @@ import (
 // 员工 Model
 type Employee struct {
 	gorm.Model
-	Phone    string `gorm:"type:varchar(20);comment:电话;not null" json:"phone"`
-	Name     string `gorm:"type:varchar(20);comment:姓名;not null" json:"name"`
-	Password string `gorm:"type:varchar(20);comment:密码;not null" json:"password"`
-	AreaId   uint   `gorm:"type:int;comment:所属区域ID;not null" json:"areaID"`
-	WechatID string `gorm:"type:varchar(20);comment:微信号" json:"wechatID"`
-	Email    string `gorm:"type:varchar(20);comment:邮箱" json:"email"`
+	Phone        string `gorm:"type:varchar(20);comment:电话;not null" json:"phone"`
+	Name         string `gorm:"type:varchar(20);comment:姓名;not null" json:"name"`
+	Password     string `gorm:"type:varchar(20);comment:密码;not null" json:"password"`
+	WechatID     string `gorm:"type:varchar(20);comment:微信号" json:"wechatID"`
+	Email        string `gorm:"type:varchar(20);comment:邮箱" json:"email"`
+	OfficeID     uint   `gorm:"type:int;comment:办事处ID;not null" json:"officeID"`
+	DepartmentID uint   `gorm:"type:int;comment:部门ID;not null" json:"departmentID"`
+	RoleID       uint   `gorm:"type:int;comment:角色ID;not null" json:"roleID"`
 }
 
 //查询员工(手机号)是否录入

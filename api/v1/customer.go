@@ -76,3 +76,16 @@ func QueryResearchGroupsByCompanyID(c *gin.Context) {
 	}
 	msg.Message(c, code, researchGroups)
 }
+
+//通过公司ID和课题组ID查询客户
+func QueryCustomersByCompanyIDAndResearchGroupID(c *gin.Context) {
+	var customers []model.Customer
+	companyID, companyIDErr := strconv.Atoi(c.DefaultQuery("companyID", "0"))
+	researchGroupID, researchGroupIDErr := strconv.Atoi(c.DefaultQuery("researchGroupID", "0"))
+
+	if companyIDErr == nil || researchGroupIDErr == nil {
+		customers, code = model.SelectCustomersByCompanyIDAndResearchGroupID(companyID, researchGroupID)
+	}
+
+	msg.Message(c, code, customers)
+}

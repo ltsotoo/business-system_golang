@@ -26,7 +26,7 @@ type Contract struct {
 	Status                int    `gorm:"type:int;comment:状态;not null" json:"status"`
 
 	Tasks    []Task   `gorm:"foreignKey:ContractID" json:"tasks"`
-	Customer Customer `gorm:"-"`
+	Customer Customer `gorm:"-" json:"customer"`
 }
 
 func CreateContract(contract *Contract) (code int) {

@@ -41,6 +41,7 @@ func InitRouter() {
 		routeV1.PUT("customer", v1.EditCustomer)
 		routeV1.GET("customer/:id", v1.QueryCustomer)
 		routeV1.POST("customers", v1.QueryCustomers)
+		routeV1.GET("customersByCompanyIDAndResearchGroupID", v1.QueryCustomersByCompanyIDAndResearchGroupID)
 		//客户模块接口+
 		routeV1.GET("companys", v1.QueryCompanys)
 		routeV1.GET("researchGroupsByCompanyID", v1.QueryResearchGroupsByCompanyID)
