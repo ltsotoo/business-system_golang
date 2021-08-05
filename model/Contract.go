@@ -26,7 +26,7 @@ type Contract struct {
 	Status                int    `gorm:"type:int;comment:状态;not null" json:"status"`
 
 	Tasks    []Task   `gorm:"foreignKey:ContractID" json:"tasks"`
-	Customer Customer `gorm:"-" json:"customer"`
+	Customer Customer `gorm:"foreignKey:CustomerID" json:"customer"`
 }
 
 func CreateContract(contract *Contract) (code int) {
@@ -58,8 +58,7 @@ func UpdateContract(contract *Contract) (code int) {
 }
 
 func SelectContract(id int) (contract Contract, code int) {
-	contract.ID = uint(id)
-	err = db.Model(&contract).Association("Tasks").Find(&contract.Tasks)
+	db.Preload("Tasks").Preload("Customer").First(&contract, id)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return contract, msg.ERROR_CONTRACT_NOT_EXIST

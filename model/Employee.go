@@ -18,6 +18,10 @@ type Employee struct {
 	OfficeID     uint   `gorm:"type:int;comment:办事处ID;not null" json:"officeID"`
 	DepartmentID uint   `gorm:"type:int;comment:部门ID;not null" json:"departmentID"`
 	RoleID       uint   `gorm:"type:int;comment:角色ID;not null" json:"roleID"`
+
+	Office     Office     `gorm:"foreignKey:OfficeID" json:"office"`
+	Department Department `gorm:"foreignKey:DepartmentID" json:"department"`
+	Role       Role       `gorm:"foreignKey:RoleID" json:"role"`
 }
 
 //查询员工(手机号)是否录入
@@ -67,7 +71,7 @@ func UpdateEmployee(employee *Employee) (code int) {
 }
 
 func SelectEmployee(id int) (employee Employee, code int) {
-	err = db.First(&employee, id).Error
+	err = db.Preload("Office").Preload("Department").Preload("Role").First(&employee, id).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return employee, msg.ERROR_EMPLOYEE_NOT_EXIST

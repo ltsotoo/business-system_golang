@@ -40,6 +40,12 @@ func InitDb() {
 		&Company{},
 		&ResearchGroup{},
 		&Dictionary{},
+
+		&Office{},
+		&Area{},
+		&Department{},
+		&Role{},
+		&Permission{},
 	)
 
 	sqlDB, _ := db.DB()

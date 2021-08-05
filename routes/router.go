@@ -26,6 +26,13 @@ func InitRouter() {
 		routeV1.PUT("employee", v1.EditEmployee)
 		routeV1.GET("employee/:id", v1.QueryEmployee)
 		routeV1.GET("employees", v1.QueryEmployees)
+		//员工模块接口PLUS
+		routeV1.GET("offices", v1.QueryOffices)
+		routeV1.GET("areas", v1.QueryAreas)
+		routeV1.GET("areasByOfficeID", v1.QueryAreasByOfficeID)
+		routeV1.GET("departmentsByOfficeID", v1.QueryDepartmentsByOfficeID)
+		routeV1.GET("roles", v1.QueryRoles)
+		routeV1.GET("permissions", v1.QueryPermissions)
 		//合同模块接口
 		routeV1.POST("contract", v1.EntryContract)
 		routeV1.DELETE("contract/:id", v1.DelContract)
@@ -42,7 +49,7 @@ func InitRouter() {
 		routeV1.GET("customer/:id", v1.QueryCustomer)
 		routeV1.POST("customers", v1.QueryCustomers)
 		routeV1.GET("customersByCompanyIDAndResearchGroupID", v1.QueryCustomersByCompanyIDAndResearchGroupID)
-		//客户模块接口+
+		//客户模块接口PLUS
 		routeV1.GET("companys", v1.QueryCompanys)
 		routeV1.GET("researchGroupsByCompanyID", v1.QueryResearchGroupsByCompanyID)
 		//产品模块接口
@@ -57,7 +64,6 @@ func InitRouter() {
 		routeV1.PUT("supplier", v1.EditSupplier)
 		routeV1.GET("supplier/:id", v1.QuerySupplier)
 		routeV1.POST("suppliers", v1.QuerySuppliers)
-
 	}
 
 	_ = r.Run(config.SystemConfig.Server.Port)
