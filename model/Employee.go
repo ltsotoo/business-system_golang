@@ -15,9 +15,9 @@ type Employee struct {
 	Password     string `gorm:"type:varchar(20);comment:密码;not null" json:"password"`
 	WechatID     string `gorm:"type:varchar(20);comment:微信号" json:"wechatID"`
 	Email        string `gorm:"type:varchar(20);comment:邮箱" json:"email"`
-	OfficeID     uint   `gorm:"type:int;comment:办事处ID;not null" json:"officeID"`
-	DepartmentID uint   `gorm:"type:int;comment:部门ID;not null" json:"departmentID"`
-	RoleID       uint   `gorm:"type:int;comment:角色ID;not null" json:"roleID"`
+	OfficeID     uint   `gorm:"type:int;comment:办事处ID;default:(-)" json:"officeID"`
+	DepartmentID uint   `gorm:"type:int;comment:部门ID;default:(-)" json:"departmentID"`
+	RoleID       uint   `gorm:"type:int;comment:角色ID;default:(-)" json:"roleID"`
 
 	Office     Office     `gorm:"foreignKey:OfficeID" json:"office"`
 	Department Department `gorm:"foreignKey:DepartmentID" json:"department"`
