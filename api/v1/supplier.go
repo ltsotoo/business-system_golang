@@ -49,10 +49,10 @@ func QuerySuppliers(c *gin.Context) {
 
 	pageSize, pageSizeErr := strconv.Atoi(c.Query("pageSize"))
 	pageNo, pageNoErr := strconv.Atoi(c.Query("pageNo"))
-	if pageSizeErr != nil || pageSize <= 0 {
+	if pageSizeErr != nil || pageSize < 0 {
 		pageSize = 10
 	}
-	if pageNoErr != nil || pageNo <= 0 {
+	if pageNoErr != nil || pageNo < 0 {
 		pageNo = 1
 	}
 

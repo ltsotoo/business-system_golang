@@ -9,12 +9,14 @@ import (
 // 客户 Model
 type Customer struct {
 	gorm.Model
-	Name            string `gorm:"type:varchar(20);comment:姓名;not null" json:"name"`
-	CompanyID       uint   `gorm:"type:int;comment:公司ID;not null" json:"companyID"`
-	ResearchGroupID uint   `gorm:"type:int;comment:课题组ID;not null" json:"researchGroupID"`
-	Phone           string `gorm:"type:varchar(20);comment:电话;not null" json:"phone"`
-	WechatID        string `gorm:"type:varchar(20);comment:微信号" json:"wechatID"`
-	Email           string `gorm:"type:varchar(20);comment:邮箱" json:"email"`
+	Name          string `gorm:"type:varchar(20);comment:姓名;not null" json:"name"`
+	CompanyID     uint   `gorm:"type:int;comment:公司ID;default:(-)" json:"companyID"`
+	ResearchGroup string `gorm:"type:varchar(20);comment:课题组" json:"researchGroup"`
+	Phone         string `gorm:"type:varchar(20);comment:电话" json:"phone"`
+	WechatID      string `gorm:"type:varchar(20);comment:微信号" json:"wechatID"`
+	Email         string `gorm:"type:varchar(20);comment:邮箱" json:"email"`
+
+	Company Company `gorm:"foreignKey:CompanyID" json:"company"`
 }
 
 func CreateCustomer(customer *Customer) (code int) {
@@ -45,7 +47,7 @@ func UpdateCustomer(customer *Customer) (code int) {
 }
 
 func SelectCustomer(id int) (customer Customer, code int) {
-	err = db.First(&customer, id).Error
+	err = db.Preload("Company").First(&customer, id).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return customer, msg.ERROR_CUSTOMER_NOT_EXIST
@@ -62,29 +64,11 @@ func SelectCustomers(pageSize int, pageNo int, customerQuery CustomerQuery) (cus
 	if customerQuery.CompanyID != 0 {
 		maps["company_id"] = customerQuery.CompanyID
 	}
-	if customerQuery.ResearchGroupID != 0 {
-		maps["research_group_id"] = customerQuery.ResearchGroupID
-	}
 
-	err = db.Limit(pageSize).Offset((pageNo-1)*pageSize).Where(maps).Where("name LIKE ?", "%"+customerQuery.Name+"%").Find(&customers).Error
+	err = db.Limit(pageSize).Offset((pageNo-1)*pageSize).Where(maps).Where("name LIKE ? AND research_group LIKE ?", "%"+customerQuery.Name+"%", "%"+customerQuery.ResearchGroup+"%").Find(&customers).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return nil, msg.ERROR, 0
 	}
-	db.Model(&customers).Where(maps).Where("name LIKE ?", "%"+customerQuery.Name+"%").Count(&total)
+	db.Model(&customers).Where(maps).Where("name LIKE ? AND research_group LIKE ?", "%"+customerQuery.Name+"%", "%"+customerQuery.ResearchGroup+"%").Count(&total)
 	return customers, msg.SUCCESS, total
-}
-
-func SelectCustomersByCompanyIDAndResearchGroupID(companyID int, researchGroupID int) (customers []Customer, code int) {
-	var maps = make(map[string]interface{})
-	if companyID != 0 {
-		maps["company_id"] = companyID
-	}
-	if researchGroupID != 0 {
-		maps["research_group_id"] = researchGroupID
-	}
-	err = db.Where(maps).Find(&customers).Error
-	if err != nil {
-		return nil, msg.ERROR
-	}
-	return customers, msg.SUCCESS
 }

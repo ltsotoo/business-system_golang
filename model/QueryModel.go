@@ -7,10 +7,10 @@ type ContractQuery struct {
 }
 
 type CustomerQuery struct {
-	AreaID          uint   `json:"areaID"`
-	CompanyID       uint   `json:"companyID"`
-	ResearchGroupID uint   `json:"researchGroupID"`
-	Name            string `json:"name"`
+	AreaID        uint   `json:"areaID"`
+	CompanyID     uint   `json:"companyID"`
+	ResearchGroup string `json:"researchGroup"`
+	Name          string `json:"name"`
 }
 
 type ProductQuery struct {

@@ -10,7 +10,7 @@ import (
 type Dictionary struct {
 	gorm.Model
 	ParentID    uint   `gorm:"type:int;comment:编号" json:"parentID"`
-	Name        string `gorm:"type:varchar(20);comment:名称" json:"name"`
+	Name        string `gorm:"type:varchar(20);comment:Key" json:"name"`
 	Value       string `gorm:"type:varchar(20);comment:value" json:"value"`
 	Text        string `gorm:"type:varchar(20);comment:名称" json:"text"`
 	Description string `gorm:"type:varchar(20);comment:描述" json:"description"`

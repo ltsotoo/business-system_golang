@@ -10,17 +10,21 @@ import (
 type Product struct {
 	gorm.Model
 	Name           string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
-	Brand          string `gorm:"type:varchar(20);comment:品牌;not null" json:"brand"`
-	Specification  string `gorm:"type:varchar(50);comment:规格;not null" json:"specification"`
-	SupplierID     uint   `gorm:"type:int;comment:供应商ID;not null" json:"supplierID"`
-	Number         int    `gorm:"type:int;comment:数量;not null" json:"number"`
-	Unit           string `gorm:"type:varchar(20);comment:单位;not null" json:"unit"`
-	PurchasedPrice int    `gorm:"type:int;comment:采购价格(元);not null" json:"purchasedPrice"`
-	StandardPrice  int    `gorm:"type:int;comment:标准价格(元);not null" json:"standardPrice"`
-	DeliveryCycle  string `gorm:"type:varchar(20);comment:供货周期;not null" json:"deliveryCycle"`
+	Brand          string `gorm:"type:varchar(20);comment:品牌" json:"brand"`
+	Specification  string `gorm:"type:varchar(50);comment:规格" json:"specification"`
+	SupplierID     uint   `gorm:"type:int;comment:供应商ID;default:(-)" json:"supplierID"`
+	Number         int    `gorm:"type:int;comment:数量" json:"number"`
+	Unit           string `gorm:"type:varchar(20);comment:单位" json:"unit"`
+	PurchasedPrice int    `gorm:"type:int;comment:采购价格(元)" json:"purchasedPrice"`
+	StandardPrice  int    `gorm:"type:int;comment:标准价格(元)" json:"standardPrice"`
+	DeliveryCycle  string `gorm:"type:varchar(20);comment:供货周期" json:"deliveryCycle"`
 	Remarks        string `gorm:"type:varchar(200);comment:备注" json:"remarks"`
-	SourceTypeID   uint   `gorm:"type:int;comment:来源类型;not null" json:"sourceTypeID"`
-	SubtypeID      uint   `gorm:"type:int;comment:子类型;not null" json:"subtypeID"`
+	SourceTypeID   uint   `gorm:"type:int;comment:来源类型;default:(-)" json:"sourceTypeID"`
+	SubtypeID      uint   `gorm:"type:int;comment:子类型;default:(-)" json:"subtypeID"`
+
+	Supplier   Supplier   `gorm:"foreignKey:SupplierID" json:"supplier"`
+	SourceType Dictionary `gorm:"foreignKey:SourceTypeID" json:"sourceType"`
+	Subtype    Dictionary `gorm:"foreignKey:SubtypeID" json:"subtype"`
 }
 
 func CreateProduct(product *Product) (code int) {
@@ -50,7 +54,7 @@ func UpdateProduct(product *Product) (code int) {
 }
 
 func SelectProduct(id int) (product Product, code int) {
-	err = db.First(&product, id).Error
+	err = db.Preload("Supplier").Preload("SourceType").Preload("Subtype").First(&product, id).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return product, msg.ERROR_PRODUCT_NOT_EXIST

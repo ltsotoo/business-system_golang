@@ -49,10 +49,10 @@ func QueryCustomers(c *gin.Context) {
 
 	pageSize, pageSizeErr := strconv.Atoi(c.Query("pageSize"))
 	pageNo, pageNoErr := strconv.Atoi(c.Query("pageNo"))
-	if pageSizeErr != nil || pageSize <= 0 {
+	if pageSizeErr != nil || pageSize < 0 {
 		pageSize = 10
 	}
-	if pageNoErr != nil || pageNo <= 0 {
+	if pageNoErr != nil || pageNo < 0 {
 		pageNo = 1
 	}
 
@@ -67,25 +67,11 @@ func QueryCompanys(c *gin.Context) {
 	msg.Message(c, code, companys)
 }
 
-//查询客户公司课题组列表
-func QueryResearchGroupsByCompanyID(c *gin.Context) {
-	var researchGroups []model.ResearchGroup
-	companyID, companyIDErr := strconv.Atoi(c.Query("companyID"))
-	if companyIDErr == nil {
-		researchGroups, code = model.SelectResearchGroupsByCompanyID(companyID)
+func QueryCompanysByAreaID(c *gin.Context) {
+	var companys []model.Company
+	areaID, areaIDErr := strconv.Atoi(c.Query("areaID"))
+	if areaIDErr == nil {
+		companys, code = model.SelectCompanysByAreaID(areaID)
 	}
-	msg.Message(c, code, researchGroups)
-}
-
-//通过公司ID和课题组ID查询客户
-func QueryCustomersByCompanyIDAndResearchGroupID(c *gin.Context) {
-	var customers []model.Customer
-	companyID, companyIDErr := strconv.Atoi(c.DefaultQuery("companyID", "0"))
-	researchGroupID, researchGroupIDErr := strconv.Atoi(c.DefaultQuery("researchGroupID", "0"))
-
-	if companyIDErr == nil || researchGroupIDErr == nil {
-		customers, code = model.SelectCustomersByCompanyIDAndResearchGroupID(companyID, researchGroupID)
-	}
-
-	msg.Message(c, code, customers)
+	msg.Message(c, code, companys)
 }
