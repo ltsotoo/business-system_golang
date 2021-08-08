@@ -74,7 +74,7 @@ func SelectProducts(pageSize int, pageNo int, productQuery ProductQuery) (produc
 		maps["subtype_id"] = productQuery.SubtypeID
 	}
 
-	err = db.Limit(pageSize).Offset((pageNo-1)*pageSize).Where(maps).Where("name LIKE ? AND specification LIKE ?", "%"+productQuery.Name+"%", "%"+productQuery.Specification+"%").Find(&products).Error
+	err = db.Limit(pageSize).Offset((pageNo-1)*pageSize).Preload("Supplier").Preload("SourceType").Preload("Subtype").Where(maps).Where("name LIKE ? AND specification LIKE ?", "%"+productQuery.Name+"%", "%"+productQuery.Specification+"%").Find(&products).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return nil, msg.ERROR, 0
 	}

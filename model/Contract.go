@@ -33,6 +33,9 @@ type Contract struct {
 }
 
 func CreateContract(contract *Contract) (code int) {
+	for _, task := range contract.Tasks {
+		contract.TotalAmount = task.TotalPrice
+	}
 	err = db.Create(&contract).Error
 	if err != nil {
 		return msg.ERROR
@@ -61,7 +64,9 @@ func UpdateContract(contract *Contract) (code int) {
 }
 
 func SelectContract(id int) (contract Contract, code int) {
-	db.Preload("Area").Preload("Employee").Preload("Customer").Preload("ContractUnit").Preload("Tasks").First(&contract, id)
+	err = db.Preload("Area").Preload("Employee").Preload("Customer").Preload("ContractUnit").First(&contract, id).Error
+	contractID := int(contract.ID)
+	contract.Tasks, _ = SelectTaskByContractID(contractID)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return contract, msg.ERROR_CONTRACT_NOT_EXIST
@@ -73,7 +78,7 @@ func SelectContract(id int) (contract Contract, code int) {
 }
 
 func SelectContracts(pageSize int, pageNo int, contractQuery ContractQuery) (contracts []Contract, code int, total int64) {
-	err = db.Limit(pageSize).Offset((pageNo-1)*pageSize).Where("no LIKE ?", "%"+contractQuery.No+"%").Find(&contracts).Error
+	err = db.Limit(pageSize).Offset((pageNo-1)*pageSize).Preload("Area").Preload("Employee").Preload("Customer").Where("no LIKE ?", "%"+contractQuery.No+"%").Find(&contracts).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return nil, msg.ERROR, 0
 	}

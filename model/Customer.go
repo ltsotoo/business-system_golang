@@ -65,7 +65,7 @@ func SelectCustomers(pageSize int, pageNo int, customerQuery CustomerQuery) (cus
 		maps["company_id"] = customerQuery.CompanyID
 	}
 
-	err = db.Limit(pageSize).Offset((pageNo-1)*pageSize).Where(maps).Where("name LIKE ? AND research_group LIKE ?", "%"+customerQuery.Name+"%", "%"+customerQuery.ResearchGroup+"%").Find(&customers).Error
+	err = db.Limit(pageSize).Offset((pageNo-1)*pageSize).Preload("Company").Where(maps).Where("name LIKE ? AND research_group LIKE ?", "%"+customerQuery.Name+"%", "%"+customerQuery.ResearchGroup+"%").Find(&customers).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return nil, msg.ERROR, 0
 	}
