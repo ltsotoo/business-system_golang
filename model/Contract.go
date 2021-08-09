@@ -34,7 +34,7 @@ type Contract struct {
 
 func CreateContract(contract *Contract) (code int) {
 	for _, task := range contract.Tasks {
-		contract.TotalAmount = task.TotalPrice
+		contract.TotalAmount += task.TotalPrice
 	}
 	err = db.Create(&contract).Error
 	if err != nil {

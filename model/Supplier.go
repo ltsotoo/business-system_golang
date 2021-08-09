@@ -34,10 +34,7 @@ func DeleteSupplier(id int) (code int) {
 }
 
 func UpdateSupplier(supplier *Supplier) (code int) {
-	var maps = make(map[string]interface{})
-	maps["WechatID"] = supplier.WechatID
-	maps["Email"] = supplier.Email
-	err = db.Model(&supplier).Updates(maps).Error
+	err = db.Omit("name").Updates(&supplier).Error
 	if err != nil {
 		return msg.ERROR
 	}
