@@ -36,6 +36,9 @@ func CreateContract(contract *Contract) (code int) {
 	for _, task := range contract.Tasks {
 		contract.TotalAmount += task.TotalPrice
 	}
+	if contract.IsEntryCustomer {
+		contract.Customer = Customer{}
+	}
 	err = db.Create(&contract).Error
 	if err != nil {
 		return msg.ERROR
@@ -65,8 +68,9 @@ func UpdateContract(contract *Contract) (code int) {
 
 func SelectContract(id int) (contract Contract, code int) {
 	err = db.Preload("Area").Preload("Employee").Preload("Customer").Preload("ContractUnit").First(&contract, id).Error
-	contractID := int(contract.ID)
-	contract.Tasks, _ = SelectTaskByContractID(contractID)
+	contract.Area.Office, _ = SelectOffice(int(contract.Area.OfficeID))
+	contract.Customer.Company, _ = SelectCompany(int(contract.Customer.CompanyID))
+	contract.Tasks, _ = SelectTaskByContractID(int(contract.ID))
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return contract, msg.ERROR_CONTRACT_NOT_EXIST

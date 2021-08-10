@@ -15,6 +15,7 @@ type Customer struct {
 	Phone         string `gorm:"type:varchar(20);comment:电话" json:"phone"`
 	WechatID      string `gorm:"type:varchar(20);comment:微信号" json:"wechatID"`
 	Email         string `gorm:"type:varchar(20);comment:邮箱" json:"email"`
+	Status        int    `gorm:"type:varchar(20);comment:状态(0:未通过审核,1:通过审核)" json:"status"`
 
 	Company Company `gorm:"foreignKey:CompanyID" json:"company"`
 }
@@ -61,6 +62,7 @@ func SelectCustomer(id int) (customer Customer, code int) {
 func SelectCustomers(pageSize int, pageNo int, customerQuery CustomerQuery) (customers []Customer, code int, total int64) {
 
 	var maps = make(map[string]interface{})
+	maps["status"] = 1
 	if customerQuery.CompanyID != 0 {
 		maps["company_id"] = customerQuery.CompanyID
 	}

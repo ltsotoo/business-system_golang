@@ -22,11 +22,14 @@ const (
 	ERROR_CONTRACT_NOT_EXIST = 20001
 	//code = 30000-40000 任务模块错误
 	//code = 40000-50000 客户模块错误
-	ERROR_CUSTOMER_NOT_EXIST = 40001
+	ERROR_CUSTOMER_NOT_EXIST         = 40001
+	ERROR_CUSTOMER_COMPANY_NOT_EXIST = 40002
 	//code = 50000-60000 产品模块错误
 	ERROR_PRODUCT_NOT_EXIST = 50001
 	//code = 60000-70000 供应商模块错误
 	ERROR_SUPPLIER_NOT_EXIST = 60001
+	//code = 70000-80000 OADRP模块错误
+	ERROR_Office_NOT_EXIST = 70001
 )
 
 var codeMsg = map[int]string{
@@ -45,11 +48,14 @@ var codeMsg = map[int]string{
 	ERROR_CONTRACT_NOT_EXIST: "合同未录入或已删除",
 	//任务模块
 	//客户模块
-	ERROR_CUSTOMER_NOT_EXIST: "客户未录入或已删除",
+	ERROR_CUSTOMER_NOT_EXIST:         "客户未录入或已删除",
+	ERROR_CUSTOMER_COMPANY_NOT_EXIST: "客户公司未录入或已删除",
 	//产品模块
 	ERROR_PRODUCT_NOT_EXIST: "产品未录入或已删除",
 	//供应商模块
 	ERROR_SUPPLIER_NOT_EXIST: "供应商未录入或已删除",
+	//供应商模块
+	ERROR_Office_NOT_EXIST: "办事处未添加或已删除",
 }
 
 func GetErrMsg(code int) string {

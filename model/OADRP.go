@@ -18,6 +18,8 @@ type Area struct {
 	gorm.Model
 	OfficeID uint   `gorm:"type:int;comment:办事处ID;not null" json:"officeID"`
 	Name     string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
+
+	Office Office `gorm:"foreignKey:OfficeID" json:"office"`
 }
 
 type Department struct {
@@ -36,6 +38,18 @@ type Permission struct {
 	gorm.Model
 	Name string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
 	Text string `gorm:"type:varchar(20);comment:描述;not null" json:"text"`
+}
+
+func SelectOffice(id int) (office Office, code int) {
+	err = db.First(&office, id).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return office, msg.ERROR_Office_NOT_EXIST
+		} else {
+			return office, msg.ERROR
+		}
+	}
+	return office, msg.SUCCESS
 }
 
 func SelectOffices() (offices []Office, code int) {

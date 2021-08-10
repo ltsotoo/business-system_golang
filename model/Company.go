@@ -16,6 +16,18 @@ type Company struct {
 	Area Area `gorm:"foreignKey:AreaID" json:"area"`
 }
 
+func SelectCompany(id int) (company Company, code int) {
+	err = db.Preload("Area").First(&company, id).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return company, msg.ERROR_CUSTOMER_COMPANY_NOT_EXIST
+		} else {
+			return company, msg.ERROR
+		}
+	}
+	return company, msg.SUCCESS
+}
+
 func SelectCompanys() (companys []Company, code int) {
 	err = db.Find(&companys).Error
 	if err != nil {

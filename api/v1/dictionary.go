@@ -10,13 +10,21 @@ import (
 
 //字典表查询
 func QueryDictionaries(c *gin.Context) {
-	name := c.Query("name")
 	parentID, parentIDErr := strconv.Atoi(c.DefaultQuery("parentID", "0"))
+	module := c.DefaultQuery("module", "")
+	name := c.DefaultQuery("name", "")
 	var dictionaries []model.Dictionary
 
 	if parentIDErr == nil {
-		dictionaries, code = model.SelectDictionaries(name, parentID)
+		dictionaries, code = model.SelectDictionaries(parentID, module, name)
 	}
 
+	msg.Message(c, code, dictionaries)
+}
+
+func QueryDictionarieTextGroup(c *gin.Context) {
+	module := c.DefaultQuery("module", "")
+	var dictionaries []model.Dictionary
+	dictionaries, code = model.SelectDictionarieTextGroup(module)
 	msg.Message(c, code, dictionaries)
 }
