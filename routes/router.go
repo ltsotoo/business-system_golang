@@ -19,8 +19,10 @@ func InitRouter() {
 
 		//SYSTEM接口
 		routeV1.POST("login", v1.Login)
+		//字典表接口
+		routeV1.GET("dictionaryTypes", v1.QueryDictionaryTypes)
 		routeV1.GET("dictionaries", v1.QueryDictionaries)
-		routeV1.GET("dictionarieTextGroup", v1.QueryDictionarieTextGroup)
+		routeV1.POST("dictionary", v1.AddDictionary)
 		//员工模块接口
 		routeV1.POST("employee", v1.EntryEmployee)
 		routeV1.DELETE("employee/:id", v1.DelEmployee)
