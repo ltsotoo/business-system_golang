@@ -52,8 +52,12 @@ func SelectOffice(id int) (office Office, code int) {
 	return office, msg.SUCCESS
 }
 
-func SelectOffices() (offices []Office, code int) {
-	err = db.Find(&offices).Error
+func SelectOffices(name string) (offices []Office, code int) {
+	if name == "" {
+		err = db.Find(&offices).Error
+	} else {
+		err = db.Where("name LIKE ?", "%"+name+"%").Find(&offices).Error
+	}
 	if err != nil {
 		return nil, msg.ERROR
 	}

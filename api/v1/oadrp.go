@@ -9,8 +9,9 @@ import (
 )
 
 func QueryOffices(c *gin.Context) {
+	name := c.Query("name")
 	var offices []model.Office
-	offices, code = model.SelectOffices()
+	offices, code = model.SelectOffices(name)
 	msg.Message(c, code, offices)
 }
 
@@ -22,14 +23,14 @@ func QueryAreas(c *gin.Context) {
 
 func QueryAreasByOfficeID(c *gin.Context) {
 	var areas []model.Area
-	officeID, _ := strconv.Atoi(c.Param("officeID"))
+	officeID, _ := strconv.Atoi(c.Query("officeID"))
 	areas, code = model.SelectAreasByOfficeID(officeID)
 	msg.Message(c, code, areas)
 }
 
 func QueryDepartmentsByOfficeID(c *gin.Context) {
 	var departments []model.Department
-	officeID, _ := strconv.Atoi(c.Param("officeID"))
+	officeID, _ := strconv.Atoi(c.Query("officeID"))
 	departments, code = model.SelectDepartmentsByOfficeID(officeID)
 	msg.Message(c, code, departments)
 }
