@@ -40,6 +40,14 @@ type Permission struct {
 	Text string `gorm:"type:varchar(20);comment:描述;not null" json:"text"`
 }
 
+func CreateOffice(office *Office) (code int) {
+	err = db.Create(&office).Error
+	if err != nil {
+		return msg.ERROR
+	}
+	return msg.SUCCESS
+}
+
 func SelectOffice(id int) (office Office, code int) {
 	err = db.First(&office, id).Error
 	if err != nil {
@@ -64,24 +72,32 @@ func SelectOffices(name string) (offices []Office, code int) {
 	return offices, msg.SUCCESS
 }
 
-func SelectAreas() (areas []Area, code int) {
-	err = db.Find(&areas).Error
+func CreateArea(area *Area) (code int) {
+	err = db.Create(&area).Error
+	if err != nil {
+		return msg.ERROR
+	}
+	return msg.SUCCESS
+}
+
+func SelectAreas(area *Area) (areas []Area, code int) {
+	err = db.Where(&area).Find(&areas).Error
 	if err != nil {
 		return nil, msg.ERROR
 	}
 	return areas, msg.SUCCESS
 }
 
-func SelectAreasByOfficeID(officeID int) (areas []Area, code int) {
-	err = db.Where("office_id = ?", officeID).Find(&areas).Error
+func CreateDepartment(department *Department) (code int) {
+	err = db.Create(&department).Error
 	if err != nil {
-		return nil, msg.ERROR
+		return msg.ERROR
 	}
-	return areas, msg.SUCCESS
+	return msg.SUCCESS
 }
 
-func SelectDepartmentsByOfficeID(officeID int) (departments []Department, code int) {
-	err = db.Where("office_id = ?", officeID).Find(&departments).Error
+func SelectDepartments(department *Department) (departments []Department, code int) {
+	err = db.Where(&department).Find(&departments).Error
 	if err != nil {
 		return nil, msg.ERROR
 	}

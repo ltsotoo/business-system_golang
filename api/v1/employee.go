@@ -48,16 +48,19 @@ func QueryEmployee(c *gin.Context) {
 func QueryEmployees(c *gin.Context) {
 	var employees []model.Employee
 	var total int64
+	var employee model.Employee
+
+	_ = c.ShouldBindJSON(&employee)
 
 	pageSize, pageSizeErr := strconv.Atoi(c.Query("pageSize"))
 	pageNo, pageNoErr := strconv.Atoi(c.Query("pageNo"))
-	if pageSizeErr != nil || pageSize <= 0 {
+	if pageSizeErr != nil || pageSize < 0 {
 		pageSize = 10
 	}
-	if pageNoErr != nil || pageNo <= 0 {
+	if pageNoErr != nil || pageNo < 0 {
 		pageNo = 1
 	}
 
-	employees, code, total = model.SelectEmployees(pageSize, pageNo)
+	employees, code, total = model.SelectEmployees(&employee, pageSize, pageNo)
 	msg.MessageForList(c, msg.SUCCESS, employees, pageSize, pageNo, total)
 }

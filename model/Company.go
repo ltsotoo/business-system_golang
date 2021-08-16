@@ -28,16 +28,8 @@ func SelectCompany(id int) (company Company, code int) {
 	return company, msg.SUCCESS
 }
 
-func SelectCompanys() (companys []Company, code int) {
-	err = db.Find(&companys).Error
-	if err != nil {
-		return nil, msg.ERROR
-	}
-	return companys, msg.SUCCESS
-}
-
-func SelectCompanysByAreaID(areaID int) (companys []Company, code int) {
-	err = db.Where("area_id = ?", areaID).Find(&companys).Error
+func SelectCompanys(company *Company) (companys []Company, code int) {
+	err = db.Where(&company).Find(&companys).Error
 	if err != nil {
 		return nil, msg.ERROR
 	}

@@ -30,12 +30,14 @@ func InitRouter() {
 		routeV1.DELETE("employee/:id", v1.DelEmployee)
 		routeV1.PUT("employee", v1.EditEmployee)
 		routeV1.GET("employee/:id", v1.QueryEmployee)
-		routeV1.GET("employees", v1.QueryEmployees)
+		routeV1.POST("employees", v1.QueryEmployees)
 		//员工模块接口PLUS
+		routeV1.POST("office", v1.EntryOffice)
 		routeV1.GET("offices", v1.QueryOffices)
-		routeV1.GET("areas", v1.QueryAreas)
-		routeV1.GET("areasByOfficeID", v1.QueryAreasByOfficeID)
-		routeV1.GET("departmentsByOfficeID", v1.QueryDepartmentsByOfficeID)
+		routeV1.POST("area", v1.EntryArea)
+		routeV1.POST("areas", v1.QueryAreas)
+		routeV1.POST("department", v1.EntryDepartment)
+		routeV1.POST("departments", v1.QueryDepartments)
 		routeV1.GET("roles", v1.QueryRoles)
 		routeV1.GET("permissions", v1.QueryPermissions)
 		//合同模块接口
@@ -46,7 +48,7 @@ func InitRouter() {
 		routeV1.POST("contracts", v1.QueryContracts)
 		//任务模块接口
 		routeV1.DELETE("task/:id", v1.DelTask)
-		routeV1.GET("tasksByContractID", v1.QueryTasksByContractID)
+		routeV1.POST("tasks", v1.QueryTasks)
 		//客户模块接口
 		routeV1.POST("customer", v1.EntryCustomer)
 		routeV1.DELETE("customer/:id", v1.DelCustomer)
@@ -54,8 +56,7 @@ func InitRouter() {
 		routeV1.GET("customer/:id", v1.QueryCustomer)
 		routeV1.POST("customers", v1.QueryCustomers)
 		//客户模块接口PLUS
-		routeV1.GET("companys", v1.QueryCompanys)
-		routeV1.GET("companysByAreaID", v1.QueryCompanysByAreaID)
+		routeV1.POST("companys", v1.QueryCompanys)
 		//产品模块接口
 		routeV1.POST("product", v1.EntryProduct)
 		routeV1.DELETE("product/:id", v1.DelProduct)

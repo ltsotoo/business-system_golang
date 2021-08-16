@@ -14,11 +14,10 @@ func DelTask(c *gin.Context) {
 	msg.Message(c, code, nil)
 }
 
-func QueryTasksByContractID(c *gin.Context) {
+func QueryTasks(c *gin.Context) {
 	var tasks []model.Task
-	conetractID, conetractIDErr := strconv.Atoi(c.Query("contractID"))
-	if conetractIDErr == nil {
-		tasks, code = model.SelectTaskByContractID(conetractID)
-	}
+	var task model.Task
+	_ = c.ShouldBindJSON(&task)
+	tasks, code = model.SelectTasks(&task)
 	msg.Message(c, code, tasks)
 }

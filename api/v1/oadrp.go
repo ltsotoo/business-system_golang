@@ -3,10 +3,16 @@ package v1
 import (
 	"business-system_golang/model"
 	"business-system_golang/utils/msg"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
+
+func EntryOffice(c *gin.Context) {
+	var office model.Office
+	_ = c.ShouldBindJSON(&office)
+	code = model.CreateOffice(&office)
+	msg.Message(c, code, office)
+}
 
 func QueryOffices(c *gin.Context) {
 	name := c.Query("name")
@@ -15,23 +21,33 @@ func QueryOffices(c *gin.Context) {
 	msg.Message(c, code, offices)
 }
 
+func EntryArea(c *gin.Context) {
+	var area model.Area
+	_ = c.ShouldBindJSON(&area)
+	code = model.CreateArea(&area)
+	msg.Message(c, code, area)
+}
+
 func QueryAreas(c *gin.Context) {
 	var areas []model.Area
-	areas, code = model.SelectAreas()
+	var area model.Area
+	_ = c.ShouldBindJSON(&area)
+	areas, code = model.SelectAreas(&area)
 	msg.Message(c, code, areas)
 }
 
-func QueryAreasByOfficeID(c *gin.Context) {
-	var areas []model.Area
-	officeID, _ := strconv.Atoi(c.Query("officeID"))
-	areas, code = model.SelectAreasByOfficeID(officeID)
-	msg.Message(c, code, areas)
+func EntryDepartment(c *gin.Context) {
+	var department model.Department
+	_ = c.ShouldBindJSON(&department)
+	code = model.CreateDepartment(&department)
+	msg.Message(c, code, department)
 }
 
-func QueryDepartmentsByOfficeID(c *gin.Context) {
+func QueryDepartments(c *gin.Context) {
 	var departments []model.Department
-	officeID, _ := strconv.Atoi(c.Query("officeID"))
-	departments, code = model.SelectDepartmentsByOfficeID(officeID)
+	var department model.Department
+	_ = c.ShouldBindJSON(&department)
+	departments, code = model.SelectDepartments(&department)
 	msg.Message(c, code, departments)
 }
 

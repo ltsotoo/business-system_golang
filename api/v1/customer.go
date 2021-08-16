@@ -63,15 +63,8 @@ func QueryCustomers(c *gin.Context) {
 //查询客户公司列表
 func QueryCompanys(c *gin.Context) {
 	var companys []model.Company
-	companys, code = model.SelectCompanys()
-	msg.Message(c, code, companys)
-}
-
-func QueryCompanysByAreaID(c *gin.Context) {
-	var companys []model.Company
-	areaID, areaIDErr := strconv.Atoi(c.Query("areaID"))
-	if areaIDErr == nil {
-		companys, code = model.SelectCompanysByAreaID(areaID)
-	}
+	var company model.Company
+	_ = c.ShouldBindJSON(&company)
+	companys, code = model.SelectCompanys(&company)
 	msg.Message(c, code, companys)
 }

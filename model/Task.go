@@ -37,8 +37,8 @@ func DeleteTask(id int) (code int) {
 	return msg.SUCCESS
 }
 
-func SelectTaskByContractID(contractID int) (tasks []Task, code int) {
-	err = db.Preload("Contract").Preload("Product").Preload("TechnicianMan").Preload("PurchaseMan").Preload("InventoryMan").Preload("ShipmentMan").Where("contract_id = ?", contractID).Find(&tasks).Error
+func SelectTasks(task *Task) (tasks []Task, code int) {
+	err = db.Preload("Contract").Preload("Product").Preload("TechnicianMan").Preload("PurchaseMan").Preload("InventoryMan").Preload("ShipmentMan").Where(&task).Find(&tasks).Error
 	if err != nil {
 		return nil, msg.ERROR
 	}

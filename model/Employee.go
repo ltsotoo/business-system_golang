@@ -82,8 +82,8 @@ func SelectEmployee(id int) (employee Employee, code int) {
 	return employee, msg.SUCCESS
 }
 
-func SelectEmployees(pageSize int, pageNo int) (employees []Employee, code int, total int64) {
-	err = db.Limit(pageSize).Offset((pageNo - 1) * pageSize).Find(&employees).Error
+func SelectEmployees(employee *Employee, pageSize int, pageNo int) (employees []Employee, code int, total int64) {
+	err = db.Where(&employee).Limit(pageSize).Offset((pageNo - 1) * pageSize).Find(&employees).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return nil, msg.ERROR, 0
 	}

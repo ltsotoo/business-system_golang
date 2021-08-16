@@ -70,7 +70,7 @@ func SelectContract(id int) (contract Contract, code int) {
 	err = db.Preload("Area").Preload("Employee").Preload("Customer").Preload("ContractUnit").First(&contract, id).Error
 	contract.Area.Office, _ = SelectOffice(int(contract.Area.OfficeID))
 	contract.Customer.Company, _ = SelectCompany(int(contract.Customer.CompanyID))
-	contract.Tasks, _ = SelectTaskByContractID(int(contract.ID))
+	contract.Tasks, _ = SelectTasks(&Task{ContractID: contract.ID})
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return contract, msg.ERROR_CONTRACT_NOT_EXIST
