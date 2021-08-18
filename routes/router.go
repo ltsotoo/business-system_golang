@@ -33,10 +33,13 @@ func InitRouter() {
 		routeV1.POST("employees", v1.QueryEmployees)
 		//员工模块接口PLUS
 		routeV1.POST("office", v1.EntryOffice)
+		routeV1.DELETE("office/:id", v1.DelOffice)
 		routeV1.GET("offices", v1.QueryOffices)
 		routeV1.POST("area", v1.EntryArea)
+		routeV1.DELETE("area/:id", v1.DelArea)
 		routeV1.POST("areas", v1.QueryAreas)
 		routeV1.POST("department", v1.EntryDepartment)
+		routeV1.DELETE("department/:id", v1.DelDepartment)
 		routeV1.POST("departments", v1.QueryDepartments)
 		routeV1.GET("roles", v1.QueryRoles)
 		routeV1.GET("permissions", v1.QueryPermissions)

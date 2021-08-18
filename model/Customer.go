@@ -60,7 +60,6 @@ func SelectCustomer(id int) (customer Customer, code int) {
 }
 
 func SelectCustomers(pageSize int, pageNo int, customerQuery CustomerQuery) (customers []Customer, code int, total int64) {
-
 	var maps = make(map[string]interface{})
 	maps["status"] = 1
 	if customerQuery.CompanyID != 0 {

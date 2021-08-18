@@ -83,11 +83,20 @@ func SelectEmployee(id int) (employee Employee, code int) {
 }
 
 func SelectEmployees(employee *Employee, pageSize int, pageNo int) (employees []Employee, code int, total int64) {
-	err = db.Where(&employee).Limit(pageSize).Offset((pageNo - 1) * pageSize).Find(&employees).Error
+
+	var maps = make(map[string]interface{})
+	if employee.OfficeID != 0 {
+		maps["office_id"] = employee.OfficeID
+	}
+	if employee.DepartmentID != 0 {
+		maps["department_id"] = employee.DepartmentID
+	}
+
+	err = db.Where(maps).Where("name LIKE ?", "%"+employee.Name+"%").Limit(pageSize).Offset((pageNo - 1) * pageSize).Find(&employees).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return nil, msg.ERROR, 0
 	}
-	db.Model(&employees).Count(&total)
+	db.Model(maps).Where("name LIKE ?", "%"+employee.Name+"%").Count(&total)
 	return employees, msg.SUCCESS, total
 }
 

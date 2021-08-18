@@ -48,6 +48,14 @@ func CreateOffice(office *Office) (code int) {
 	return msg.SUCCESS
 }
 
+func DeleteOffice(id int) (code int) {
+	err = db.Where("id = ?", id).Delete(&Office{}).Error
+	if err != nil {
+		return msg.ERROR
+	}
+	return msg.SUCCESS
+}
+
 func SelectOffice(id int) (office Office, code int) {
 	err = db.First(&office, id).Error
 	if err != nil {
@@ -80,6 +88,14 @@ func CreateArea(area *Area) (code int) {
 	return msg.SUCCESS
 }
 
+func DeleteArea(id int) (code int) {
+	err = db.Where("id = ?", id).Delete(&Area{}).Error
+	if err != nil {
+		return msg.ERROR
+	}
+	return msg.SUCCESS
+}
+
 func SelectAreas(area *Area) (areas []Area, code int) {
 	err = db.Where(&area).Find(&areas).Error
 	if err != nil {
@@ -96,8 +112,16 @@ func CreateDepartment(department *Department) (code int) {
 	return msg.SUCCESS
 }
 
+func DeleteDepartment(id int) (code int) {
+	err = db.Where("id = ?", id).Delete(&Department{}).Error
+	if err != nil {
+		return msg.ERROR
+	}
+	return msg.SUCCESS
+}
+
 func SelectDepartments(department *Department) (departments []Department, code int) {
-	err = db.Where(&department).Find(&departments).Error
+	err = db.Where("office_id = ? AND name LIKE ?", department.OfficeID, "%"+department.Name+"%").Find(&departments).Error
 	if err != nil {
 		return nil, msg.ERROR
 	}

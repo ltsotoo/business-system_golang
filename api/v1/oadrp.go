@@ -3,6 +3,7 @@ package v1
 import (
 	"business-system_golang/model"
 	"business-system_golang/utils/msg"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -12,6 +13,12 @@ func EntryOffice(c *gin.Context) {
 	_ = c.ShouldBindJSON(&office)
 	code = model.CreateOffice(&office)
 	msg.Message(c, code, office)
+}
+
+func DelOffice(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+	code = model.DeleteOffice(id)
+	msg.Message(c, code, nil)
 }
 
 func QueryOffices(c *gin.Context) {
@@ -28,6 +35,12 @@ func EntryArea(c *gin.Context) {
 	msg.Message(c, code, area)
 }
 
+func DelArea(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+	code = model.DeleteArea(id)
+	msg.Message(c, code, nil)
+}
+
 func QueryAreas(c *gin.Context) {
 	var areas []model.Area
 	var area model.Area
@@ -41,6 +54,12 @@ func EntryDepartment(c *gin.Context) {
 	_ = c.ShouldBindJSON(&department)
 	code = model.CreateDepartment(&department)
 	msg.Message(c, code, department)
+}
+
+func DelDepartment(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+	code = model.DeleteDepartment(id)
+	msg.Message(c, code, nil)
 }
 
 func QueryDepartments(c *gin.Context) {
