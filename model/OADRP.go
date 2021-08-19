@@ -97,7 +97,7 @@ func DeleteArea(id int) (code int) {
 }
 
 func SelectAreas(area *Area) (areas []Area, code int) {
-	err = db.Where(&area).Find(&areas).Error
+	err = db.Preload("Office").Where(&area).Find(&areas).Error
 	if err != nil {
 		return nil, msg.ERROR
 	}
