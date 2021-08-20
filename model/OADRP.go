@@ -96,8 +96,18 @@ func DeleteArea(id int) (code int) {
 	return msg.SUCCESS
 }
 
+func UpdateArea(area *Area) (code int) {
+	var maps = make(map[string]interface{})
+	maps["office_id"] = area.OfficeID
+	err = db.Model(&area).Updates(maps).Error
+	if err != nil {
+		return msg.ERROR
+	}
+	return msg.SUCCESS
+}
+
 func SelectAreas(area *Area) (areas []Area, code int) {
-	err = db.Preload("Office").Where(&area).Find(&areas).Error
+	err = db.Preload("Office").Joins("Office").Where("area.name LIKE ? AND Office.name LIKE ?", "%"+area.Name+"%", "%"+area.Office.Name+"%").Find(&areas).Error
 	if err != nil {
 		return nil, msg.ERROR
 	}

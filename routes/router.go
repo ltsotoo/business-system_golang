@@ -37,6 +37,7 @@ func InitRouter() {
 		routeV1.GET("offices", v1.QueryOffices)
 		routeV1.POST("area", v1.EntryArea)
 		routeV1.DELETE("area/:id", v1.DelArea)
+		routeV1.PUT("area", v1.EditArea)
 		routeV1.POST("areas", v1.QueryAreas)
 		routeV1.POST("department", v1.EntryDepartment)
 		routeV1.DELETE("department/:id", v1.DelDepartment)

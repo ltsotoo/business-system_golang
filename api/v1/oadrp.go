@@ -49,6 +49,13 @@ func QueryAreas(c *gin.Context) {
 	msg.Message(c, code, areas)
 }
 
+func EditArea(c *gin.Context) {
+	var area model.Area
+	_ = c.ShouldBindJSON(&area)
+	code = model.UpdateArea(&area)
+	msg.Message(c, code, area)
+}
+
 func EntryDepartment(c *gin.Context) {
 	var department model.Department
 	_ = c.ShouldBindJSON(&department)
