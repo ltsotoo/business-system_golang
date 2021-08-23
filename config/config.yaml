@@ -2,6 +2,7 @@ server:
   #debug开发模式 release生产模式
   mode : 'debug'
   port : ':8088'
+  jwtKey : 'zyhk'
 
 db:
   type : 'mysql'

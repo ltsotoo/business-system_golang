@@ -97,9 +97,7 @@ func DeleteArea(id int) (code int) {
 }
 
 func UpdateArea(area *Area) (code int) {
-	var maps = make(map[string]interface{})
-	maps["office_id"] = area.OfficeID
-	err = db.Model(&area).Updates(maps).Error
+	err = db.Model(&area).Updates(Area{Name: area.Name, OfficeID: area.OfficeID}).Error
 	if err != nil {
 		return msg.ERROR
 	}

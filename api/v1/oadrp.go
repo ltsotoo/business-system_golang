@@ -73,6 +73,10 @@ func QueryDepartments(c *gin.Context) {
 	var departments []model.Department
 	var department model.Department
 	_ = c.ShouldBindJSON(&department)
+	if department.OfficeID == 0 {
+		employee, _ := model.SelectEmployee(int(c.MustGet("employeeID").(uint)))
+		department.OfficeID = employee.OfficeID
+	}
 	departments, code = model.SelectDepartments(&department)
 	msg.Message(c, code, departments)
 }

@@ -15,8 +15,9 @@ type Config struct {
 }
 
 type Server struct {
-	Mode string `yaml:"mode"`
-	Port string `yaml:"port"`
+	Mode   string `yaml:"mode"`
+	Port   string `yaml:"port"`
+	JwtKey string `yaml:"jwtKey"`
 }
 
 type Db struct {

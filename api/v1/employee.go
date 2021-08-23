@@ -16,6 +16,14 @@ func EntryEmployee(c *gin.Context) {
 	_ = c.ShouldBindJSON(&employee)
 	code = model.CheckEmployeePhone(employee.Phone)
 	if code == msg.ERROR_EMPLOYEE_NOT_EXIST {
+		if employee.OfficeID == 0 {
+			employeeUploader, _ := model.SelectEmployee(int(c.MustGet("employeeID").(uint)))
+			employee.OfficeID = employeeUploader.OfficeID
+			if employee.DepartmentID == 0 {
+				employee.DepartmentID = employeeUploader.DepartmentID
+			}
+		}
+		employee.Password = employee.Phone
 		code = model.CreateEmployee(&employee)
 	}
 	msg.Message(c, code, employee)
@@ -40,6 +48,9 @@ func EditEmployee(c *gin.Context) {
 func QueryEmployee(c *gin.Context) {
 	var employee model.Employee
 	id, _ := strconv.Atoi(c.Param("id"))
+	if id == 0 {
+		id = int(c.MustGet("employeeID").(uint))
+	}
 	employee, code = model.SelectEmployee(id)
 	msg.Message(c, code, employee)
 }
@@ -51,6 +62,12 @@ func QueryEmployees(c *gin.Context) {
 	var employee model.Employee
 
 	_ = c.ShouldBindJSON(&employee)
+
+	if employee.OfficeID == 0 && employee.DepartmentID == 0 {
+		employeeTemp, _ := model.SelectEmployee(int(c.MustGet("employeeID").(uint)))
+		employee.OfficeID = employeeTemp.OfficeID
+		employee.DepartmentID = employeeTemp.DepartmentID
+	}
 
 	pageSize, pageSizeErr := strconv.Atoi(c.Query("pageSize"))
 	pageNo, pageNoErr := strconv.Atoi(c.Query("pageNo"))

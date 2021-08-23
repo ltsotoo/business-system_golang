@@ -34,13 +34,13 @@ func CheckEmployeePhone(phone string) (code int) {
 	return msg.ERROR_EMPLOYEE_NOT_EXIST
 }
 
-func CheckEmployeeByPhoneAndPwd(employee *Employee) (code int) {
+func CheckLogin(employee *Employee) (code int) {
 	employee.Password, _ = pwd.ScryptPwd(employee.Password)
 	db.Where("phone = ? AND password = ?", employee.Phone, employee.Password).First(&employee)
-	if employee.ID > 0 {
-		return msg.SUCCESS
+	if employee.ID == 0 {
+		return msg.ERROR_EMPLOYEE_LOGIN_FAIL
 	}
-	return msg.ERROR_EMPLOYEE_LOGIN_FAIL
+	return msg.SUCCESS
 }
 
 func CreateEmployee(employee *Employee) (code int) {
@@ -92,11 +92,11 @@ func SelectEmployees(employee *Employee, pageSize int, pageNo int) (employees []
 		maps["department_id"] = employee.DepartmentID
 	}
 
-	err = db.Where(maps).Where("name LIKE ?", "%"+employee.Name+"%").Limit(pageSize).Offset((pageNo - 1) * pageSize).Find(&employees).Error
+	err = db.Preload("Office").Preload("Department").Preload("Role").Where(maps).Where("name LIKE ? AND phone LIKE ?", "%"+employee.Name+"%", "%"+employee.Phone+"%").Limit(pageSize).Offset((pageNo - 1) * pageSize).Find(&employees).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return nil, msg.ERROR, 0
 	}
-	db.Model(maps).Where("name LIKE ?", "%"+employee.Name+"%").Count(&total)
+	db.Model(&employee).Where(maps).Where("name LIKE ? AND phone LIKE ?", "%"+employee.Name+"%", "%"+employee.Phone+"%").Count(&total)
 	return employees, msg.SUCCESS, total
 }
 

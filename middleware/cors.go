@@ -12,8 +12,8 @@ func Cors() gin.HandlerFunc {
 		// AllowAllOrigins: true,
 		AllowOrigins:     []string{"*"},
 		AllowMethods:     []string{"*"},
-		AllowHeaders:     []string{"Content-Type, Content-Length"},
-		ExposeHeaders:    []string{"Content-Length, Access-Control-Allow-Headers"},
+		AllowHeaders:     []string{"*"},
+		ExposeHeaders:    []string{"Content-Length, Access-Control-Allow-Headers", "Authorization"},
 		AllowCredentials: true,
 		// AllowOriginFunc: func(origin string) bool {
 		// 	return origin == "https://github.com"
