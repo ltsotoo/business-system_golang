@@ -24,7 +24,7 @@ const (
 	//code = 40000-50000 客户模块错误
 	ERROR_CUSTOMER_NOT_EXIST         = 40001
 	ERROR_CUSTOMER_COMPANY_NOT_EXIST = 40002
-	ERRPR_CUSTOMER_CREATE            = 40003
+	ERRPR_CUSTOMER_INSERT            = 40003
 	ERRPR_CUSTOMER_DELETE            = 40004
 	ERRPR_CUSTOMER_UPDATE            = 40005
 	ERRPR_CUSTOMER_SELECT            = 40006
@@ -34,6 +34,13 @@ const (
 	ERROR_SUPPLIER_NOT_EXIST = 60001
 	//code = 70000-80000 OADRP模块错误
 	ERROR_Office_NOT_EXIST = 70001
+	//code = 80000-90000 System模块错误
+	ERROR_SYSTE_DIC_TYPE_INSERT = 80001
+	ERROR_SYSTE_DIC_TYPE_DELETE = 80002
+	ERROR_SYSTE_DIC_TYPE_SELECT = 80003
+	ERROR_SYSTE_DIC_INSERT      = 80004
+	ERROR_SYSTE_DIC_DELETE      = 80005
+	ERROR_SYSTE_DIC_SELECT      = 80006
 )
 
 var codeMsg = map[int]string{
@@ -54,7 +61,7 @@ var codeMsg = map[int]string{
 	//客户模块
 	ERROR_CUSTOMER_NOT_EXIST:         "客户未录入或已删除",
 	ERROR_CUSTOMER_COMPANY_NOT_EXIST: "客户公司未录入或已删除",
-	ERRPR_CUSTOMER_CREATE:            "客户录入失败",
+	ERRPR_CUSTOMER_INSERT:            "客户录入失败",
 	ERRPR_CUSTOMER_DELETE:            "客户删除失败",
 	ERRPR_CUSTOMER_UPDATE:            "客户信息编辑失败",
 	ERRPR_CUSTOMER_SELECT:            "客户信息查找失败",
@@ -62,8 +69,15 @@ var codeMsg = map[int]string{
 	ERROR_PRODUCT_NOT_EXIST: "产品未录入或已删除",
 	//供应商模块
 	ERROR_SUPPLIER_NOT_EXIST: "供应商未录入或已删除",
-	//供应商模块
+	//OADRP模块
 	ERROR_Office_NOT_EXIST: "办事处未添加或已删除",
+	//System模块错误
+	ERROR_SYSTE_DIC_TYPE_INSERT: "系统字典类型添加失败",
+	ERROR_SYSTE_DIC_TYPE_DELETE: "系统字典类型删除失败",
+	ERROR_SYSTE_DIC_TYPE_SELECT: "系统字典类型查找失败",
+	ERROR_SYSTE_DIC_INSERT:      "系统字典添加失败",
+	ERROR_SYSTE_DIC_DELETE:      "系统字典删除失败",
+	ERROR_SYSTE_DIC_SELECT:      "系统字典查找失败",
 }
 
 func GetErrMsg(code int) string {

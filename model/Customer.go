@@ -33,18 +33,17 @@ type CustomerCompany struct {
 	Area Area `gorm:"foreignKey:AreaUID;references:UID" json:"area"`
 }
 
-func CreateCustomer(customer *Customer) (code int) {
-	//生成uid
+func InsertCustomer(customer *Customer) (code int) {
 	customer.UID = uid.Generate()
 	err = db.Create(&customer).Error
 	if err != nil {
-		return msg.ERRPR_CUSTOMER_CREATE
+		return msg.ERRPR_CUSTOMER_INSERT
 	}
 	return msg.SUCCESS
 }
 
-func DeleteCustomer(id int) (code int) {
-	err = db.Where("id = ?", id).Delete(&Customer{}).Error
+func DeleteCustomer(uid string) (code int) {
+	err = db.Where("uid = ?", uid).Delete(&Customer{}).Error
 	if err != nil {
 		return msg.ERRPR_CUSTOMER_DELETE
 	}
@@ -64,8 +63,8 @@ func UpdateCustomer(customer *Customer) (code int) {
 	return msg.SUCCESS
 }
 
-func SelectCustomer(id int) (customer Customer, code int) {
-	err = db.Preload("Company").First(&customer, id).Error
+func SelectCustomer(uid string) (customer Customer, code int) {
+	err = db.Preload("Company").First(&customer, "uid = ?", uid).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return customer, msg.ERROR_CUSTOMER_NOT_EXIST
@@ -85,10 +84,10 @@ func SelectCustomers(pageSize int, pageNo int, customerQuery CustomerQuery) (cus
 		maps["Company.area_uid"] = customerQuery.AreaUID
 	}
 
-	err = db.Debug().Model(&customers).Joins("Company").Where(maps).
+	err = db.Debug().Joins("Company").Where(maps).
 		Where("customer.research_group LIKE ? AND customer.name LIKE ?",
 			"%"+customerQuery.ResearchGroup+"%", "%"+customerQuery.Name+"%").
-		Count(&total).Limit(pageSize).Offset((pageNo - 1) * pageSize).
+		Find(&customers).Count(&total).Limit(pageSize).Offset((pageNo - 1) * pageSize).
 		Find(&customers).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return customers, msg.ERRPR_CUSTOMER_SELECT, total

@@ -25,3 +25,10 @@ type SupplierQuery struct {
 	Linkman string `json:"linkman"`
 	Phone   string `json:"phone"`
 }
+
+type DictionaryQuery struct {
+	TypeModule string `json:"typeModule"`
+	TypeName   string `json:"typeName"`
+	TypeUID    string `json:"typeUID"`
+	PUID       string `json:"pUID"`
+}
