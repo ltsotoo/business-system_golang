@@ -10,32 +10,38 @@ import (
 
 type Office struct {
 	gorm.Model
-	Name  string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
-	Areas []Area `gorm:"foreignKey:OfficeID" json:"areas"`
+	UID  string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
+	Name string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
+
+	Areas []Area `gorm:"foreignKey:OfficeUID;references:UID" json:"areas"`
 }
 
 type Area struct {
 	gorm.Model
-	OfficeID uint   `gorm:"type:int;comment:办事处ID;not null" json:"officeID"`
-	Name     string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
+	UID       string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
+	OfficeUID string `gorm:"type:varchar(32);comment:办事处UID;not null" json:"officeUID"`
+	Name      string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
 
-	Office Office `gorm:"foreignKey:OfficeID" json:"office"`
+	Office Office `gorm:"foreignKey:OfficeUID;references:UID" json:"office"`
 }
 
 type Department struct {
 	gorm.Model
+	UID      string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
 	OfficeID uint   `gorm:"type:int;comment:办事处ID;not null" json:"officeID"`
 	Name     string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
 }
 
 type Role struct {
 	gorm.Model
+	UID         string       `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
 	Name        string       `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
 	Permissions []Permission `gorm:"many2many:role_permission;" json:"rermissions"`
 }
 
 type Permission struct {
 	gorm.Model
+	UID  string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
 	Name string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
 	Text string `gorm:"type:varchar(20);comment:描述;not null" json:"text"`
 }
@@ -97,7 +103,7 @@ func DeleteArea(id int) (code int) {
 }
 
 func UpdateArea(area *Area) (code int) {
-	err = db.Model(&area).Updates(Area{Name: area.Name, OfficeID: area.OfficeID}).Error
+	// err = db.Model(&area).Updates(Area{Name: area.Name, OfficeID: area.OfficeID}).Error
 	if err != nil {
 		return msg.ERROR
 	}
@@ -105,7 +111,7 @@ func UpdateArea(area *Area) (code int) {
 }
 
 func SelectAreas(area *Area) (areas []Area, code int) {
-	err = db.Preload("Office").Joins("Office").Where("area.name LIKE ? AND Office.name LIKE ?", "%"+area.Name+"%", "%"+area.Office.Name+"%").Find(&areas).Error
+	// err = db.Preload("Office").Joins("Office").Where("area.name LIKE ? AND Office.name LIKE ?", "%"+area.Name+"%", "%"+area.Office.Name+"%").Find(&areas).Error
 	if err != nil {
 		return nil, msg.ERROR
 	}

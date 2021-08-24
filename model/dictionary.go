@@ -2,12 +2,14 @@ package model
 
 import (
 	"business-system_golang/utils/msg"
+	"business-system_golang/utils/uid"
 
 	"gorm.io/gorm"
 )
 
 type DictionaryType struct {
 	gorm.Model
+	UID      string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
 	ParentID uint   `gorm:"type:int;comment:父ID" json:"parentID"`
 	Module   string `gorm:"type:varchar(20);comment:模块;not null" json:"module"`
 	Name     string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
@@ -17,11 +19,10 @@ type DictionaryType struct {
 //字典表 Model
 type Dictionary struct {
 	gorm.Model
+	UID              string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
 	ParentID         uint   `gorm:"type:int;comment:父ID" json:"parentID"`
 	DictionaryTypeID uint   `gorm:"type:int;comment:类型ID;default:(-)" json:"dictionaryTypeID"`
 	Text             string `gorm:"type:varchar(20);comment:文本" json:"text"`
-
-	ParentText string `gorm:"<-:false" json:"parentText"`
 }
 
 func SelectDictionaryTypes(module string) (dictionaryTypes []DictionaryType, code int) {
@@ -33,6 +34,7 @@ func SelectDictionaryTypes(module string) (dictionaryTypes []DictionaryType, cod
 }
 
 func CreateDictionary(dictionary *Dictionary) (code int) {
+	dictionary.UID = uid.Generate()
 	err = db.Create(&dictionary).Error
 	if err != nil {
 		return msg.ERROR

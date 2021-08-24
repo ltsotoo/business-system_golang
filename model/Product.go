@@ -9,6 +9,7 @@ import (
 // 产品 Model
 type Product struct {
 	gorm.Model
+	UID            string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
 	Name           string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
 	Brand          string `gorm:"type:varchar(20);comment:品牌" json:"brand"`
 	Specification  string `gorm:"type:varchar(50);comment:规格" json:"specification"`
@@ -67,10 +68,10 @@ func SelectProduct(id int) (product Product, code int) {
 
 func SelectProducts(pageSize int, pageNo int, productQuery ProductQuery) (products []Product, code int, total int64) {
 	var maps = make(map[string]interface{})
-	if productQuery.SourceTypeID != 0 {
+	if productQuery.SourceTypeID != "" {
 		maps["source_type_id"] = productQuery.SourceTypeID
 	}
-	if productQuery.SubtypeID != 0 {
+	if productQuery.SubtypeID != "" {
 		maps["subtype_id"] = productQuery.SubtypeID
 	}
 

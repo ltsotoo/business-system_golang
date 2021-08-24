@@ -10,12 +10,12 @@ import (
 type Contract struct {
 	gorm.Model
 	No                    string `gorm:"type:varchar(20);comment:合同编号" json:"no"`
-	AreaID                uint   `gorm:"type:int;comment:所属区域ID;default:(-)" json:"areaID"`
-	EmployeeID            uint   `gorm:"type:int;comment:业务员ID;default:(-)" json:"employeeID"`
+	AreaUID               uint   `gorm:"type:int;comment:所属区域ID;default:(-)" json:"areaUID"`
+	EmployeeUID           uint   `gorm:"type:int;comment:业务员ID;default:(-)" json:"employeeUID"`
 	IsEntryCustomer       bool   `gorm:"type:boolean;comment:客户是否录入" json:"isEntryCustomer"`
-	CustomerID            uint   `gorm:"type:int;comment:客户ID;default:(-)" json:"customerID"`
+	CustomerUID           uint   `gorm:"type:int;comment:客户ID;default:(-)" json:"customerUID"`
 	ContractDate          string `gorm:"type:varchar(20);comment:签订日期" json:"contractDate"`
-	ContractUnitID        uint   `gorm:"type:int;comment:签订单位;default:(-)" json:"contractUnitID"`
+	ContractUnitUID       uint   `gorm:"type:int;comment:签订单位;default:(-)" json:"contractUnitUID"`
 	EstimatedDeliveryDate string `gorm:"type:varchar(20);comment:合同交货日期" json:"estimatedDeliveryDate"`
 	EndDeliveryDate       string `gorm:"type:varchar(20);comment:实际交货日期" json:"endDeliveryDate"`
 	InvoiceType           int    `gorm:"type:int;comment:开票类型" json:"invoiceType"`
@@ -25,11 +25,11 @@ type Contract struct {
 	Remarks               string `gorm:"type:varchar(20);comment:备注" json:"remarks"`
 	Status                int    `gorm:"type:int;comment:状态;not null" json:"status"`
 
-	Area         Area       `gorm:"foreignKey:AreaID" json:"area"`
-	Employee     Employee   `gorm:"foreignKey:EmployeeID" json:"employee"`
-	Customer     Customer   `gorm:"foreignKey:CustomerID" json:"customer"`
-	ContractUnit Dictionary `gorm:"foreignKey:ContractUnitID" json:"contractUnit"`
-	Tasks        []Task     `gorm:"foreignKey:ContractID" json:"tasks"`
+	Area         Area       `gorm:"foreignKey:AreaUID;references:UID" json:"area"`
+	Employee     Employee   `gorm:"foreignKey:EmployeeUID;references:UID" json:"employee"`
+	Customer     Customer   `gorm:"foreignKey:CustomerUID;references:UID" json:"customer"`
+	ContractUnit Dictionary `gorm:"foreignKey:ContractUnitUID;references:UID" json:"contractUnit"`
+	Tasks        []Task     `gorm:"foreignKey:No;references:ContractNo" json:"tasks"`
 }
 
 func CreateContract(contract *Contract) (code int) {
@@ -67,10 +67,7 @@ func UpdateContract(contract *Contract) (code int) {
 }
 
 func SelectContract(id int) (contract Contract, code int) {
-	err = db.Preload("Area").Preload("Employee").Preload("Customer").Preload("ContractUnit").First(&contract, id).Error
-	contract.Area.Office, _ = SelectOffice(int(contract.Area.OfficeID))
-	contract.Customer.Company, _ = SelectCompany(int(contract.Customer.CompanyID))
-	contract.Tasks, _ = SelectTasks(&Task{ContractID: contract.ID})
+	err = db.Preload("Tasks").Preload("Area").Preload("Employee").Preload("Customer").Preload("ContractUnit").First(&contract, id).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return contract, msg.ERROR_CONTRACT_NOT_EXIST

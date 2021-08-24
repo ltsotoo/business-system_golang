@@ -24,6 +24,10 @@ const (
 	//code = 40000-50000 客户模块错误
 	ERROR_CUSTOMER_NOT_EXIST         = 40001
 	ERROR_CUSTOMER_COMPANY_NOT_EXIST = 40002
+	ERRPR_CUSTOMER_CREATE            = 40003
+	ERRPR_CUSTOMER_DELETE            = 40004
+	ERRPR_CUSTOMER_UPDATE            = 40005
+	ERRPR_CUSTOMER_SELECT            = 40006
 	//code = 50000-60000 产品模块错误
 	ERROR_PRODUCT_NOT_EXIST = 50001
 	//code = 60000-70000 供应商模块错误
@@ -50,6 +54,10 @@ var codeMsg = map[int]string{
 	//客户模块
 	ERROR_CUSTOMER_NOT_EXIST:         "客户未录入或已删除",
 	ERROR_CUSTOMER_COMPANY_NOT_EXIST: "客户公司未录入或已删除",
+	ERRPR_CUSTOMER_CREATE:            "客户录入失败",
+	ERRPR_CUSTOMER_DELETE:            "客户删除失败",
+	ERRPR_CUSTOMER_UPDATE:            "客户信息编辑失败",
+	ERRPR_CUSTOMER_SELECT:            "客户信息查找失败",
 	//产品模块
 	ERROR_PRODUCT_NOT_EXIST: "产品未录入或已删除",
 	//供应商模块

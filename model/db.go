@@ -31,22 +31,28 @@ func InitDb() {
 
 	//AutoMigrate 用于自动迁移您的 schema，保持您的 schema 是最新的
 	db.AutoMigrate(
-		&Contract{},
-		&Customer{},
-		&Employee{},
-		&Product{},
-		&Supplier{},
-		&Task{},
-		&Company{},
-		&DictionaryType{},
-		&Dictionary{},
-
 		&Office{},
 		&Area{},
-		&Department{},
-		&Role{},
-		&Permission{},
+		&Customer{},
+		&CustomerCompany{},
 	)
+	// db.AutoMigrate(
+	// 	&Contract{},
+	// 	&Customer{},
+	// 	&Employee{},
+	// 	&Product{},
+	// 	&Supplier{},
+	// 	&Task{},
+	// 	&Company{},
+	// 	&DictionaryType{},
+	// 	&Dictionary{},
+
+	// 	&Office{},
+	// 	&Area{},
+	// 	&Department{},
+	// 	&Role{},
+	// 	&Permission{},
+	// )
 
 	sqlDB, _ := db.DB()
 	// SetMaxIdleConns 设置空闲连接池中连接的最大数量

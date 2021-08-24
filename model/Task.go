@@ -9,7 +9,8 @@ import (
 // 合同任务 Model
 type Task struct {
 	gorm.Model
-	ContractID      uint   `gorm:"type:int;comment:合同ID;default:(-)" json:"contractID"`
+	UID             string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
+	ContractNo      uint   `gorm:"type:int;comment:合同ID;default:(-)" json:"contractID"`
 	ProductID       uint   `gorm:"type:int;comment:产品ID;default:(-)" json:"productID"`
 	Number          int    `gorm:"type:int;comment:数量" json:"number"`
 	Unit            string `gorm:"type:varchar(20);comment:单位" json:"unit"`

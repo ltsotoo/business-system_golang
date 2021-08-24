@@ -10,6 +10,7 @@ import (
 // 员工 Model
 type Employee struct {
 	gorm.Model
+	UID          string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
 	Phone        string `gorm:"type:varchar(20);comment:电话;not null" json:"phone"`
 	Name         string `gorm:"type:varchar(20);comment:姓名;not null" json:"name"`
 	Password     string `gorm:"type:varchar(20);comment:密码;not null" json:"password"`

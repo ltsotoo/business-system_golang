@@ -9,11 +9,12 @@ import (
 // 客户公司 Model
 type Company struct {
 	gorm.Model
-	AreaID  uint   `gorm:"int;comment:地区ID;default:(-)" json:"areaID"`
+	UID     string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
+	AreaUID uint   `gorm:"int;comment:地区ID;default:(-)" json:"areaUID"`
 	Name    string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
 	Address string `gorm:"type:varchar(20);comment:地址" json:"address"`
 
-	Area Area `gorm:"foreignKey:AreaID" json:"area"`
+	Area Area `gorm:"foreignKey:AreaUID;references:UID" json:"area"`
 }
 
 func SelectCompany(id int) (company Company, code int) {

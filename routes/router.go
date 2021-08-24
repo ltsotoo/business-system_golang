@@ -2,6 +2,7 @@ package routes
 
 import (
 	v1 "business-system_golang/api/v1"
+	v2 "business-system_golang/api/v2"
 	"business-system_golang/config"
 	"business-system_golang/middleware"
 
@@ -13,6 +14,12 @@ func InitRouter() {
 	r := gin.Default()
 
 	r.Use(middleware.Cors())
+
+	V2 := r.Group("api/v2")
+	{
+		//SYSTEM接口
+		V2.POST("customers", v2.QueryCustomers)
+	}
 
 	router := r.Group("api/v1")
 	{
