@@ -2,6 +2,7 @@ package model
 
 import (
 	"business-system_golang/utils/msg"
+	"business-system_golang/utils/uid"
 
 	"gorm.io/gorm"
 )
@@ -27,16 +28,16 @@ type Area struct {
 
 type Department struct {
 	gorm.Model
-	UID      string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	OfficeID uint   `gorm:"type:int;comment:办事处ID;not null" json:"officeID"`
-	Name     string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
+	UID       string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
+	OfficeUID string `gorm:"type:varchar(32);comment:办事处ID;not null" json:"officeUID"`
+	Name      string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
 }
 
 type Role struct {
 	gorm.Model
 	UID         string       `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
 	Name        string       `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
-	Permissions []Permission `gorm:"many2many:role_permission;" json:"rermissions"`
+	Permissions []Permission `gorm:"many2many:role_permission;foreignKey:UID;References:UID" json:"rermissions"`
 }
 
 type Permission struct {
@@ -46,47 +47,45 @@ type Permission struct {
 	Text string `gorm:"type:varchar(20);comment:描述;not null" json:"text"`
 }
 
-func CreateOffice(office *Office) (code int) {
+func InsertOffice(office *Office) (code int) {
+	office.UID = uid.Generate()
 	err = db.Create(&office).Error
 	if err != nil {
-		return msg.ERROR
+		return msg.ERROR_OFFICE_INSERT
 	}
 	return msg.SUCCESS
 }
 
-func DeleteOffice(id int) (code int) {
-	err = db.Where("id = ?", id).Delete(&Office{}).Error
+func DeleteOffice(uid string) (code int) {
+	err = db.Where("uid = ?", uid).Delete(&Office{}).Error
 	if err != nil {
-		return msg.ERROR
+		return msg.ERROR_OFFICE_DELETE
 	}
 	return msg.SUCCESS
 }
 
-func SelectOffice(id int) (office Office, code int) {
-	err = db.First(&office, id).Error
+func SelectOffice(uid string) (office Office, code int) {
+	err = db.First(&office, "uid = ?", uid).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return office, msg.ERROR_Office_NOT_EXIST
+			return office, msg.ERROR_OFFICE_NOT_EXIST
 		} else {
-			return office, msg.ERROR
+			return office, msg.ERROR_OFFICE_SELECT
 		}
 	}
 	return office, msg.SUCCESS
 }
 
 func SelectOffices(name string) (offices []Office, code int) {
-	if name == "" {
-		err = db.Find(&offices).Error
-	} else {
-		err = db.Where("name LIKE ?", "%"+name+"%").Find(&offices).Error
-	}
+	err = db.Where("name LIKE ?", "%"+name+"%").Find(&offices).Error
 	if err != nil {
-		return nil, msg.ERROR
+		return offices, msg.ERROR_OFFICE_SELECT
 	}
 	return offices, msg.SUCCESS
 }
 
-func CreateArea(area *Area) (code int) {
+func InsertArea(area *Area) (code int) {
+	area.UID = uid.Generate()
 	err = db.Create(&area).Error
 	if err != nil {
 		return msg.ERROR
@@ -94,8 +93,8 @@ func CreateArea(area *Area) (code int) {
 	return msg.SUCCESS
 }
 
-func DeleteArea(id int) (code int) {
-	err = db.Where("id = ?", id).Delete(&Area{}).Error
+func DeleteArea(uid string) (code int) {
+	err = db.Where("uid = ?", uid).Delete(&Area{}).Error
 	if err != nil {
 		return msg.ERROR
 	}
@@ -103,31 +102,34 @@ func DeleteArea(id int) (code int) {
 }
 
 func UpdateArea(area *Area) (code int) {
-	// err = db.Model(&area).Updates(Area{Name: area.Name, OfficeID: area.OfficeID}).Error
+	err = db.Model(&area).Updates(Area{Name: area.Name, OfficeUID: area.OfficeUID}).Error
 	if err != nil {
-		return msg.ERROR
+		return msg.ERROR_AREA_UPDATE
 	}
 	return msg.SUCCESS
 }
 
-func SelectAreas(area *Area) (areas []Area, code int) {
-	// err = db.Preload("Office").Joins("Office").Where("area.name LIKE ? AND Office.name LIKE ?", "%"+area.Name+"%", "%"+area.Office.Name+"%").Find(&areas).Error
+func SelectAreas(areaQuery *AreaQuery) (areas []Area, code int) {
+	err = db.Preload("Office").Joins("Office").
+		Where("area.name LIKE ? AND Office.name LIKE ?", "%"+areaQuery.Name+"%", "%"+areaQuery.OfficeName+"%").
+		Find(&areas).Error
 	if err != nil {
-		return nil, msg.ERROR
+		return areas, msg.ERROR_AREA_SELECT
 	}
 	return areas, msg.SUCCESS
 }
 
-func CreateDepartment(department *Department) (code int) {
+func InsertDepartment(department *Department) (code int) {
+	department.UID = uid.Generate()
 	err = db.Create(&department).Error
 	if err != nil {
-		return msg.ERROR
+		return msg.ERROR_DEPARTMENT_INSERT
 	}
 	return msg.SUCCESS
 }
 
-func DeleteDepartment(id int) (code int) {
-	err = db.Where("id = ?", id).Delete(&Department{}).Error
+func DeleteDepartment(uid string) (code int) {
+	err = db.Where("uid = ?", uid).Delete(&Department{}).Error
 	if err != nil {
 		return msg.ERROR
 	}
@@ -135,9 +137,10 @@ func DeleteDepartment(id int) (code int) {
 }
 
 func SelectDepartments(department *Department) (departments []Department, code int) {
-	err = db.Where("office_id = ? AND name LIKE ?", department.OfficeID, "%"+department.Name+"%").Find(&departments).Error
+	err = db.Where("office_uid = ? AND name LIKE ?", department.OfficeUID, "%"+department.Name+"%").
+		Find(&departments).Error
 	if err != nil {
-		return nil, msg.ERROR
+		return nil, msg.ERROR_DEPARTMENT_SELECT
 	}
 	return departments, msg.SUCCESS
 }
@@ -145,7 +148,7 @@ func SelectDepartments(department *Department) (departments []Department, code i
 func SelectRoles() (roles []Role, code int) {
 	err = db.Find(&roles).Error
 	if err != nil {
-		return nil, msg.ERROR
+		return nil, msg.ERROR_ROLE_SELECT
 	}
 	return roles, msg.SUCCESS
 }
@@ -153,7 +156,7 @@ func SelectRoles() (roles []Role, code int) {
 func SelectPermissions() (permissions []Permission, code int) {
 	err = db.Find(&permissions).Error
 	if err != nil {
-		return nil, msg.ERROR
+		return nil, msg.ERROR_PERMISSION_SELECT
 	}
 	return permissions, msg.SUCCESS
 }

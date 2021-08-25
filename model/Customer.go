@@ -11,7 +11,7 @@ import (
 type Customer struct {
 	gorm.Model
 	UID           string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	CompanyUID    string `gorm:"type:varchar(32);comment:公司ID;not null" json:"companyUID"`
+	CompanyUID    string `gorm:"type:varchar(32);comment:公司UID;not null" json:"companyUID"`
 	Name          string `gorm:"type:varchar(20);comment:姓名;not null" json:"name"`
 	ResearchGroup string `gorm:"type:varchar(20);comment:课题组" json:"researchGroup"`
 	Phone         string `gorm:"type:varchar(20);comment:电话" json:"phone"`
@@ -26,7 +26,7 @@ type Customer struct {
 type CustomerCompany struct {
 	gorm.Model
 	UID     string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	AreaUID string `gorm:"type:varchar(32);comment:地区ID;not null" json:"areaUID"`
+	AreaUID string `gorm:"type:varchar(32);comment:地区UID;not null" json:"areaUID"`
 	Name    string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
 	Address string `gorm:"type:varchar(20);comment:地址" json:"address"`
 
@@ -37,7 +37,7 @@ func InsertCustomer(customer *Customer) (code int) {
 	customer.UID = uid.Generate()
 	err = db.Create(&customer).Error
 	if err != nil {
-		return msg.ERRPR_CUSTOMER_INSERT
+		return msg.ERROR_CUSTOMER_INSERT
 	}
 	return msg.SUCCESS
 }
@@ -45,7 +45,7 @@ func InsertCustomer(customer *Customer) (code int) {
 func DeleteCustomer(uid string) (code int) {
 	err = db.Where("uid = ?", uid).Delete(&Customer{}).Error
 	if err != nil {
-		return msg.ERRPR_CUSTOMER_DELETE
+		return msg.ERROR_CUSTOMER_DELETE
 	}
 	return msg.SUCCESS
 }
@@ -58,7 +58,7 @@ func UpdateCustomer(customer *Customer) (code int) {
 	maps["Email"] = customer.Email
 	err = db.Model(&customer).Updates(maps).Error
 	if err != nil {
-		return msg.ERRPR_CUSTOMER_UPDATE
+		return msg.ERROR_CUSTOMER_UPDATE
 	}
 	return msg.SUCCESS
 }
@@ -69,13 +69,13 @@ func SelectCustomer(uid string) (customer Customer, code int) {
 		if err == gorm.ErrRecordNotFound {
 			return customer, msg.ERROR_CUSTOMER_NOT_EXIST
 		} else {
-			return customer, msg.ERRPR_CUSTOMER_SELECT
+			return customer, msg.ERROR_CUSTOMER_SELECT
 		}
 	}
 	return customer, msg.SUCCESS
 }
 
-func SelectCustomers(pageSize int, pageNo int, customerQuery CustomerQuery) (customers []Customer, code int, total int64) {
+func SelectCustomers(pageSize int, pageNo int, customerQuery *CustomerQuery) (customers []Customer, code int, total int64) {
 	var maps = make(map[string]interface{})
 	if customerQuery.CompanyUID != "" {
 		maps["customer.company_uid"] = customerQuery.CompanyUID
@@ -84,13 +84,22 @@ func SelectCustomers(pageSize int, pageNo int, customerQuery CustomerQuery) (cus
 		maps["Company.area_uid"] = customerQuery.AreaUID
 	}
 
-	err = db.Debug().Joins("Company").Where(maps).
+	err = db.Joins("Company").Where(maps).
 		Where("customer.research_group LIKE ? AND customer.name LIKE ?",
 			"%"+customerQuery.ResearchGroup+"%", "%"+customerQuery.Name+"%").
-		Find(&customers).Count(&total).Limit(pageSize).Offset((pageNo - 1) * pageSize).
+		Find(&customers).Count(&total).
+		Limit(pageSize).Offset((pageNo - 1) * pageSize).
 		Find(&customers).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
-		return customers, msg.ERRPR_CUSTOMER_SELECT, total
+		return customers, msg.ERROR_CUSTOMER_SELECT, total
 	}
 	return customers, msg.SUCCESS, total
+}
+
+func SelectCompanys(areaUID string) (CustomerCompanys []CustomerCompany, code int) {
+	err = db.Find(&CustomerCompanys).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return CustomerCompanys, msg.ERROR
+	}
+	return CustomerCompanys, msg.SUCCESS
 }

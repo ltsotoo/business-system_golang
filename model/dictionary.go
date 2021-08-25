@@ -11,10 +11,12 @@ import (
 type DictionaryType struct {
 	gorm.Model
 	UID       string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	ParentUID string `gorm:"type:varchar(32);comment:父ID" json:"parentUID"`
+	ParentUID string `gorm:"type:varchar(32);comment:父UID" json:"parentUID"`
 	Module    string `gorm:"type:varchar(20);comment:模块;not null" json:"module"`
 	Name      string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
 	Text      string `gorm:"type:varchar(20);comment:文本;not null" json:"text"`
+
+	Dictionaries []Dictionary `gorm:"foreignKey:DictionaryTypeUID;references:UID" json:"dictionaries"`
 }
 
 //字典表 Model
@@ -43,6 +45,14 @@ func DeleteDictionaryType(uid string) (code int) {
 	return msg.SUCCESS
 }
 
+func SelectDictionaryType(module string, name string) (dictionaryType DictionaryType, code int) {
+	err = db.Preload("Dictionaries").Where("module = ? AND name = ?", module, name).First(&dictionaryType).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return dictionaryType, msg.ERROR_SYSTE_DIC_TYPE_SELECT
+	}
+	return dictionaryType, msg.SUCCESS
+}
+
 func SelectDictionaryTypes(module string) (dictionaryTypes []DictionaryType, code int) {
 	err = db.Where("module = ?", module).Find(&dictionaryTypes).Error
 	if err != nil {
@@ -60,7 +70,7 @@ func InsertDictionary(dictionary *Dictionary) (code int) {
 	return msg.SUCCESS
 }
 
-func DeleteDictionary(uid int) (code int) {
+func DeleteDictionary(uid string) (code int) {
 	err = db.Where("uid = ?", uid).Delete(&Dictionary{}).Error
 	if err != nil {
 		return msg.ERROR_SYSTE_DIC_DELETE
@@ -68,25 +78,17 @@ func DeleteDictionary(uid int) (code int) {
 	return msg.SUCCESS
 }
 
-func SelectDictionaries(parentID int, dictionaryTypeID int) (dictionaries []Dictionary, code int) {
+func SelectDictionaries(parentUID string, dictionaryTypeUID string) (dictionaries []Dictionary, code int) {
 	var maps = make(map[string]interface{})
-	if parentID > 0 {
-		maps["parent_id"] = parentID
+	if parentUID != "" {
+		maps["parent_uid"] = parentUID
 	}
-	if dictionaryTypeID > 0 {
-		maps["dictionary_type_id"] = dictionaryTypeID
+	if dictionaryTypeUID != "" {
+		maps["dictionary_type_uid"] = dictionaryTypeUID
 	}
 	err = db.Where(maps).Find(&dictionaries).Error
 	if err != nil {
-		return nil, msg.ERROR
-	}
-	return dictionaries, msg.SUCCESS
-}
-
-func SelectDictionariesByDictionaryType(module string, name string) (dictionaries []Dictionary, code int) {
-	err = db.Joins("left join dictionary_type on dictionary_type.id = dictionary.dictionary_type_id").Where("dictionary_type.module = ? AND dictionary_type.name = ?", module, name).Find(&dictionaries).Error
-	if err != nil {
-		return nil, msg.ERROR
+		return dictionaries, msg.ERROR
 	}
 	return dictionaries, msg.SUCCESS
 }

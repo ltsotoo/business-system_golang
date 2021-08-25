@@ -12,14 +12,14 @@ import (
 func EntrySupplier(c *gin.Context) {
 	var supplier model.Supplier
 	_ = c.ShouldBindJSON(&supplier)
-	code = model.CreateSupplier(&supplier)
+	code = model.InsertSupplier(&supplier)
 	msg.Message(c, code, supplier)
 }
 
 //删除供应商
 func DelSupplier(c *gin.Context) {
-	id, _ := strconv.Atoi(c.Param("id"))
-	code = model.DeleteSupplier(id)
+	uid := c.Param("uid")
+	code = model.DeleteSupplier(uid)
 	msg.Message(c, code, nil)
 }
 
@@ -34,8 +34,8 @@ func EditSupplier(c *gin.Context) {
 //查询供应商
 func QuerySupplier(c *gin.Context) {
 	var supplier model.Supplier
-	id, _ := strconv.Atoi(c.Param("id"))
-	supplier, code = model.SelectSupplier(id)
+	uid := c.Param("uid")
+	supplier, code = model.SelectSupplier(uid)
 	msg.Message(c, code, supplier)
 }
 
@@ -56,7 +56,6 @@ func QuerySuppliers(c *gin.Context) {
 		pageNo = 1
 	}
 
-	suppliers, code, total = model.SelectSuppliers(pageSize, pageNo, supplierQuery)
+	suppliers, code, total = model.SelectSuppliers(pageSize, pageNo, &supplierQuery)
 	msg.MessageForList(c, msg.SUCCESS, suppliers, pageSize, pageNo, total)
-
 }

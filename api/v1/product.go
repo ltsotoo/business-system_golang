@@ -12,14 +12,14 @@ import (
 func EntryProduct(c *gin.Context) {
 	var product model.Product
 	_ = c.ShouldBindJSON(&product)
-	code = model.CreateProduct(&product)
+	code = model.InsertProduct(&product)
 	msg.Message(c, code, product)
 }
 
 //删除产品
 func DelProduct(c *gin.Context) {
-	id, _ := strconv.Atoi(c.Param("id"))
-	code = model.DeleteProduct(id)
+	uid := c.Param("uid")
+	code = model.DeleteProduct(uid)
 	msg.Message(c, code, nil)
 }
 
@@ -34,8 +34,8 @@ func EditProduct(c *gin.Context) {
 //查询产品
 func QueryProduct(c *gin.Context) {
 	var product model.Product
-	id, _ := strconv.Atoi(c.Param("id"))
-	product, code = model.SelectProduct(id)
+	uid := c.Param("uid")
+	product, code = model.SelectProduct(uid)
 	msg.Message(c, code, product)
 }
 
@@ -57,6 +57,6 @@ func QueryProducts(c *gin.Context) {
 		pageNo = 1
 	}
 
-	products, code, total = model.SelectProducts(pageSize, pageNo, productQuery)
+	products, code, total = model.SelectProducts(pageSize, pageNo, &productQuery)
 	msg.MessageForList(c, msg.SUCCESS, products, pageSize, pageNo, total)
 }

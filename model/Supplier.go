@@ -2,6 +2,7 @@ package model
 
 import (
 	"business-system_golang/utils/msg"
+	"business-system_golang/utils/uid"
 
 	"gorm.io/gorm"
 )
@@ -18,47 +19,57 @@ type Supplier struct {
 	Email    string `gorm:"type:varchar(20);comment:邮箱" json:"email"`
 }
 
-func CreateSupplier(supplier *Supplier) (code int) {
+func InsertSupplier(supplier *Supplier) (code int) {
+	supplier.UID = uid.Generate()
 	err = db.Create(&supplier).Error
 	if err != nil {
-		return msg.ERROR
+		return msg.ERROR_SUPPLIER_INSERT
 	}
 	return msg.SUCCESS
 }
 
-func DeleteSupplier(id int) (code int) {
-	err = db.Where("id = ?", id).Delete(&Supplier{}).Error
+func DeleteSupplier(uid string) (code int) {
+	err = db.Where("uid = ?", uid).Delete(&Supplier{}).Error
 	if err != nil {
-		return msg.ERROR
+		return msg.ERROR_SUPPLIER_DELETE
 	}
 	return msg.SUCCESS
 }
 
 func UpdateSupplier(supplier *Supplier) (code int) {
-	err = db.Omit("name").Updates(&supplier).Error
+	var maps = make(map[string]interface{})
+	maps["Linkman"] = supplier.Linkman
+	maps["Phone"] = supplier.Phone
+	maps["WechatID"] = supplier.WechatID
+	maps["Email"] = supplier.Email
+
+	err = db.Model(&supplier).Updates(maps).Error
+
 	if err != nil {
-		return msg.ERROR
+		return msg.ERROR_SUPPLIER_UPDATE
 	}
 	return msg.SUCCESS
 }
 
-func SelectSupplier(id int) (supplier Supplier, code int) {
-	err = db.First(&supplier, id).Error
+func SelectSupplier(uid string) (supplier Supplier, code int) {
+	err = db.First(&supplier, "uid = ?", uid).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return supplier, msg.ERROR_SUPPLIER_NOT_EXIST
 		} else {
-			return supplier, msg.ERROR
+			return supplier, msg.ERROR_SUPPLIER_SELECT
 		}
 	}
 	return supplier, msg.SUCCESS
 }
 
-func SelectSuppliers(pageSize int, pageNo int, supplierQuery SupplierQuery) (suppliers []Supplier, code int, total int64) {
-	err = db.Limit(pageSize).Offset((pageNo-1)*pageSize).Where("name LIKE ? AND linkman LIKE ? AND phone LIKE ?", "%"+supplierQuery.Name+"%", "%"+supplierQuery.Linkman+"%", "%"+supplierQuery.Phone+"%").Find(&suppliers).Error
+func SelectSuppliers(pageSize int, pageNo int, supplierQuery *SupplierQuery) (suppliers []Supplier, code int, total int64) {
+	err = db.Where("name LIKE ? AND linkman LIKE ? AND phone LIKE ?", "%"+supplierQuery.Name+"%", "%"+supplierQuery.Linkman+"%", "%"+supplierQuery.Phone+"%").
+		Find(&suppliers).Count(&total).
+		Limit(pageSize).Offset((pageNo - 1) * pageSize).
+		Find(&suppliers).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
-		return nil, msg.ERROR, 0
+		return suppliers, msg.ERROR_SUPPLIER_SELECT, total
 	}
-	db.Model(&suppliers).Where("name LIKE ? AND linkman LIKE ? AND phone LIKE ?", "%"+supplierQuery.Name+"%", "%"+supplierQuery.Linkman+"%", "%"+supplierQuery.Phone+"%").Count(&total)
 	return suppliers, msg.SUCCESS, total
 }

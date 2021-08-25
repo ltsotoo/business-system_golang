@@ -3,6 +3,7 @@ package v1
 import (
 	"business-system_golang/model"
 	"business-system_golang/utils/msg"
+	"business-system_golang/utils/uid"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -12,14 +13,18 @@ import (
 func EntryContract(c *gin.Context) {
 	var contract model.Contract
 	_ = c.ShouldBindJSON(&contract)
-	code = model.CreateContract(&contract)
+	for _, task := range contract.Tasks {
+		task.UID = uid.Generate()
+		contract.TotalAmount += task.TotalPrice
+	}
+	code = model.InsertContract(&contract)
 	msg.Message(c, code, contract)
 }
 
 //删除合同
 func DelContract(c *gin.Context) {
-	id, _ := strconv.Atoi(c.Param("id"))
-	code = model.DeleteContract(id)
+	uid := c.Param("id")
+	code = model.DeleteContract(uid)
 	msg.Message(c, code, nil)
 }
 
@@ -34,8 +39,8 @@ func EditContract(c *gin.Context) {
 //查询合同
 func QueryContract(c *gin.Context) {
 	var contract model.Contract
-	id, _ := strconv.Atoi(c.Param("id"))
-	contract, code = model.SelectContract(id)
+	uid := c.Param("id")
+	contract, code = model.SelectContract(uid)
 	msg.Message(c, code, contract)
 }
 
@@ -49,13 +54,13 @@ func QueryContracts(c *gin.Context) {
 
 	pageSize, pageSizeErr := strconv.Atoi(c.Query("pageSize"))
 	pageNo, pageNoErr := strconv.Atoi(c.Query("pageNo"))
-	if pageSizeErr != nil || pageSize <= 0 {
+	if pageSizeErr != nil || pageSize < 0 {
 		pageSize = 10
 	}
-	if pageNoErr != nil || pageNo <= 0 {
+	if pageNoErr != nil || pageNo < 0 {
 		pageNo = 1
 	}
 
-	contracts, code, total = model.SelectContracts(pageSize, pageNo, contractQuery)
+	contracts, code, total = model.SelectContracts(pageSize, pageNo, &contractQuery)
 	msg.MessageForList(c, msg.SUCCESS, contracts, pageSize, pageNo, total)
 }

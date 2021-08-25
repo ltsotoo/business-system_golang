@@ -3,7 +3,6 @@ package v1
 import (
 	"business-system_golang/model"
 	"business-system_golang/utils/msg"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -11,13 +10,13 @@ import (
 func EntryOffice(c *gin.Context) {
 	var office model.Office
 	_ = c.ShouldBindJSON(&office)
-	code = model.CreateOffice(&office)
+	code = model.InsertOffice(&office)
 	msg.Message(c, code, office)
 }
 
 func DelOffice(c *gin.Context) {
-	id, _ := strconv.Atoi(c.Param("id"))
-	code = model.DeleteOffice(id)
+	uid := c.Param("uid")
+	code = model.DeleteOffice(uid)
 	msg.Message(c, code, nil)
 }
 
@@ -31,21 +30,21 @@ func QueryOffices(c *gin.Context) {
 func EntryArea(c *gin.Context) {
 	var area model.Area
 	_ = c.ShouldBindJSON(&area)
-	code = model.CreateArea(&area)
+	code = model.InsertArea(&area)
 	msg.Message(c, code, area)
 }
 
 func DelArea(c *gin.Context) {
-	id, _ := strconv.Atoi(c.Param("id"))
-	code = model.DeleteArea(id)
+	uid := c.Param("uid")
+	code = model.DeleteArea(uid)
 	msg.Message(c, code, nil)
 }
 
 func QueryAreas(c *gin.Context) {
 	var areas []model.Area
-	var area model.Area
-	_ = c.ShouldBindJSON(&area)
-	areas, code = model.SelectAreas(&area)
+	var areaQuery model.AreaQuery
+	_ = c.ShouldBindJSON(&areaQuery)
+	areas, code = model.SelectAreas(&areaQuery)
 	msg.Message(c, code, areas)
 }
 
@@ -59,13 +58,17 @@ func EditArea(c *gin.Context) {
 func EntryDepartment(c *gin.Context) {
 	var department model.Department
 	_ = c.ShouldBindJSON(&department)
-	code = model.CreateDepartment(&department)
+	if department.OfficeUID == "" {
+		visitor, _ := model.SelectEmployee(c.MustGet("employeeUID").(string))
+		department.OfficeUID = visitor.OfficeUID
+	}
+	code = model.InsertDepartment(&department)
 	msg.Message(c, code, department)
 }
 
 func DelDepartment(c *gin.Context) {
-	id, _ := strconv.Atoi(c.Param("id"))
-	code = model.DeleteDepartment(id)
+	uid := c.Param("uid")
+	code = model.DeleteDepartment(uid)
 	msg.Message(c, code, nil)
 }
 
@@ -73,9 +76,9 @@ func QueryDepartments(c *gin.Context) {
 	var departments []model.Department
 	var department model.Department
 	_ = c.ShouldBindJSON(&department)
-	if department.OfficeID == 0 {
-		employee, _ := model.SelectEmployee(int(c.MustGet("employeeID").(uint)))
-		department.OfficeID = employee.OfficeID
+	if department.OfficeUID == "" {
+		visitor, _ := model.SelectEmployee(c.MustGet("employeeUID").(string))
+		department.OfficeUID = visitor.OfficeUID
 	}
 	departments, code = model.SelectDepartments(&department)
 	msg.Message(c, code, departments)

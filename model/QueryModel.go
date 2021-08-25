@@ -1,7 +1,7 @@
 package model
 
 type ContractQuery struct {
-	AreaID      string `json:"areaID"`
+	AreaUID     string `json:"areaUID"`
 	No          string `json:"no"`
 	CompanyName string `json:"companyName"`
 }
@@ -14,8 +14,8 @@ type CustomerQuery struct {
 }
 
 type ProductQuery struct {
-	SourceTypeID  string `json:"sourceTypeID"`
-	SubtypeID     string `json:"subtypeID"`
+	SourceTypeUID string `json:"sourceTypeUID"`
+	SubtypeUID    string `json:"subtypeUID"`
 	Name          string `json:"name"`
 	Specification string `json:"specification"`
 }
@@ -26,9 +26,14 @@ type SupplierQuery struct {
 	Phone   string `json:"phone"`
 }
 
-type DictionaryQuery struct {
-	TypeModule string `json:"typeModule"`
-	TypeName   string `json:"typeName"`
-	TypeUID    string `json:"typeUID"`
-	PUID       string `json:"pUID"`
+type EmployeeQuery struct {
+	Name          string `json:"name"`
+	Phone         string `json:"phone"`
+	OfficeUID     string `json:"officeUID"`
+	DepartmentUID string `json:"departmentUID"`
+}
+
+type AreaQuery struct {
+	Name       string `json:"name"`
+	OfficeName string `json:"officeName"`
 }

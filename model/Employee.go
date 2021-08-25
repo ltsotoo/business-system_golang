@@ -3,6 +3,7 @@ package model
 import (
 	"business-system_golang/utils/msg"
 	"business-system_golang/utils/pwd"
+	"business-system_golang/utils/uid"
 
 	"gorm.io/gorm"
 )
@@ -10,23 +11,23 @@ import (
 // 员工 Model
 type Employee struct {
 	gorm.Model
-	UID          string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	Phone        string `gorm:"type:varchar(20);comment:电话;not null" json:"phone"`
-	Name         string `gorm:"type:varchar(20);comment:姓名;not null" json:"name"`
-	Password     string `gorm:"type:varchar(20);comment:密码;not null" json:"password"`
-	WechatID     string `gorm:"type:varchar(20);comment:微信号" json:"wechatID"`
-	Email        string `gorm:"type:varchar(20);comment:邮箱" json:"email"`
-	OfficeID     uint   `gorm:"type:int;comment:办事处ID;default:(-)" json:"officeID"`
-	DepartmentID uint   `gorm:"type:int;comment:部门ID;default:(-)" json:"departmentID"`
-	RoleID       uint   `gorm:"type:int;comment:角色ID;default:(-)" json:"roleID"`
+	UID           string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
+	Phone         string `gorm:"type:varchar(20);comment:电话;not null" json:"phone"`
+	Name          string `gorm:"type:varchar(20);comment:姓名;not null" json:"name"`
+	Password      string `gorm:"type:varchar(20);comment:密码;not null" json:"password"`
+	WechatID      string `gorm:"type:varchar(20);comment:微信号" json:"wechatID"`
+	Email         string `gorm:"type:varchar(20);comment:邮箱" json:"email"`
+	OfficeUID     string `gorm:"type:varchar(32);comment:办事处UID;default:(-)" json:"officeUID"`
+	DepartmentUID string `gorm:"type:varchar(32);comment:部门UID;default:(-)" json:"departmentUID"`
+	RoleUID       string `gorm:"type:varchar(32);comment:角色UID;default:(-)" json:"roleUID"`
 
-	Office     Office     `gorm:"foreignKey:OfficeID" json:"office"`
-	Department Department `gorm:"foreignKey:DepartmentID" json:"department"`
-	Role       Role       `gorm:"foreignKey:RoleID" json:"role"`
+	Office     Office     `gorm:"foreignKey:OfficeUID;references:UID" json:"office"`
+	Department Department `gorm:"foreignKey:DepartmentUID;references:UID" json:"department"`
+	Role       Role       `gorm:"foreignKey:RoleUID;references:UID" json:"role"`
 }
 
 //查询员工(手机号)是否录入
-func CheckEmployeePhone(phone string) (code int) {
+func CheckEmployee(phone string) (code int) {
 	var employee Employee
 	db.Where("phone = ?", phone).First(&employee)
 	if employee.ID > 0 {
@@ -35,44 +36,49 @@ func CheckEmployeePhone(phone string) (code int) {
 	return msg.ERROR_EMPLOYEE_NOT_EXIST
 }
 
-func CheckLogin(employee *Employee) (code int) {
-	employee.Password, _ = pwd.ScryptPwd(employee.Password)
-	db.Where("phone = ? AND password = ?", employee.Phone, employee.Password).First(&employee)
+func CheckLogin(phone string, password string) (employee Employee, code int) {
+	db.Where("phone = ?", phone).First(&employee)
 	if employee.ID == 0 {
-		return msg.ERROR_EMPLOYEE_LOGIN_FAIL
+		return employee, msg.ERROR_EMPLOYEE_LOGIN_FAIL
 	}
-	return msg.SUCCESS
+	password, err = pwd.ScryptPwd(password)
+	if err != nil || employee.Password != password {
+		return employee, msg.ERROR_EMPLOYEE_LOGIN_FAIL
+	}
+	return employee, msg.SUCCESS
 }
 
-func CreateEmployee(employee *Employee) (code int) {
+func InsertEmployee(employee *Employee) (code int) {
+	employee.UID = uid.Generate()
 	err = db.Create(&employee).Error
 	if err != nil {
-		return msg.ERROR
+		return msg.ERROR_CUSTOMER_INSERT
 	}
 	return msg.SUCCESS
 }
 
-func DeleteEmployee(id int) (code int) {
-	err = db.Where("id = ?", id).Delete(&Employee{}).Error
+func DeleteEmployee(uid string) (code int) {
+	err = db.Where("uid = ?", uid).Delete(&Employee{}).Error
 	if err != nil {
-		return msg.ERROR
+		return msg.ERROR_CUSTOMER_DELETE
 	}
 	return msg.SUCCESS
 }
 
 func UpdateEmployee(employee *Employee) (code int) {
 	var maps = make(map[string]interface{})
-	maps["WechatID"] = employee.WechatID
-	maps["Email"] = employee.Email
+	maps["wechat_id"] = employee.WechatID
+	maps["email"] = employee.Email
 	err = db.Model(&employee).Updates(maps).Error
 	if err != nil {
-		return msg.ERROR
+		return msg.ERROR_CUSTOMER_UPDATE
 	}
 	return msg.SUCCESS
 }
 
-func SelectEmployee(id int) (employee Employee, code int) {
-	err = db.Preload("Office").Preload("Department").Preload("Role").First(&employee, id).Error
+func SelectEmployee(uid string) (employee Employee, code int) {
+	err = db.Preload("Office").Preload("Department").Preload("Role").
+		First(&employee, "uid = ?", uid).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return employee, msg.ERROR_EMPLOYEE_NOT_EXIST
@@ -83,30 +89,29 @@ func SelectEmployee(id int) (employee Employee, code int) {
 	return employee, msg.SUCCESS
 }
 
-func SelectEmployees(employee *Employee, pageSize int, pageNo int) (employees []Employee, code int, total int64) {
-
+func SelectEmployees(pageSize int, pageNo int, employeeQuery *EmployeeQuery) (employees []Employee, code int, total int64) {
 	var maps = make(map[string]interface{})
-	if employee.OfficeID != 0 {
-		maps["office_id"] = employee.OfficeID
+	if employeeQuery.OfficeUID != "" {
+		maps["office_uid"] = employeeQuery.OfficeUID
 	}
-	if employee.DepartmentID != 0 {
-		maps["department_id"] = employee.DepartmentID
+	if employeeQuery.DepartmentUID != "" {
+		maps["department_uid"] = employeeQuery.DepartmentUID
 	}
 
-	err = db.Preload("Office").Preload("Department").Preload("Role").Where(maps).Where("name LIKE ? AND phone LIKE ?", "%"+employee.Name+"%", "%"+employee.Phone+"%").Limit(pageSize).Offset((pageNo - 1) * pageSize).Find(&employees).Error
+	err = db.Model(&employees).Where(maps).
+		Where("name LIKE ? AND phone LIKE ?", "%"+employeeQuery.Name+"%", "%"+employeeQuery.Phone+"%").
+		Count(&total).
+		Preload("Office").Preload("Department").Preload("Role").
+		Limit(pageSize).Offset((pageNo - 1) * pageSize).
+		Find(&employees).Error
+
 	if err != nil && err != gorm.ErrRecordNotFound {
-		return nil, msg.ERROR, 0
+		return employees, msg.ERROR_CUSTOMER_SELECT, total
 	}
-	db.Model(&employee).Where(maps).Where("name LIKE ? AND phone LIKE ?", "%"+employee.Name+"%", "%"+employee.Phone+"%").Count(&total)
 	return employees, msg.SUCCESS, total
 }
 
 func (employee *Employee) BeforeCreate(tx *gorm.DB) (err error) {
 	employee.Password, err = pwd.ScryptPwd(employee.Password)
 	return err
-}
-
-func (employee *Employee) AfterFind(tx *gorm.DB) (err error) {
-	employee.Password = ""
-	return
 }

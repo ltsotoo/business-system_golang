@@ -14,25 +14,29 @@ var code int
 func EntryEmployee(c *gin.Context) {
 	var employee model.Employee
 	_ = c.ShouldBindJSON(&employee)
-	code = model.CheckEmployeePhone(employee.Phone)
+	code = model.CheckEmployee(employee.Phone)
 	if code == msg.ERROR_EMPLOYEE_NOT_EXIST {
-		if employee.OfficeID == 0 {
-			employeeUploader, _ := model.SelectEmployee(int(c.MustGet("employeeID").(uint)))
-			employee.OfficeID = employeeUploader.OfficeID
-			if employee.DepartmentID == 0 {
-				employee.DepartmentID = employeeUploader.DepartmentID
+		//对录入员工的办事处和部门信息补充
+		if employee.OfficeUID == "" || employee.DepartmentUID == "" {
+			visitor, _ := model.SelectEmployee(c.MustGet("employeeUID").(string))
+			if employee.OfficeUID == "" {
+				employee.OfficeUID = visitor.OfficeUID
+			}
+			if employee.DepartmentUID == "" {
+				employee.DepartmentUID = visitor.DepartmentUID
 			}
 		}
+		//默认密码等于手机号
 		employee.Password = employee.Phone
-		code = model.CreateEmployee(&employee)
+		code = model.InsertEmployee(&employee)
 	}
 	msg.Message(c, code, employee)
 }
 
 //删除员工
 func DelEmployee(c *gin.Context) {
-	id, _ := strconv.Atoi(c.Param("id"))
-	code = model.DeleteEmployee(id)
+	uid := c.Param("uid")
+	code = model.DeleteEmployee(uid)
 	msg.Message(c, code, nil)
 }
 
@@ -47,11 +51,11 @@ func EditEmployee(c *gin.Context) {
 //查询员工
 func QueryEmployee(c *gin.Context) {
 	var employee model.Employee
-	id, _ := strconv.Atoi(c.Param("id"))
-	if id == 0 {
-		id = int(c.MustGet("employeeID").(uint))
+	uid := c.Param("uid")
+	if uid == "" {
+		uid = c.MustGet("employeeUID").(string)
 	}
-	employee, code = model.SelectEmployee(id)
+	employee, code = model.SelectEmployee(uid)
 	msg.Message(c, code, employee)
 }
 
@@ -59,14 +63,14 @@ func QueryEmployee(c *gin.Context) {
 func QueryEmployees(c *gin.Context) {
 	var employees []model.Employee
 	var total int64
-	var employee model.Employee
+	var employeeQuery model.EmployeeQuery
 
-	_ = c.ShouldBindJSON(&employee)
+	_ = c.ShouldBindJSON(&employeeQuery)
 
-	if employee.OfficeID == 0 && employee.DepartmentID == 0 {
-		employeeTemp, _ := model.SelectEmployee(int(c.MustGet("employeeID").(uint)))
-		employee.OfficeID = employeeTemp.OfficeID
-		employee.DepartmentID = employeeTemp.DepartmentID
+	if employeeQuery.OfficeUID == "" && employeeQuery.DepartmentUID == "" {
+		visitor, _ := model.SelectEmployee(c.MustGet("employeeUID").(string))
+		employeeQuery.OfficeUID = visitor.OfficeUID
+		employeeQuery.DepartmentUID = visitor.DepartmentUID
 	}
 
 	pageSize, pageSizeErr := strconv.Atoi(c.Query("pageSize"))
@@ -78,6 +82,6 @@ func QueryEmployees(c *gin.Context) {
 		pageNo = 1
 	}
 
-	employees, code, total = model.SelectEmployees(&employee, pageSize, pageNo)
+	employees, code, total = model.SelectEmployees(pageSize, pageNo, &employeeQuery)
 	msg.MessageForList(c, msg.SUCCESS, employees, pageSize, pageNo, total)
 }

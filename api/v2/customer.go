@@ -27,6 +27,6 @@ func QueryCustomers(c *gin.Context) {
 		pageNo = 1
 	}
 
-	customers, code, total = model.SelectCustomers(pageSize, pageNo, customerQuery)
+	customers, code, total = model.SelectCustomers(pageSize, pageNo, &customerQuery)
 	msg.MessageForList(c, msg.SUCCESS, customers, pageSize, pageNo, total)
 }

@@ -12,14 +12,14 @@ import (
 func EntryCustomer(c *gin.Context) {
 	var customer model.Customer
 	_ = c.ShouldBindJSON(&customer)
-	code = model.CreateCustomer(&customer)
+	code = model.InsertCustomer(&customer)
 	msg.Message(c, code, customer)
 }
 
 //删除客户
 func DelCustomer(c *gin.Context) {
-	id, _ := strconv.Atoi(c.Param("id"))
-	code = model.DeleteCustomer(id)
+	uid := c.Param("uid")
+	code = model.DeleteCustomer(uid)
 	msg.Message(c, code, nil)
 }
 
@@ -34,8 +34,8 @@ func EditCustomer(c *gin.Context) {
 //查询客户
 func QueryCustomer(c *gin.Context) {
 	var customer model.Customer
-	id, _ := strconv.Atoi(c.Param("id"))
-	customer, code = model.SelectCustomer(id)
+	uid := c.Param("uid")
+	customer, code = model.SelectCustomer(uid)
 	msg.Message(c, code, customer)
 }
 
@@ -56,15 +56,13 @@ func QueryCustomers(c *gin.Context) {
 		pageNo = 1
 	}
 
-	customers, code, total = model.SelectCustomers(pageSize, pageNo, customerQuery)
+	customers, code, total = model.SelectCustomers(pageSize, pageNo, &customerQuery)
 	msg.MessageForList(c, msg.SUCCESS, customers, pageSize, pageNo, total)
 }
 
 //查询客户公司列表
 func QueryCompanys(c *gin.Context) {
-	var companys []model.Company
-	var company model.Company
-	_ = c.ShouldBindJSON(&company)
-	companys, code = model.SelectCompanys(&company)
+	var companys []model.CustomerCompany
+	companys, code = model.SelectCompanys("")
 	msg.Message(c, code, companys)
 }
