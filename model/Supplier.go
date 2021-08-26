@@ -19,8 +19,13 @@ type Supplier struct {
 	Email    string `gorm:"type:varchar(20);comment:邮箱" json:"email"`
 }
 
+type SupplierQuery struct {
+	Name    string `json:"name"`
+	Linkman string `json:"linkman"`
+	Phone   string `json:"phone"`
+}
+
 func InsertSupplier(supplier *Supplier) (code int) {
-	supplier.UID = uid.Generate()
 	err = db.Create(&supplier).Error
 	if err != nil {
 		return msg.ERROR_SUPPLIER_INSERT
@@ -43,7 +48,7 @@ func UpdateSupplier(supplier *Supplier) (code int) {
 	maps["WechatID"] = supplier.WechatID
 	maps["Email"] = supplier.Email
 
-	err = db.Model(&supplier).Updates(maps).Error
+	err = db.Model(&Supplier{}).Where("uid = ?", supplier.UID).Updates(maps).Error
 
 	if err != nil {
 		return msg.ERROR_SUPPLIER_UPDATE
@@ -72,4 +77,9 @@ func SelectSuppliers(pageSize int, pageNo int, supplierQuery *SupplierQuery) (su
 		return suppliers, msg.ERROR_SUPPLIER_SELECT, total
 	}
 	return suppliers, msg.SUCCESS, total
+}
+
+func (supplier *Supplier) BeforeCreate(tx *gorm.DB) (err error) {
+	supplier.UID = uid.Generate()
+	return err
 }

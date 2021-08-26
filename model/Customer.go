@@ -22,6 +22,13 @@ type Customer struct {
 	Company CustomerCompany `gorm:"foreignKey:CompanyUID;references:UID" json:"company"`
 }
 
+type CustomerQuery struct {
+	AreaUID       string `json:"areaUID"`
+	CompanyUID    string `json:"companyUID"`
+	ResearchGroup string `json:"researchGroup"`
+	Name          string `json:"name"`
+}
+
 // 客户公司 Model
 type CustomerCompany struct {
 	gorm.Model
@@ -34,7 +41,6 @@ type CustomerCompany struct {
 }
 
 func InsertCustomer(customer *Customer) (code int) {
-	customer.UID = uid.Generate()
 	err = db.Create(&customer).Error
 	if err != nil {
 		return msg.ERROR_CUSTOMER_INSERT
@@ -56,7 +62,7 @@ func UpdateCustomer(customer *Customer) (code int) {
 	maps["Phone"] = customer.Phone
 	maps["WechatID"] = customer.WechatID
 	maps["Email"] = customer.Email
-	err = db.Model(&customer).Updates(maps).Error
+	err = db.Model(&Customer{}).Where("uid = ?", customer.UID).Updates(maps).Error
 	if err != nil {
 		return msg.ERROR_CUSTOMER_UPDATE
 	}
@@ -102,4 +108,9 @@ func SelectCompanys(areaUID string) (CustomerCompanys []CustomerCompany, code in
 		return CustomerCompanys, msg.ERROR
 	}
 	return CustomerCompanys, msg.SUCCESS
+}
+
+func (customer *Customer) BeforeCreate(tx *gorm.DB) (err error) {
+	customer.UID = uid.Generate()
+	return err
 }

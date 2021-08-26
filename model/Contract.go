@@ -2,6 +2,7 @@ package model
 
 import (
 	"business-system_golang/utils/msg"
+	"business-system_golang/utils/uid"
 
 	"gorm.io/gorm"
 )
@@ -9,7 +10,8 @@ import (
 // 合同 Model
 type Contract struct {
 	gorm.Model
-	No                    string `gorm:"type:varchar(32);comment:合同编号;not null;unique" json:"no"`
+	No                    string `gorm:"type:varchar(32);comment:合同编号" json:"no"`
+	UID                   string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
 	AreaUID               string `gorm:"type:varchar(32);comment:所属区域ID;default:(-)" json:"areaUID"`
 	EmployeeUID           string `gorm:"type:varchar(32);comment:业务员ID;default:(-)" json:"employeeUID"`
 	IsEntryCustomer       bool   `gorm:"type:boolean;comment:客户是否录入" json:"isEntryCustomer"`
@@ -29,13 +31,16 @@ type Contract struct {
 	Employee     Employee   `gorm:"foreignKey:EmployeeUID;references:UID" json:"employee"`
 	Customer     Customer   `gorm:"foreignKey:CustomerUID;references:UID" json:"customer"`
 	ContractUnit Dictionary `gorm:"foreignKey:ContractUnitUID;references:UID" json:"contractUnit"`
-	Tasks        []Task     `gorm:"foreignKey:ContractNo;references:No" json:"tasks"`
+	Tasks        []Task     `gorm:"foreignKey:ContractUID;references:UID" json:"tasks"`
+}
+
+type ContractQuery struct {
+	AreaUID     string `json:"areaUID"`
+	No          string `json:"no"`
+	CompanyName string `json:"companyName"`
 }
 
 func InsertContract(contract *Contract) (code int) {
-	if contract.IsEntryCustomer {
-		contract.Customer = Customer{}
-	}
 	err = db.Create(&contract).Error
 	if err != nil {
 		return msg.ERROR_CONTRACT_INSERT
@@ -54,7 +59,7 @@ func DeleteContract(uid string) (code int) {
 func UpdateContract(contract *Contract) (code int) {
 	var maps = make(map[string]interface{})
 	maps["Remarks"] = contract.Remarks
-	err = db.Model(&contract).Updates(maps).Error
+	err = db.Model(&Contract{}).Where("uid = ?", contract.UID).Updates(maps).Error
 	if err != nil {
 		return msg.ERROR_CONTRACT_UPDATE
 	}
@@ -62,7 +67,10 @@ func UpdateContract(contract *Contract) (code int) {
 }
 
 func SelectContract(uid string) (contract Contract, code int) {
-	err = db.Preload("Tasks").Preload("Area").Preload("Employee").Preload("Customer").Preload("ContractUnit").
+	err = db.Preload("Area").Preload("ContractUnit").
+		Preload("Employee").Preload("Employee.Office").
+		Preload("Customer").Preload("Customer.Company").
+		Preload("Tasks").Preload("Tasks.Product").
 		First(&contract, "uid = ?", uid).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -85,4 +93,12 @@ func SelectContracts(pageSize int, pageNo int, contractQuery *ContractQuery) (co
 		return contracts, msg.ERROR, total
 	}
 	return contracts, msg.SUCCESS, total
+}
+
+func (contract *Contract) BeforeCreate(tx *gorm.DB) (err error) {
+	contract.UID = uid.Generate()
+	if contract.IsEntryCustomer {
+		contract.Customer = Customer{}
+	}
+	return err
 }

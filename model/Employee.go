@@ -19,11 +19,17 @@ type Employee struct {
 	Email         string `gorm:"type:varchar(20);comment:邮箱" json:"email"`
 	OfficeUID     string `gorm:"type:varchar(32);comment:办事处UID;default:(-)" json:"officeUID"`
 	DepartmentUID string `gorm:"type:varchar(32);comment:部门UID;default:(-)" json:"departmentUID"`
-	RoleUID       string `gorm:"type:varchar(32);comment:角色UID;default:(-)" json:"roleUID"`
 
 	Office     Office     `gorm:"foreignKey:OfficeUID;references:UID" json:"office"`
 	Department Department `gorm:"foreignKey:DepartmentUID;references:UID" json:"department"`
-	Role       Role       `gorm:"foreignKey:RoleUID;references:UID" json:"role"`
+	Roles      []Role     `gorm:"many2many:employee_role;foreignKey:UID;references:UID" json:"roles"`
+}
+
+type EmployeeQuery struct {
+	Name          string `json:"name"`
+	Phone         string `json:"phone"`
+	OfficeUID     string `json:"officeUID"`
+	DepartmentUID string `json:"departmentUID"`
 }
 
 //查询员工(手机号)是否录入
@@ -49,7 +55,6 @@ func CheckLogin(phone string, password string) (employee Employee, code int) {
 }
 
 func InsertEmployee(employee *Employee) (code int) {
-	employee.UID = uid.Generate()
 	err = db.Create(&employee).Error
 	if err != nil {
 		return msg.ERROR_CUSTOMER_INSERT
@@ -69,7 +74,7 @@ func UpdateEmployee(employee *Employee) (code int) {
 	var maps = make(map[string]interface{})
 	maps["wechat_id"] = employee.WechatID
 	maps["email"] = employee.Email
-	err = db.Model(&employee).Updates(maps).Error
+	err = db.Model(&Employee{}).Where("uid = ?", employee.UID).Updates(maps).Error
 	if err != nil {
 		return msg.ERROR_CUSTOMER_UPDATE
 	}
@@ -77,7 +82,7 @@ func UpdateEmployee(employee *Employee) (code int) {
 }
 
 func SelectEmployee(uid string) (employee Employee, code int) {
-	err = db.Preload("Office").Preload("Department").Preload("Role").
+	err = db.Preload("Office").Preload("Department").
 		First(&employee, "uid = ?", uid).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -101,7 +106,7 @@ func SelectEmployees(pageSize int, pageNo int, employeeQuery *EmployeeQuery) (em
 	err = db.Model(&employees).Where(maps).
 		Where("name LIKE ? AND phone LIKE ?", "%"+employeeQuery.Name+"%", "%"+employeeQuery.Phone+"%").
 		Count(&total).
-		Preload("Office").Preload("Department").Preload("Role").
+		Preload("Office").Preload("Department").
 		Limit(pageSize).Offset((pageNo - 1) * pageSize).
 		Find(&employees).Error
 
@@ -112,6 +117,7 @@ func SelectEmployees(pageSize int, pageNo int, employeeQuery *EmployeeQuery) (em
 }
 
 func (employee *Employee) BeforeCreate(tx *gorm.DB) (err error) {
+	employee.UID = uid.Generate()
 	employee.Password, err = pwd.ScryptPwd(employee.Password)
 	return err
 }

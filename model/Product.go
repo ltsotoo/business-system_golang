@@ -29,8 +29,14 @@ type Product struct {
 	Subtype    Dictionary `gorm:"foreignKey:SubtypeUID;references:UID" json:"subtype"`
 }
 
+type ProductQuery struct {
+	SourceTypeUID string `json:"sourceTypeUID"`
+	SubtypeUID    string `json:"subtypeUID"`
+	Name          string `json:"name"`
+	Specification string `json:"specification"`
+}
+
 func InsertProduct(product *Product) (code int) {
-	product.UID = uid.Generate()
 	err = db.Create(&product).Error
 	if err != nil {
 		return msg.ERROR_PRODUCT_INSERT
@@ -49,7 +55,7 @@ func DeleteProduct(uid string) (code int) {
 func UpdateProduct(product *Product) (code int) {
 	var maps = make(map[string]interface{})
 	maps["Remarks"] = product.Remarks
-	err = db.Model(&product).Updates(maps).Error
+	err = db.Model(&Product{}).Where("uid = ?", product.UID).Updates(maps).Error
 	if err != nil {
 		return msg.ERROR_PRODUCT_UPDATE
 	}
@@ -87,4 +93,9 @@ func SelectProducts(pageSize int, pageNo int, productQuery *ProductQuery) (produ
 		return nil, msg.ERROR, 0
 	}
 	return products, msg.SUCCESS, total
+}
+
+func (product *Product) BeforeCreate(tx *gorm.DB) (err error) {
+	product.UID = uid.Generate()
+	return err
 }

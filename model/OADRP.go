@@ -26,25 +26,33 @@ type Area struct {
 	Office Office `gorm:"foreignKey:OfficeUID;references:UID" json:"office"`
 }
 
+type AreaQuery struct {
+	Name       string `json:"name"`
+	OfficeName string `json:"officeName"`
+}
+
 type Department struct {
 	gorm.Model
 	UID       string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
+	Type      string `gorm:"type:varchar(32);comment:部门类型;not null" json:"type"`
 	OfficeUID string `gorm:"type:varchar(32);comment:办事处ID;not null" json:"officeUID"`
 	Name      string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
 }
 
 type Role struct {
 	gorm.Model
-	UID         string       `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	Name        string       `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
-	Permissions []Permission `gorm:"many2many:role_permission;foreignKey:UID;References:UID" json:"rermissions"`
+	UID           string       `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
+	Name          string       `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
+	DepartmentUID string       `gorm:"type:varchar(32);comment:部门UID" json:"departmentUID"`
+	Permissions   []Permission `gorm:"many2many:role_permission;foreignKey:UID;References:UID" json:"rermissions"`
 }
 
 type Permission struct {
 	gorm.Model
-	UID  string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	Name string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
-	Text string `gorm:"type:varchar(20);comment:描述;not null" json:"text"`
+	UID    string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
+	Module string `gorm:"type:varchar(20);comment:模块;not null" json:"module"`
+	Name   string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
+	Text   string `gorm:"type:varchar(20);comment:描述;not null" json:"text"`
 }
 
 func InsertOffice(office *Office) (code int) {
@@ -102,7 +110,7 @@ func DeleteArea(uid string) (code int) {
 }
 
 func UpdateArea(area *Area) (code int) {
-	err = db.Model(&area).Updates(Area{Name: area.Name, OfficeUID: area.OfficeUID}).Error
+	err = db.Model(&Area{}).Where("uid = ?", area.UID).Updates(Area{Name: area.Name, OfficeUID: area.OfficeUID}).Error
 	if err != nil {
 		return msg.ERROR_AREA_UPDATE
 	}
@@ -159,4 +167,29 @@ func SelectPermissions() (permissions []Permission, code int) {
 		return nil, msg.ERROR_PERMISSION_SELECT
 	}
 	return permissions, msg.SUCCESS
+}
+
+func (office *Office) BeforeCreate(tx *gorm.DB) (err error) {
+	office.UID = uid.Generate()
+	return err
+}
+
+func (area *Area) BeforeCreate(tx *gorm.DB) (err error) {
+	area.UID = uid.Generate()
+	return err
+}
+
+func (department *Department) BeforeCreate(tx *gorm.DB) (err error) {
+	department.UID = uid.Generate()
+	return err
+}
+
+func (role *Role) BeforeCreate(tx *gorm.DB) (err error) {
+	role.UID = uid.Generate()
+	return err
+}
+
+func (permission *Permission) BeforeCreate(tx *gorm.DB) (err error) {
+	permission.UID = uid.Generate()
+	return err
 }

@@ -52,7 +52,7 @@ func EditEmployee(c *gin.Context) {
 func QueryEmployee(c *gin.Context) {
 	var employee model.Employee
 	uid := c.Param("uid")
-	if uid == "" {
+	if uid == "my" {
 		uid = c.MustGet("employeeUID").(string)
 	}
 	employee, code = model.SelectEmployee(uid)

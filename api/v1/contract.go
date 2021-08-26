@@ -13,9 +13,9 @@ import (
 func EntryContract(c *gin.Context) {
 	var contract model.Contract
 	_ = c.ShouldBindJSON(&contract)
-	for _, task := range contract.Tasks {
-		task.UID = uid.Generate()
-		contract.TotalAmount += task.TotalPrice
+	for i := range contract.Tasks {
+		contract.Tasks[i].UID = uid.Generate()
+		contract.TotalAmount += contract.Tasks[i].TotalPrice
 	}
 	code = model.InsertContract(&contract)
 	msg.Message(c, code, contract)
@@ -23,7 +23,7 @@ func EntryContract(c *gin.Context) {
 
 //删除合同
 func DelContract(c *gin.Context) {
-	uid := c.Param("id")
+	uid := c.Param("uid")
 	code = model.DeleteContract(uid)
 	msg.Message(c, code, nil)
 }
@@ -39,7 +39,7 @@ func EditContract(c *gin.Context) {
 //查询合同
 func QueryContract(c *gin.Context) {
 	var contract model.Contract
-	uid := c.Param("id")
+	uid := c.Param("uid")
 	contract, code = model.SelectContract(uid)
 	msg.Message(c, code, contract)
 }
