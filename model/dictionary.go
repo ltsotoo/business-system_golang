@@ -29,6 +29,7 @@ type Dictionary struct {
 }
 
 func InsertDictionaryType(dictionaryType *DictionaryType) (code int) {
+	dictionaryType.UID = uid.Generate()
 	err = db.Create(&dictionaryType).Error
 	if err != nil {
 		return msg.ERROR_SYSTE_DIC_TYPE_INSERT
@@ -93,10 +94,5 @@ func SelectDictionaries(parentUID string, dictionaryTypeUID string) (dictionarie
 
 func (dictionaryType *DictionaryType) BeforeCreate(tx *gorm.DB) (err error) {
 	dictionaryType.UID = uid.Generate()
-	return err
-}
-
-func (dictionary *Dictionary) BeforeCreate(tx *gorm.DB) (err error) {
-	dictionary.UID = uid.Generate()
 	return err
 }

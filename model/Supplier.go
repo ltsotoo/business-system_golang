@@ -26,6 +26,7 @@ type SupplierQuery struct {
 }
 
 func InsertSupplier(supplier *Supplier) (code int) {
+	supplier.UID = uid.Generate()
 	err = db.Create(&supplier).Error
 	if err != nil {
 		return msg.ERROR_SUPPLIER_INSERT
@@ -77,9 +78,4 @@ func SelectSuppliers(pageSize int, pageNo int, supplierQuery *SupplierQuery) (su
 		return suppliers, msg.ERROR_SUPPLIER_SELECT, total
 	}
 	return suppliers, msg.SUCCESS, total
-}
-
-func (supplier *Supplier) BeforeCreate(tx *gorm.DB) (err error) {
-	supplier.UID = uid.Generate()
-	return err
 }

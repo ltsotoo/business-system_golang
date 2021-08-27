@@ -37,6 +37,7 @@ type ProductQuery struct {
 }
 
 func InsertProduct(product *Product) (code int) {
+	product.UID = uid.Generate()
 	err = db.Create(&product).Error
 	if err != nil {
 		return msg.ERROR_PRODUCT_INSERT
@@ -93,9 +94,4 @@ func SelectProducts(pageSize int, pageNo int, productQuery *ProductQuery) (produ
 		return nil, msg.ERROR, 0
 	}
 	return products, msg.SUCCESS, total
-}
-
-func (product *Product) BeforeCreate(tx *gorm.DB) (err error) {
-	product.UID = uid.Generate()
-	return err
 }

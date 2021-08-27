@@ -41,6 +41,10 @@ type ContractQuery struct {
 }
 
 func InsertContract(contract *Contract) (code int) {
+	contract.UID = uid.Generate()
+	if contract.IsEntryCustomer {
+		contract.Customer = Customer{}
+	}
 	err = db.Create(&contract).Error
 	if err != nil {
 		return msg.ERROR_CONTRACT_INSERT
@@ -93,12 +97,4 @@ func SelectContracts(pageSize int, pageNo int, contractQuery *ContractQuery) (co
 		return contracts, msg.ERROR, total
 	}
 	return contracts, msg.SUCCESS, total
-}
-
-func (contract *Contract) BeforeCreate(tx *gorm.DB) (err error) {
-	contract.UID = uid.Generate()
-	if contract.IsEntryCustomer {
-		contract.Customer = Customer{}
-	}
-	return err
 }

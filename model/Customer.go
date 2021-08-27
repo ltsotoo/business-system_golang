@@ -41,6 +41,7 @@ type CustomerCompany struct {
 }
 
 func InsertCustomer(customer *Customer) (code int) {
+	customer.UID = uid.Generate()
 	err = db.Create(&customer).Error
 	if err != nil {
 		return msg.ERROR_CUSTOMER_INSERT
@@ -108,9 +109,4 @@ func SelectCompanys(areaUID string) (CustomerCompanys []CustomerCompany, code in
 		return CustomerCompanys, msg.ERROR
 	}
 	return CustomerCompanys, msg.SUCCESS
-}
-
-func (customer *Customer) BeforeCreate(tx *gorm.DB) (err error) {
-	customer.UID = uid.Generate()
-	return err
 }

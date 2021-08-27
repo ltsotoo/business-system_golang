@@ -34,17 +34,21 @@ type AreaQuery struct {
 type Department struct {
 	gorm.Model
 	UID       string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	Type      string `gorm:"type:varchar(32);comment:部门类型;not null" json:"type"`
+	TypeUID   string `gorm:"type:varchar(32);comment:部门类型;not null" json:"typeUID"`
 	OfficeUID string `gorm:"type:varchar(32);comment:办事处ID;not null" json:"officeUID"`
 	Name      string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
+
+	Type Dictionary `gorm:"foreignKey:TypeUID;references:UID" json:"type"`
 }
 
 type Role struct {
 	gorm.Model
 	UID           string       `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
 	Name          string       `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
-	DepartmentUID string       `gorm:"type:varchar(32);comment:部门UID" json:"departmentUID"`
-	Permissions   []Permission `gorm:"many2many:role_permission;foreignKey:UID;References:UID" json:"rermissions"`
+	DepartmentUID string       `gorm:"type:varchar(32);comment:部门UID;default:(-)" json:"departmentUID"`
+	Permissions   []Permission `gorm:"many2many:role_permission;foreignKey:UID;References:UID" json:"permissions"`
+
+	Department Dictionary `gorm:"foreignKey:DepartmentUID;references:UID" json:"department"`
 }
 
 type Permission struct {
@@ -145,7 +149,7 @@ func DeleteDepartment(uid string) (code int) {
 }
 
 func SelectDepartments(department *Department) (departments []Department, code int) {
-	err = db.Where("office_uid = ? AND name LIKE ?", department.OfficeUID, "%"+department.Name+"%").
+	err = db.Preload("Type").Where("office_uid = ? AND name LIKE ?", department.OfficeUID, "%"+department.Name+"%").
 		Find(&departments).Error
 	if err != nil {
 		return nil, msg.ERROR_DEPARTMENT_SELECT
@@ -153,8 +157,41 @@ func SelectDepartments(department *Department) (departments []Department, code i
 	return departments, msg.SUCCESS
 }
 
-func SelectRoles() (roles []Role, code int) {
-	err = db.Find(&roles).Error
+func SelectAllRoles(name string) (roles []Role, code int) {
+	err = db.Preload("Department").Where("name LIKE ?", "%"+name+"%").Find(&roles).Error
+	if err != nil {
+		return nil, msg.ERROR_ROLE_SELECT
+	}
+	return roles, msg.SUCCESS
+}
+
+func InsertRole(role *Role) (code int) {
+	role.UID = uid.Generate()
+	err = db.Debug().Create(&role).Error
+	if err != nil {
+		return msg.ERROR_OFFICE_INSERT
+	}
+	return msg.SUCCESS
+}
+
+func UpdateRole(role *Role) (code int) {
+	err = db.Where("uid = ?", role.UID).Association("Permissions").Replace(role.Permissions)
+	if err != nil {
+		return msg.ERROR_ROLE_UPDATE
+	}
+	return msg.SUCCESS
+}
+
+func SelectRole(uid string) (role Role, code int) {
+	err = db.Preload("Permissions").Where("uid = ?", uid).First(&role).Error
+	if err != nil {
+		return role, msg.ERROR_ROLE_SELECT
+	}
+	return role, msg.SUCCESS
+}
+
+func SelectRoles(name string, departmentUID string) (roles []Role, code int) {
+	err = db.Where("name LIKE ? AND department_uid = ?", "%"+"name"+"%", departmentUID).Find(&roles).Error
 	if err != nil {
 		return nil, msg.ERROR_ROLE_SELECT
 	}
@@ -167,29 +204,4 @@ func SelectPermissions() (permissions []Permission, code int) {
 		return nil, msg.ERROR_PERMISSION_SELECT
 	}
 	return permissions, msg.SUCCESS
-}
-
-func (office *Office) BeforeCreate(tx *gorm.DB) (err error) {
-	office.UID = uid.Generate()
-	return err
-}
-
-func (area *Area) BeforeCreate(tx *gorm.DB) (err error) {
-	area.UID = uid.Generate()
-	return err
-}
-
-func (department *Department) BeforeCreate(tx *gorm.DB) (err error) {
-	department.UID = uid.Generate()
-	return err
-}
-
-func (role *Role) BeforeCreate(tx *gorm.DB) (err error) {
-	role.UID = uid.Generate()
-	return err
-}
-
-func (permission *Permission) BeforeCreate(tx *gorm.DB) (err error) {
-	permission.UID = uid.Generate()
-	return err
 }

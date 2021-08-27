@@ -84,9 +84,31 @@ func QueryDepartments(c *gin.Context) {
 	msg.Message(c, code, departments)
 }
 
+func AddRole(c *gin.Context) {
+	var role model.Role
+	_ = c.ShouldBindJSON(&role)
+	code = model.InsertRole(&role)
+	msg.Message(c, code, role)
+}
+
+func EditRole(c *gin.Context) {
+	var role model.Role
+	_ = c.ShouldBindJSON(&role)
+	code = model.UpdateRole(&role)
+	msg.Message(c, code, role)
+}
+
+func QueryRole(c *gin.Context) {
+	var role model.Role
+	uid := c.Param("uid")
+	role, code = model.SelectRole(uid)
+	msg.Message(c, code, role)
+}
+
 func QueryRoles(c *gin.Context) {
 	var roles []model.Role
-	roles, code = model.SelectRoles()
+	name := c.DefaultQuery("name", "")
+	roles, code = model.SelectAllRoles(name)
 	msg.Message(c, code, roles)
 }
 

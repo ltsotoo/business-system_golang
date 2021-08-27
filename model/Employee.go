@@ -55,6 +55,8 @@ func CheckLogin(phone string, password string) (employee Employee, code int) {
 }
 
 func InsertEmployee(employee *Employee) (code int) {
+	employee.UID = uid.Generate()
+	employee.Password, err = pwd.ScryptPwd(employee.Password)
 	err = db.Create(&employee).Error
 	if err != nil {
 		return msg.ERROR_CUSTOMER_INSERT
@@ -114,10 +116,4 @@ func SelectEmployees(pageSize int, pageNo int, employeeQuery *EmployeeQuery) (em
 		return employees, msg.ERROR_CUSTOMER_SELECT, total
 	}
 	return employees, msg.SUCCESS, total
-}
-
-func (employee *Employee) BeforeCreate(tx *gorm.DB) (err error) {
-	employee.UID = uid.Generate()
-	employee.Password, err = pwd.ScryptPwd(employee.Password)
-	return err
 }

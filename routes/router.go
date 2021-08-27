@@ -55,6 +55,9 @@ func InitRouter() {
 		auth.POST("department", v1.EntryDepartment)
 		auth.DELETE("department/:uid", v1.DelDepartment)
 		auth.POST("departments", v1.QueryDepartments)
+		auth.POST("role", v1.AddRole)
+		auth.PUT("role", v1.EditRole)
+		auth.GET("role/:uid", v1.QueryRole)
 		auth.GET("roles", v1.QueryRoles)
 		auth.GET("permissions", v1.QueryPermissions)
 		//合同模块接口
