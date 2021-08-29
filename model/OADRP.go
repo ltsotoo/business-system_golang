@@ -175,7 +175,7 @@ func InsertRole(role *Role) (code int) {
 }
 
 func UpdateRole(role *Role) (code int) {
-	err = db.Where("uid = ?", role.UID).Association("Permissions").Replace(role.Permissions)
+	err = db.Model(&role).Association("Permissions").Replace(role.Permissions)
 	if err != nil {
 		return msg.ERROR_ROLE_UPDATE
 	}
