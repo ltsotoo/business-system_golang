@@ -87,9 +87,14 @@ func SelectContract(uid string) (contract Contract, code int) {
 }
 
 func SelectContracts(pageSize int, pageNo int, contractQuery *ContractQuery) (contracts []Contract, code int, total int64) {
-	err = db.Where("no LIKE ?", "%"+contractQuery.No+"%").
-		Find(&contracts).Count(&total).
-		Preload("Area").Preload("Employee").Preload("Customer").
+	var maps = make(map[string]interface{})
+	if contractQuery.AreaUID != "" {
+		maps["area_uid"] = contractQuery.AreaUID
+	}
+
+	err = db.Where("no LIKE ?", "%"+contractQuery.No+"%").Where(maps).
+		Preload("Customer").Find(&contracts).Count(&total).
+		Preload("Area").Preload("Employee").
 		Limit(pageSize).Offset((pageNo - 1) * pageSize).
 		Find(&contracts).Error
 

@@ -14,12 +14,11 @@ func Login(c *gin.Context) {
 	_ = c.ShouldBindJSON(&employee)
 
 	employee, code = model.CheckLogin(employee.Phone, employee.Password)
-
 	if code == msg.SUCCESS {
-		token, _ = middleware.SetToken(employee.UID, employee.Phone)
+		permission_uid_set := model.SelectAllPermission(employee.UID, employee.DepartmentUID)
+		token, _ = middleware.SetToken(employee.UID, permission_uid_set)
 		token = "Bearer " + token
 	}
-
 	msg.Message(c, code, gin.H{"employee": employee, "token": token})
 }
 

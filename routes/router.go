@@ -30,7 +30,7 @@ func InitRouter() {
 	}
 
 	auth := r.Group("api/v1")
-	auth.Use(middleware.JwtToken())
+	auth.Use(middleware.JwtToken(), middleware.CheckPermission)
 	{
 		//字典表接口
 		auth.POST("dictionary", v1.AddDictionary)
@@ -58,6 +58,7 @@ func InitRouter() {
 		auth.POST("role", v1.AddRole)
 		auth.PUT("role", v1.EditRole)
 		auth.GET("role/:uid", v1.QueryRole)
+		auth.GET("allRoles", v1.QueryAllRoles)
 		auth.GET("roles", v1.QueryRoles)
 		auth.GET("permissions", v1.QueryPermissions)
 		//合同模块接口

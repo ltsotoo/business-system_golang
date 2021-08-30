@@ -54,6 +54,15 @@ func CheckLogin(phone string, password string) (employee Employee, code int) {
 	return employee, msg.SUCCESS
 }
 
+func SelectAllPermission(employeeUID string, departmentUID string) (permissions []string) {
+	//查出所有的权限(去重)
+	db.Raw("SELECT distinct permission_uid FROM role_permission WHERE role_uid IN "+
+		"(SELECT role_uid AS uid FROM employee_role WHERE employee_uid = ? UNION "+
+		"SELECT uid FROM role WHERE department_uid IN "+
+		"(SELECT type_uid FROM department WHERE	uid = ?))", employeeUID, departmentUID).Scan(&permissions)
+	return
+}
+
 func InsertEmployee(employee *Employee) (code int) {
 	employee.UID = uid.Generate()
 	employee.Password, err = pwd.ScryptPwd(employee.Password)
@@ -73,10 +82,15 @@ func DeleteEmployee(uid string) (code int) {
 }
 
 func UpdateEmployee(employee *Employee) (code int) {
-	var maps = make(map[string]interface{})
-	maps["wechat_id"] = employee.WechatID
-	maps["email"] = employee.Email
-	err = db.Model(&Employee{}).Where("uid = ?", employee.UID).Updates(maps).Error
+	err = db.Transaction(func(tdb *gorm.DB) error {
+		if txErr := tdb.Model(&Employee{}).Where("uid = ?", employee.UID).Updates(employee).Error; err != nil {
+			return txErr
+		}
+		if txErr := tdb.Model(&employee).Association("Roles").Replace(employee.Roles); err != nil {
+			return txErr
+		}
+		return nil
+	})
 	if err != nil {
 		return msg.ERROR_CUSTOMER_UPDATE
 	}
@@ -84,7 +98,7 @@ func UpdateEmployee(employee *Employee) (code int) {
 }
 
 func SelectEmployee(uid string) (employee Employee, code int) {
-	err = db.Preload("Office").Preload("Department").
+	err = db.Preload("Office").Preload("Department").Preload("Roles").
 		First(&employee, "uid = ?", uid).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {

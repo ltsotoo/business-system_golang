@@ -107,6 +107,12 @@ func QueryRole(c *gin.Context) {
 
 func QueryRoles(c *gin.Context) {
 	var roles []model.Role
+	roles, code = model.SelectRoles()
+	msg.Message(c, code, roles)
+}
+
+func QueryAllRoles(c *gin.Context) {
+	var roles []model.Role
 	name := c.DefaultQuery("name", "")
 	roles, code = model.SelectAllRoles(name)
 	msg.Message(c, code, roles)

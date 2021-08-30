@@ -8,7 +8,6 @@ import (
 )
 
 //Office办事处 Area地区 Department部门 Role角色 Permission权限
-
 type Office struct {
 	gorm.Model
 	UID  string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
@@ -157,14 +156,6 @@ func SelectDepartments(department *Department) (departments []Department, code i
 	return departments, msg.SUCCESS
 }
 
-func SelectAllRoles(name string) (roles []Role, code int) {
-	err = db.Preload("Department").Where("name LIKE ?", "%"+name+"%").Find(&roles).Error
-	if err != nil {
-		return nil, msg.ERROR_ROLE_SELECT
-	}
-	return roles, msg.SUCCESS
-}
-
 func InsertRole(role *Role) (code int) {
 	role.UID = uid.Generate()
 	err = db.Debug().Create(&role).Error
@@ -190,12 +181,28 @@ func SelectRole(uid string) (role Role, code int) {
 	return role, msg.SUCCESS
 }
 
-func SelectRoles(name string, departmentUID string) (roles []Role, code int) {
-	err = db.Where("name LIKE ? AND department_uid = ?", "%"+"name"+"%", departmentUID).Find(&roles).Error
+func SelectRoles() (roles []Role, code int) {
+	err = db.Raw("SELECT * From role Where department_uid is NULL").Scan(&roles).Error
 	if err != nil {
 		return nil, msg.ERROR_ROLE_SELECT
 	}
 	return roles, msg.SUCCESS
+}
+
+func SelectAllRoles(name string) (roles []Role, code int) {
+	err = db.Preload("Department").Where("name LIKE ?", "%"+name+"%").Find(&roles).Error
+	if err != nil {
+		return nil, msg.ERROR_ROLE_SELECT
+	}
+	return roles, msg.SUCCESS
+}
+
+func SelectPermission(module string, name string) (permission Permission, code int) {
+	err = db.Where("module = ? AND name = ?", module, name).First(&permission).Error
+	if err != nil {
+		return permission, msg.ERROR_PERMISSION_SELECT
+	}
+	return permission, msg.SUCCESS
 }
 
 func SelectPermissions() (permissions []Permission, code int) {
