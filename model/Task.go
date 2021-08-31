@@ -43,7 +43,7 @@ func SelectTasks(task *Task) (tasks []Task, code int) {
 		Preload("PurchaseMan").Preload("InventoryMan").Preload("ShipmentMan").
 		Where(&task).Find(&tasks).Error
 	if err != nil {
-		return nil, msg.ERROR
+		return tasks, msg.ERROR
 	}
 	return tasks, msg.SUCCESS
 }

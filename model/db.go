@@ -55,6 +55,7 @@ func InitDb() {
 		&Department{},
 		&Role{},
 		&Permission{},
+		&Url{},
 	)
 
 	sqlDB, _ := db.DB()

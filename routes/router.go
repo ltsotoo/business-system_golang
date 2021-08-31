@@ -30,7 +30,7 @@ func InitRouter() {
 	}
 
 	auth := r.Group("api/v1")
-	auth.Use(middleware.JwtToken(), middleware.CheckPermission)
+	auth.Use(middleware.JwtToken())
 	{
 		//字典表接口
 		auth.POST("dictionary", v1.AddDictionary)

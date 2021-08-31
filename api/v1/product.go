@@ -3,6 +3,7 @@ package v1
 import (
 	"business-system_golang/model"
 	"business-system_golang/utils/msg"
+	"business-system_golang/utils/rbac"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -10,33 +11,53 @@ import (
 
 //录入产品
 func EntryProduct(c *gin.Context) {
-	var product model.Product
-	_ = c.ShouldBindJSON(&product)
-	code = model.InsertProduct(&product)
-	msg.Message(c, code, product)
+	code = rbac.Check(c, "product", "insert")
+	if code == msg.SUCCESS {
+		var product model.Product
+		_ = c.ShouldBindJSON(&product)
+		code = model.InsertProduct(&product)
+		msg.Message(c, code, product)
+	} else {
+		msg.MessageForNotPermission(c)
+	}
 }
 
 //删除产品
 func DelProduct(c *gin.Context) {
-	uid := c.Param("uid")
-	code = model.DeleteProduct(uid)
-	msg.Message(c, code, nil)
+	code = rbac.Check(c, "product", "delete")
+	if code == msg.SUCCESS {
+		uid := c.Param("uid")
+		code = model.DeleteProduct(uid)
+		msg.Message(c, code, nil)
+	} else {
+		msg.MessageForNotPermission(c)
+	}
 }
 
 //编辑产品
 func EditProduct(c *gin.Context) {
-	var product model.Product
-	_ = c.ShouldBindJSON(&product)
-	code = model.UpdateProduct(&product)
-	msg.Message(c, code, product)
+	code = rbac.Check(c, "product", "update")
+	if code == msg.ERROR {
+		msg.MessageForNotPermission(c)
+	} else {
+		var product model.Product
+		_ = c.ShouldBindJSON(&product)
+		code = model.UpdateProduct(&product)
+		msg.Message(c, code, product)
+	}
 }
 
 //查询产品
 func QueryProduct(c *gin.Context) {
-	var product model.Product
-	uid := c.Param("uid")
-	product, code = model.SelectProduct(uid)
-	msg.Message(c, code, product)
+	code = rbac.Check(c, "product", "select")
+	if code == msg.ERROR {
+		msg.MessageForNotPermission(c)
+	} else {
+		var product model.Product
+		uid := c.Param("uid")
+		product, code = model.SelectProduct(uid)
+		msg.Message(c, code, product)
+	}
 }
 
 //查询产品列表

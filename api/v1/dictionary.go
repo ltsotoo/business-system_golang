@@ -3,6 +3,7 @@ package v1
 import (
 	"business-system_golang/model"
 	"business-system_golang/utils/msg"
+	"business-system_golang/utils/rbac"
 
 	"github.com/gin-gonic/gin"
 )
@@ -23,16 +24,26 @@ func QueryDictionaryTypes(c *gin.Context) {
 }
 
 func AddDictionary(c *gin.Context) {
-	var dictionary model.Dictionary
-	_ = c.ShouldBindJSON(&dictionary)
-	code = model.InsertDictionary(&dictionary)
-	msg.Message(c, code, dictionary)
+	code = rbac.Check(c, "system", "all")
+	if code == msg.ERROR {
+		msg.MessageForNotPermission(c)
+	} else {
+		var dictionary model.Dictionary
+		_ = c.ShouldBindJSON(&dictionary)
+		code = model.InsertDictionary(&dictionary)
+		msg.Message(c, code, dictionary)
+	}
 }
 
 func DelDictionary(c *gin.Context) {
-	uid := c.Param("uid")
-	code = model.DeleteDictionary(uid)
-	msg.Message(c, code, nil)
+	code = rbac.Check(c, "system", "all")
+	if code == msg.ERROR {
+		msg.MessageForNotPermission(c)
+	} else {
+		uid := c.Param("uid")
+		code = model.DeleteDictionary(uid)
+		msg.Message(c, code, nil)
+	}
 }
 
 //字典表查询

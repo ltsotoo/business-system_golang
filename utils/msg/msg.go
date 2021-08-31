@@ -184,6 +184,13 @@ func Message(c *gin.Context, code int, data interface{}) {
 	})
 }
 
+func MessageForNotPermission(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{
+		"status":  ERROR_PREMISSION_WORING,
+		"message": GetErrMsg(ERROR_PREMISSION_WORING),
+	})
+}
+
 func MessageForList(c *gin.Context, code int, data interface{}, pageSize int, PageNo int, total int64) {
 	c.JSON(http.StatusOK, gin.H{
 		"status":   code,

@@ -91,7 +91,7 @@ func SelectProducts(pageSize int, pageNo int, productQuery *ProductQuery) (produ
 		Limit(pageSize).Offset((pageNo - 1) * pageSize).Find(&products).Error
 
 	if err != nil && err != gorm.ErrRecordNotFound {
-		return nil, msg.ERROR, 0
+		return products, msg.ERROR, 0
 	}
 	return products, msg.SUCCESS, total
 }

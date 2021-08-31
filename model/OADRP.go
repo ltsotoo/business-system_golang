@@ -56,6 +56,16 @@ type Permission struct {
 	Module string `gorm:"type:varchar(20);comment:模块;not null" json:"module"`
 	Name   string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
 	Text   string `gorm:"type:varchar(20);comment:描述;not null" json:"text"`
+	No     string `gorm:"type:varchar(3);comment:序号;default:(-)" json:"no"`
+	UrlUID string `gorm:"type:varchar(32);comment:Url_UID;default:(-)" json:"urlUID"`
+}
+
+type Url struct {
+	gorm.Model
+	UID   string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
+	Title string `gorm:"type:varchar(20);comment:标题;not null" json:"title"`
+	Icon  string `gorm:"type:varchar(20);comment:图标;not null" json:"icon"`
+	Url   string `gorm:"type:varchar(20);comment:url;not null" json:"url"`
 }
 
 func InsertOffice(office *Office) (code int) {
@@ -151,7 +161,7 @@ func SelectDepartments(department *Department) (departments []Department, code i
 	err = db.Preload("Type").Where("office_uid = ? AND name LIKE ?", department.OfficeUID, "%"+department.Name+"%").
 		Find(&departments).Error
 	if err != nil {
-		return nil, msg.ERROR_DEPARTMENT_SELECT
+		return departments, msg.ERROR_DEPARTMENT_SELECT
 	}
 	return departments, msg.SUCCESS
 }
@@ -184,7 +194,7 @@ func SelectRole(uid string) (role Role, code int) {
 func SelectRoles() (roles []Role, code int) {
 	err = db.Raw("SELECT * From role Where department_uid is NULL").Scan(&roles).Error
 	if err != nil {
-		return nil, msg.ERROR_ROLE_SELECT
+		return roles, msg.ERROR_ROLE_SELECT
 	}
 	return roles, msg.SUCCESS
 }
@@ -192,7 +202,7 @@ func SelectRoles() (roles []Role, code int) {
 func SelectAllRoles(name string) (roles []Role, code int) {
 	err = db.Preload("Department").Where("name LIKE ?", "%"+name+"%").Find(&roles).Error
 	if err != nil {
-		return nil, msg.ERROR_ROLE_SELECT
+		return roles, msg.ERROR_ROLE_SELECT
 	}
 	return roles, msg.SUCCESS
 }
@@ -208,7 +218,19 @@ func SelectPermission(module string, name string) (permission Permission, code i
 func SelectPermissions() (permissions []Permission, code int) {
 	err = db.Find(&permissions).Error
 	if err != nil {
-		return nil, msg.ERROR_PERMISSION_SELECT
+		return permissions, msg.ERROR_PERMISSION_SELECT
 	}
 	return permissions, msg.SUCCESS
+}
+
+func SelectUrls(uids []string) (urls []Url) {
+	db.Raw("SELECT distinct url.* FROM url LEFT JOIN permission "+
+		"ON url.uid = permission.url_uid WHERE permission.uid IN (?) or url.id = 1 order by url.id", uids).
+		Scan(&urls)
+	return
+}
+
+func SelectPermissionsNo(uids []string) (nos []string) {
+	db.Raw("SELECT no FROM permission WHERE uid IN (?)", uids).Scan(&nos)
+	return
 }

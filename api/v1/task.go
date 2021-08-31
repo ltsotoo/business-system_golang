@@ -3,14 +3,20 @@ package v1
 import (
 	"business-system_golang/model"
 	"business-system_golang/utils/msg"
+	"business-system_golang/utils/rbac"
 
 	"github.com/gin-gonic/gin"
 )
 
 func DelTask(c *gin.Context) {
-	uid := c.Param("uid")
-	code = model.DeleteTask(uid)
-	msg.Message(c, code, nil)
+	code = rbac.Check(c, "contract", "delete")
+	if code == msg.ERROR {
+		msg.MessageForNotPermission(c)
+	} else {
+		uid := c.Param("uid")
+		code = model.DeleteTask(uid)
+		msg.Message(c, code, nil)
+	}
 }
 
 func QueryTasks(c *gin.Context) {

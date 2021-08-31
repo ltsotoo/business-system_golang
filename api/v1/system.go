@@ -11,6 +11,8 @@ import (
 func Login(c *gin.Context) {
 	var employee model.Employee
 	var token string
+	var urls []model.Url
+	var nos []string
 	_ = c.ShouldBindJSON(&employee)
 
 	employee, code = model.CheckLogin(employee.Phone, employee.Password)
@@ -18,8 +20,10 @@ func Login(c *gin.Context) {
 		permission_uid_set := model.SelectAllPermission(employee.UID, employee.DepartmentUID)
 		token, _ = middleware.SetToken(employee.UID, permission_uid_set)
 		token = "Bearer " + token
+		urls = model.SelectUrls(permission_uid_set)
+		nos = model.SelectPermissionsNo(permission_uid_set)
 	}
-	msg.Message(c, code, gin.H{"employee": employee, "token": token})
+	msg.Message(c, code, gin.H{"employee": employee, "token": token, "urls": urls, "nos": nos})
 }
 
 func Regist(c *gin.Context) {
