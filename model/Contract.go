@@ -12,8 +12,8 @@ type Contract struct {
 	gorm.Model
 	No                    string `gorm:"type:varchar(32);comment:合同编号" json:"no"`
 	UID                   string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	AreaUID               string `gorm:"type:varchar(32);comment:所属区域ID;default:(-)" json:"areaUID"`
-	EmployeeUID           string `gorm:"type:varchar(32);comment:业务员ID;default:(-)" json:"employeeUID"`
+	AreaUID               string `gorm:"type:varchar(32);comment:所属区域UID;default:(-)" json:"areaUID"`
+	EmployeeUID           string `gorm:"type:varchar(32);comment:业务员UID;default:(-)" json:"employeeUID"`
 	IsEntryCustomer       bool   `gorm:"type:boolean;comment:客户是否录入" json:"isEntryCustomer"`
 	CustomerUID           string `gorm:"type:varchar(32);comment:客户ID;default:(-)" json:"customerUID"`
 	ContractDate          string `gorm:"type:varchar(20);comment:签订日期" json:"contractDate"`
@@ -24,7 +24,7 @@ type Contract struct {
 	InvoiceContent        string `gorm:"type:varchar(20);comment:开票内容" json:"invoiceContent"`
 	IsSpecial             bool   `gorm:"type:boolean;comment:特殊合同?" json:"isSpecial"`
 	TotalAmount           int    `gorm:"type:int;comment:总金额(元)" json:"totalAmount"`
-	Remarks               string `gorm:"type:varchar(20);comment:备注" json:"remarks"`
+	Remarks               string `gorm:"type:varchar(200);comment:备注" json:"remarks"`
 	Status                int    `gorm:"type:int;comment:状态;not null" json:"status"`
 
 	Area         Area       `gorm:"foreignKey:AreaUID;references:UID" json:"area"`
@@ -32,6 +32,15 @@ type Contract struct {
 	Customer     Customer   `gorm:"foreignKey:CustomerUID;references:UID" json:"customer"`
 	ContractUnit Dictionary `gorm:"foreignKey:ContractUnitUID;references:UID" json:"contractUnit"`
 	Tasks        []Task     `gorm:"foreignKey:ContractUID;references:UID" json:"tasks"`
+}
+
+//回款记录Model
+type Collection struct {
+	gorm.Model
+	UID         string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
+	ContractUID string `gorm:"type:varchar(32);comment:合同ID" json:"contractUID"`
+	Amount      int    `gorm:"type:int;comment:金额(元)" json:"totalAmount"`
+	Remarks     string `gorm:"type:varchar(200);comment:回款详情记录" json:"remarks"`
 }
 
 type ContractQuery struct {
