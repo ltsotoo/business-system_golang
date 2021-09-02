@@ -76,6 +76,11 @@ func JwtToken() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
+		if key.EmployeeUID == "" {
+			msg.Message(c, msg.ERROR_TOKEN_UID, nil)
+			c.Abort()
+			return
+		}
 		c.Set("employeeUID", key.EmployeeUID)
 		c.Set("Permission_uid_set", key.Permission_uid_set)
 		c.Next()

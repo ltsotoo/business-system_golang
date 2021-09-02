@@ -9,7 +9,7 @@ import (
 
 // 供应商 Model
 type Supplier struct {
-	gorm.Model
+	BaseModel
 	UID      string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
 	Name     string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
 	Address  string `gorm:"type:varchar(20);comment:地址;not null" json:"address"`

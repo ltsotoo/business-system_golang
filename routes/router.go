@@ -90,6 +90,11 @@ func InitRouter() {
 		auth.PUT("supplier", v1.EditSupplier)
 		auth.GET("supplier/:uid", v1.QuerySupplier)
 		auth.POST("suppliers", v1.QuerySuppliers)
+		//财务模块接口
+		auth.POST("expense", v1.AddExpense)
+		auth.PUT("expense", v1.ApprovalExpense)
+		auth.GET("expense/:uid", v1.QueryExpense)
+		auth.POST("expenses", v1.QueryExpenses)
 	}
 
 	_ = r.Run(config.SystemConfig.Server.Port)

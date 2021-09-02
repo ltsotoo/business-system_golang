@@ -9,7 +9,7 @@ import (
 
 // 合同 Model
 type Contract struct {
-	gorm.Model
+	BaseModel
 	No                    string `gorm:"type:varchar(32);comment:合同编号" json:"no"`
 	UID                   string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
 	AreaUID               string `gorm:"type:varchar(32);comment:所属区域UID;default:(-)" json:"areaUID"`
@@ -36,7 +36,7 @@ type Contract struct {
 
 //回款记录Model
 type Collection struct {
-	gorm.Model
+	BaseModel
 	UID         string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
 	ContractUID string `gorm:"type:varchar(32);comment:合同ID" json:"contractUID"`
 	Amount      int    `gorm:"type:int;comment:金额(元)" json:"totalAmount"`

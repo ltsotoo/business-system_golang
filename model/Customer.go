@@ -9,7 +9,7 @@ import (
 
 // 客户 Model
 type Customer struct {
-	gorm.Model
+	BaseModel
 	UID           string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
 	CompanyUID    string `gorm:"type:varchar(32);comment:公司UID;not null" json:"companyUID"`
 	Name          string `gorm:"type:varchar(20);comment:姓名;not null" json:"name"`
@@ -31,7 +31,7 @@ type CustomerQuery struct {
 
 // 客户公司 Model
 type CustomerCompany struct {
-	gorm.Model
+	BaseModel
 	UID     string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
 	AreaUID string `gorm:"type:varchar(32);comment:地区UID;not null" json:"areaUID"`
 	Name    string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`

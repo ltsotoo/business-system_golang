@@ -2,13 +2,11 @@ package model
 
 import (
 	"business-system_golang/utils/msg"
-
-	"gorm.io/gorm"
 )
 
 // 合同任务 Model
 type Task struct {
-	gorm.Model
+	BaseModel
 	UID              string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
 	ContractUID      string `gorm:"type:varchar(32);comment:合同ID" json:"contractUID"`
 	ProductUID       string `gorm:"type:varchar(32);comment:产品ID" json:"productUID"`

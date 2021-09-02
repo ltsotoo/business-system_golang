@@ -9,7 +9,7 @@ import (
 
 //Office办事处 Area地区 Department部门 Role角色 Permission权限
 type Office struct {
-	gorm.Model
+	BaseModel
 	UID  string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
 	Name string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
 
@@ -17,7 +17,7 @@ type Office struct {
 }
 
 type Area struct {
-	gorm.Model
+	BaseModel
 	UID       string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
 	OfficeUID string `gorm:"type:varchar(32);comment:办事处UID;not null" json:"officeUID"`
 	Name      string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
@@ -31,7 +31,7 @@ type AreaQuery struct {
 }
 
 type Department struct {
-	gorm.Model
+	BaseModel
 	UID       string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
 	TypeUID   string `gorm:"type:varchar(32);comment:部门类型;not null" json:"typeUID"`
 	OfficeUID string `gorm:"type:varchar(32);comment:办事处ID;not null" json:"officeUID"`
@@ -41,7 +41,7 @@ type Department struct {
 }
 
 type Role struct {
-	gorm.Model
+	BaseModel
 	UID           string       `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
 	Name          string       `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
 	DepartmentUID string       `gorm:"type:varchar(32);comment:部门UID;default:(-)" json:"departmentUID"`
@@ -51,7 +51,7 @@ type Role struct {
 }
 
 type Permission struct {
-	gorm.Model
+	BaseModel
 	UID    string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
 	Module string `gorm:"type:varchar(20);comment:模块;not null" json:"module"`
 	Name   string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
@@ -61,7 +61,7 @@ type Permission struct {
 }
 
 type Url struct {
-	gorm.Model
+	BaseModel
 	UID   string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
 	Title string `gorm:"type:varchar(20);comment:标题;not null" json:"title"`
 	Icon  string `gorm:"type:varchar(20);comment:图标;not null" json:"icon"`

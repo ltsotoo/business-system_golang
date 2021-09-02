@@ -9,7 +9,7 @@ import (
 
 //字典类型表 Model
 type DictionaryType struct {
-	gorm.Model
+	BaseModel
 	UID       string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
 	ParentUID string `gorm:"type:varchar(32);comment:父UID" json:"parentUID"`
 	Module    string `gorm:"type:varchar(20);comment:模块;not null" json:"module"`
@@ -21,7 +21,7 @@ type DictionaryType struct {
 
 //字典表 Model
 type Dictionary struct {
-	gorm.Model
+	BaseModel
 	UID               string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
 	ParentUID         string `gorm:"type:varchar(32);comment:父ID" json:"parentUID"`
 	DictionaryTypeUID string `gorm:"type:varchar(32);comment:类型ID;default:(-)" json:"dictionaryTypeUID"`
