@@ -51,7 +51,7 @@ func UpdateExpense(expense *Expense) (code int) {
 
 func SelectExpense(uid string) (expense Expense, code int) {
 	err = db.Preload("Employee").Preload("Approver").Preload("Type").
-		First(&expense, "uid = ?", uid).Error
+		Where("uid = ?", uid).First(&expense).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return expense, msg.ERROR_EXPENSE_SELECT
 	}

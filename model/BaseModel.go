@@ -4,6 +4,8 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type XTime struct {
@@ -36,5 +38,5 @@ type BaseModel struct {
 	ID        uint `gorm:"primary_key"`
 	CreatedAt XTime
 	UpdatedAt XTime
-	DeletedAt *XTime `sql:"index"`
+	DeletedAt gorm.DeletedAt `gorm:"index"`
 }

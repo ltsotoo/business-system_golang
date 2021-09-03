@@ -24,16 +24,16 @@ func ApprovalExpense(c *gin.Context) {
 	if code == msg.ERROR {
 		msg.MessageForNotPermission(c)
 	} else {
-		var expense model.Expense
-		var expenseDB model.Expense
+		var expense, expenseDB model.Expense
 		_ = c.ShouldBindJSON(&expense)
 		expenseDB, code = model.SelectExpense(expense.UID)
 		if code == msg.SUCCESS && expenseDB.Status == 0 &&
 			(expense.Status == -1 || expense.Status == 1) {
 			expense.ApproverUID = c.MustGet("employeeUID").(string)
 			code = model.UpdateExpense(&expense)
-			msg.Message(c, code, expense)
+
 		}
+		msg.Message(c, code, expense)
 	}
 }
 
