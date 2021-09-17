@@ -66,18 +66,13 @@ func EditEmployee(c *gin.Context) {
 
 //查询员工
 func QueryEmployee(c *gin.Context) {
-	code = rbac.Check(c, "employee", "select")
-	if code == msg.ERROR {
-		msg.MessageForNotPermission(c)
-	} else {
-		var employee model.Employee
-		uid := c.Param("uid")
-		if uid == "my" {
-			uid = c.MustGet("employeeUID").(string)
-		}
-		employee, code = model.SelectEmployee(uid)
-		msg.Message(c, code, employee)
+	var employee model.Employee
+	uid := c.Param("uid")
+	if uid == "my" {
+		uid = c.MustGet("employeeUID").(string)
 	}
+	employee, code = model.SelectEmployee(uid)
+	msg.Message(c, code, employee)
 }
 
 //查询员工列表

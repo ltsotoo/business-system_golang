@@ -19,6 +19,7 @@ type Employee struct {
 	Email         string `gorm:"type:varchar(20);comment:邮箱" json:"email"`
 	OfficeUID     string `gorm:"type:varchar(32);comment:办事处UID;default:(-)" json:"officeUID"`
 	DepartmentUID string `gorm:"type:varchar(32);comment:部门UID;default:(-)" json:"departmentUID"`
+	Number        string `gorm:"type:varchar(20);comment:编号;unique" json:"number"`
 
 	Office     Office     `gorm:"foreignKey:OfficeUID;references:UID" json:"office"`
 	Department Department `gorm:"foreignKey:DepartmentUID;references:UID" json:"department"`
@@ -83,11 +84,11 @@ func DeleteEmployee(uid string) (code int) {
 
 func UpdateEmployee(employee *Employee) (code int) {
 	err = db.Transaction(func(tdb *gorm.DB) error {
-		if txErr := tdb.Model(&Employee{}).Where("uid = ?", employee.UID).Updates(employee).Error; err != nil {
-			return txErr
+		if tErr := tdb.Model(&Employee{}).Where("uid = ?", employee.UID).Updates(employee).Error; tErr != nil {
+			return tErr
 		}
-		if txErr := tdb.Model(&employee).Association("Roles").Replace(employee.Roles); err != nil {
-			return txErr
+		if tErr := tdb.Model(&employee).Association("Roles").Replace(employee.Roles); tErr != nil {
+			return tErr
 		}
 		return nil
 	})

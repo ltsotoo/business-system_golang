@@ -19,8 +19,9 @@ type Office struct {
 type Area struct {
 	BaseModel
 	UID       string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	OfficeUID string `gorm:"type:varchar(32);comment:办事处UID;not null" json:"officeUID"`
+	OfficeUID string `gorm:"type:varchar(32);comment:办事处UID;default:(-)" json:"officeUID"`
 	Name      string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
+	Number    string `gorm:"type:varchar(20);comment:编号;unique" json:"number"`
 
 	Office Office `gorm:"foreignKey:OfficeUID;references:UID" json:"office"`
 }
@@ -66,6 +67,7 @@ type Url struct {
 	Title string `gorm:"type:varchar(20);comment:标题;not null" json:"title"`
 	Icon  string `gorm:"type:varchar(20);comment:图标;not null" json:"icon"`
 	Url   string `gorm:"type:varchar(20);comment:url;not null" json:"url"`
+	No    int    `gorm:"type:int;comment:序号" json:"no"`
 }
 
 func InsertOffice(office *Office) (code int) {
@@ -130,10 +132,23 @@ func UpdateArea(area *Area) (code int) {
 	return msg.SUCCESS
 }
 
+func SelectArea(uid string) (area Area, code int) {
+	err = db.Where("uid = ?", uid).First(&area).Error
+	if err != nil {
+		return area, msg.ERROR_AREA_SELECT
+	}
+	return area, msg.SUCCESS
+}
+
 func SelectAreas(areaQuery *AreaQuery) (areas []Area, code int) {
-	err = db.Preload("Office").Joins("Office").
-		Where("area.name LIKE ? AND Office.name LIKE ?", "%"+areaQuery.Name+"%", "%"+areaQuery.OfficeName+"%").
-		Find(&areas).Error
+	tDb := db.Preload("Office").Joins("Office")
+	if areaQuery.Name != "" {
+		tDb = tDb.Where("area.name LIKE ?", "%"+areaQuery.Name+"%")
+	}
+	if areaQuery.OfficeName != "" {
+		tDb = tDb.Where("Office.name LIKE ?", "%"+areaQuery.OfficeName+"%")
+	}
+	err = tDb.Find(&areas).Error
 	if err != nil {
 		return areas, msg.ERROR_AREA_SELECT
 	}
@@ -225,7 +240,7 @@ func SelectPermissions() (permissions []Permission, code int) {
 
 func SelectUrls(uids []string) (urls []Url) {
 	db.Raw("SELECT distinct url.* FROM url LEFT JOIN permission "+
-		"ON url.uid = permission.url_uid WHERE permission.uid IN (?) or url.id = 1 order by url.id", uids).
+		"ON url.uid = permission.url_uid WHERE permission.uid IN (?) or url.id = 1 order by url.no", uids).
 		Scan(&urls)
 	return
 }

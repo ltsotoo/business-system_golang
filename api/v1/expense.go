@@ -28,7 +28,7 @@ func ApprovalExpense(c *gin.Context) {
 		_ = c.ShouldBindJSON(&expense)
 		expenseDB, code = model.SelectExpense(expense.UID)
 		if code == msg.SUCCESS && expenseDB.Status == 0 &&
-			(expense.Status == -1 || expense.Status == 1) {
+			(expense.Status == 1 || expense.Status == 2) {
 			expense.ApproverUID = c.MustGet("employeeUID").(string)
 			code = model.UpdateExpense(&expense)
 

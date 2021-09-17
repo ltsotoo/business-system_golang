@@ -72,7 +72,7 @@ func SelectExpenses(pageSize int, pageNo int, expenseQuery *ExpenseQuery) (expen
 			"%"+expenseQuery.EmployeeName+"%", "%"+expenseQuery.EmployeePhone+"%").
 		Find(&expenses).Count(&total).
 		Preload("Employee").Preload("Employee.Office").Preload("Approver").Preload("Type").
-		Limit(pageSize).Offset((pageNo - 1) * pageSize).
+		Limit(pageSize).Offset((pageNo - 1) * pageSize).Order("status").
 		Find(&expenses).Error
 
 	if err != nil && err != gorm.ErrRecordNotFound {

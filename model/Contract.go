@@ -3,6 +3,8 @@ package model
 import (
 	"business-system_golang/utils/msg"
 	"business-system_golang/utils/uid"
+	"strconv"
+	"strings"
 
 	"gorm.io/gorm"
 )
@@ -26,6 +28,8 @@ type Contract struct {
 	TotalAmount           int    `gorm:"type:int;comment:总金额(元)" json:"totalAmount"`
 	Remarks               string `gorm:"type:varchar(200);comment:备注" json:"remarks"`
 	Status                int    `gorm:"type:int;comment:状态;not null" json:"status"`
+	ProductionStatus      int    `gorm:"type:int;comment:生产状态" json:"productionStatus"`
+	CollectionStatus      int    `gorm:"type:int;comment:回款状态" json:"collectionStatus"`
 
 	Area         Area       `gorm:"foreignKey:AreaUID;references:UID" json:"area"`
 	Employee     Employee   `gorm:"foreignKey:EmployeeUID;references:UID" json:"employee"`
@@ -54,11 +58,28 @@ func InsertContract(contract *Contract) (code int) {
 	if contract.IsEntryCustomer {
 		contract.Customer = Customer{}
 	}
-	err = db.Create(&contract).Error
+	// err = db.Create(&contract).Error
+	err = db.Transaction(func(tdb *gorm.DB) error {
+		if tErr := tdb.Create(&contract).Error; tErr != nil {
+			return tErr
+		}
+		if tErr := tdb.Model(&Contract{}).Where("uid = ?", contract.UID).Update("no", CreateNo(contract)).Error; tErr != nil {
+			return tErr
+		}
+		return nil
+	})
 	if err != nil {
 		return msg.ERROR_CONTRACT_INSERT
 	}
 	return msg.SUCCESS
+}
+
+func CreateNo(contract *Contract) (no string) {
+	area, _ := SelectArea(contract.AreaUID)
+	employee, _ := SelectEmployee(contract.EmployeeUID)
+	tString := strings.ReplaceAll(contract.ContractDate, "-", "")
+	no = "bjscistar-" + tString + "-" + area.Number + employee.Number + "0" + strconv.Itoa(int(contract.ID))
+	return
 }
 
 func DeleteContract(uid string) (code int) {

@@ -3,6 +3,7 @@ package model
 import (
 	"database/sql/driver"
 	"fmt"
+	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -10,6 +11,18 @@ import (
 
 type XTime struct {
 	time.Time
+}
+
+func (t *XTime) UnmarshalJSON(data []byte) error {
+	if string(data) == "null" {
+		return nil
+	}
+	var err error
+	str := string(data)
+	timeStr := strings.Trim(str, "\"")
+	t1, err := time.Parse("2006-01-02 15:04:05", timeStr)
+	*t = XTime{t1}
+	return err
 }
 
 func (t XTime) MarshalJSON() ([]byte, error) {
@@ -35,7 +48,7 @@ func (t *XTime) Scan(v interface{}) error {
 }
 
 type BaseModel struct {
-	ID        uint `gorm:"primary_key"`
+	ID        uint `gorm:"primary_key" json:"ID"`
 	CreatedAt XTime
 	UpdatedAt XTime
 	DeletedAt gorm.DeletedAt `gorm:"index"`
