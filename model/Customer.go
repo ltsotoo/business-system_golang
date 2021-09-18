@@ -25,6 +25,7 @@ type Customer struct {
 type CustomerQuery struct {
 	AreaUID       string `json:"areaUID"`
 	CompanyUID    string `json:"companyUID"`
+	CompanyName   string `json:"companyName"`
 	ResearchGroup string `json:"researchGroup"`
 	Name          string `json:"name"`
 }
@@ -83,18 +84,22 @@ func SelectCustomer(uid string) (customer Customer, code int) {
 }
 
 func SelectCustomers(pageSize int, pageNo int, customerQuery *CustomerQuery) (customers []Customer, code int, total int64) {
-	var maps = make(map[string]interface{})
-	if customerQuery.CompanyUID != "" {
-		maps["customer.company_uid"] = customerQuery.CompanyUID
-	}
+	tDb := db.Joins("Company")
 	if customerQuery.AreaUID != "" {
-		maps["Company.area_uid"] = customerQuery.AreaUID
+		tDb = tDb.Where("Company.area_uid = ?", customerQuery.AreaUID)
+	}
+	if customerQuery.CompanyName != "" {
+		tDb = tDb.Where("Company.name LIKE ?", "%"+customerQuery.CompanyName+"%")
+	}
+	if customerQuery.ResearchGroup != "" {
+		tDb = tDb.Where("customer.research_group LIKE ?", "%"+customerQuery.ResearchGroup+"%")
+	}
+	if customerQuery.Name != "" {
+		tDb = tDb.Where("customer.name LIKE ?", "%"+customerQuery.Name+"%")
 	}
 
-	err = db.Joins("Company").Where(maps).
-		Where("customer.research_group LIKE ? AND customer.name LIKE ?",
-			"%"+customerQuery.ResearchGroup+"%", "%"+customerQuery.Name+"%").
-		Find(&customers).Count(&total).
+	err = tDb.Find(&customers).Count(&total).
+		Preload("Company").Preload("Company.Area").
 		Limit(pageSize).Offset((pageNo - 1) * pageSize).
 		Find(&customers).Error
 	if err != nil && err != gorm.ErrRecordNotFound {

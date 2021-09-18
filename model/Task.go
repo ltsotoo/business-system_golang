@@ -1,6 +1,7 @@
 package model
 
 import (
+	"business-system_golang/utils/magic"
 	"business-system_golang/utils/msg"
 )
 
@@ -44,4 +45,34 @@ func SelectTasks(task *Task) (tasks []Task, code int) {
 		return tasks, msg.ERROR
 	}
 	return tasks, msg.SUCCESS
+}
+
+func UpdateTaskStatus(uid string, status int, employeeUID string) (code int) {
+	switch status {
+	case magic.TASK_STATUS_NOT_DESIGN:
+		err = db.Model(&Task{}).Where("uid = ?", uid).
+			Updates(Task{Status: status, TechnicianManUID: employeeUID}).Error
+	case magic.TASK_STATUS_NOT_PURCHASE:
+		err = db.Model(&Task{}).Where("uid = ?", uid).
+			Updates(Task{Status: status, PurchaseManUID: employeeUID}).Error
+	case magic.TASK_STATUS_NOT_STORAGE:
+		err = db.Model(&Task{}).Where("uid = ?", uid).
+			Updates(Task{Status: status, InventoryManUID: employeeUID}).Error
+	case magic.TASK_STATUS_NOT_SHIPMENT:
+		err = db.Model(&Task{}).Where("uid = ?", uid).
+			Updates(Task{Status: status, ShipmentManUID: employeeUID}).Error
+	case magic.TASK_STATUS_NOT_CONFIRM:
+		err = db.Model(&Task{}).Where("uid = ?", uid).
+			Update("Status", status).Error
+	case magic.TASK_STATUS_FINISH:
+		err = db.Model(&Task{}).Where("uid = ?", uid).
+			Update("Status", status).Error
+	}
+
+	if err != nil {
+		code = msg.ERROR_CONTRACT_UPDATE_STATUS
+	} else {
+		code = msg.SUCCESS
+	}
+	return
 }

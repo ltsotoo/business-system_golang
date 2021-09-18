@@ -71,7 +71,7 @@ func SelectExpenses(pageSize int, pageNo int, expenseQuery *ExpenseQuery) (expen
 		Where("Employee.name LIKE ? AND Employee.phone LIKE ?",
 			"%"+expenseQuery.EmployeeName+"%", "%"+expenseQuery.EmployeePhone+"%").
 		Find(&expenses).Count(&total).
-		Preload("Employee").Preload("Employee.Office").Preload("Approver").Preload("Type").
+		Preload("Employee.Office").Preload("Approver").Preload("Type").
 		Limit(pageSize).Offset((pageNo - 1) * pageSize).Order("status").
 		Find(&expenses).Error
 

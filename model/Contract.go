@@ -1,6 +1,7 @@
 package model
 
 import (
+	"business-system_golang/utils/magic"
 	"business-system_golang/utils/msg"
 	"business-system_golang/utils/uid"
 	"strconv"
@@ -30,6 +31,7 @@ type Contract struct {
 	Status                int    `gorm:"type:int;comment:状态;not null" json:"status"`
 	ProductionStatus      int    `gorm:"type:int;comment:生产状态" json:"productionStatus"`
 	CollectionStatus      int    `gorm:"type:int;comment:回款状态" json:"collectionStatus"`
+	AuditorUID            string `gorm:"type:varchar(32);comment:审核员ID;default:(-)" json:"auditor"`
 
 	Area         Area       `gorm:"foreignKey:AreaUID;references:UID" json:"area"`
 	Employee     Employee   `gorm:"foreignKey:EmployeeUID;references:UID" json:"employee"`
@@ -48,9 +50,14 @@ type Collection struct {
 }
 
 type ContractQuery struct {
-	AreaUID     string `json:"areaUID"`
-	No          string `json:"no"`
-	CompanyName string `json:"companyName"`
+	AreaUID          string `json:"areaUID"`
+	No               string `json:"no"`
+	CompanyName      string `json:"companyName"`
+	CustomerName     string `json:"customerName"`
+	IsSpecial        int    `json:"isSpecial"`
+	Status           int    `json:"status"`
+	ProductionStatus int    `json:"productionStatus"`
+	CollectionStatus int    `json:"collectionStatus"`
 }
 
 func InsertContract(contract *Contract) (code int) {
@@ -121,10 +128,41 @@ func SelectContracts(pageSize int, pageNo int, contractQuery *ContractQuery) (co
 	if contractQuery.AreaUID != "" {
 		maps["area_uid"] = contractQuery.AreaUID
 	}
+	if contractQuery.IsSpecial == 1 {
+		maps["is_special"] = true
+	} else if contractQuery.IsSpecial == 2 {
+		maps["is_special"] = false
+	}
+	if contractQuery.Status != 0 {
+		maps["status"] = contractQuery.Status
+	}
+	if contractQuery.ProductionStatus != 0 {
+		maps["production_status"] = contractQuery.ProductionStatus
+	}
+	if contractQuery.CollectionStatus != 0 {
+		maps["collection_status"] = contractQuery.CollectionStatus
+	}
+	tDb := db
 
-	err = db.Where("no LIKE ?", "%"+contractQuery.No+"%").Where(maps).
-		Preload("Customer").Find(&contracts).Count(&total).
-		Preload("Area").Preload("Employee").
+	if contractQuery.CompanyName != "" {
+		tDb = tDb.Joins("Customer").
+			Joins("left join customer_company on Customer.company_uid = customer_company.uid").
+			Where("Customer.name LIKE ? AND customer_company.name LIKE ?", "%"+contractQuery.CustomerName+"%", "%"+contractQuery.CompanyName+"%")
+	} else {
+		if contractQuery.CustomerName != "" {
+			tDb = tDb.Joins("Customer").
+				Where("Customer.name LIKE ?", "%"+contractQuery.CustomerName+"%")
+		}
+	}
+
+	if contractQuery.No != "" {
+		tDb = tDb.Where("contract.no LIKE ?", "%"+contractQuery.No+"%")
+	}
+	if len(maps) > 0 {
+		tDb = tDb.Where(maps)
+	}
+	err = tDb.Find(&contracts).Count(&total).
+		Preload("Customer").Preload("Customer.Company").Preload("Area").Preload("Employee").
 		Limit(pageSize).Offset((pageNo - 1) * pageSize).
 		Find(&contracts).Error
 
@@ -132,4 +170,41 @@ func SelectContracts(pageSize int, pageNo int, contractQuery *ContractQuery) (co
 		return contracts, msg.ERROR, total
 	}
 	return contracts, msg.SUCCESS, total
+}
+
+//变更合同状态
+func UpdateContractStatus(uid string, status int, employeeUID string) (code int) {
+	err = db.Model(&Contract{}).Where("uid = ?", uid).
+		Updates(Contract{Status: status, AuditorUID: employeeUID}).Error
+
+	if err != nil {
+		code = msg.ERROR_CONTRACT_UPDATE_STATUS
+	} else {
+		code = msg.SUCCESS
+	}
+	return
+}
+
+//变更合同生产状态为已完成
+func UpdateContractProductionStatusToFinish(uid string) (code int) {
+	err = db.Model(&Contract{}).Where("uid = ?", uid).Update("production_status", magic.CONTATCT_PRODUCTION_STATUS_FINISH).Error
+
+	if err != nil {
+		code = msg.ERROR_CONTRACT_UPDATE_P_STATUS
+	} else {
+		code = msg.SUCCESS
+	}
+	return
+}
+
+//变更合同回款状态为已完成
+func UpdateContractCollectionStatusToFinish(uid string) (code int) {
+	err = db.Model(&Contract{}).Where("uid = ?", uid).Update("collection_status", magic.CONTATCT_COLLECTION_STATUS_FINISH).Error
+
+	if err != nil {
+		code = msg.ERROR_CONTRACT_UPDATE_P_STATUS
+	} else {
+		code = msg.SUCCESS
+	}
+	return
 }
