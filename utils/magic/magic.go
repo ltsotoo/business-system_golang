@@ -20,15 +20,15 @@ const (
 	//回款完成
 	CONTATCT_COLLECTION_STATUS_FINISH = 2
 
-	//未设计
+	//待设计
 	TASK_STATUS_NOT_DESIGN = 1
-	//未采购
+	//待采购
 	TASK_STATUS_NOT_PURCHASE = 2
-	//未入库
+	//待入库
 	TASK_STATUS_NOT_STORAGE = 3
-	//未发货
+	//待发货
 	TASK_STATUS_NOT_SHIPMENT = 4
-	//未确认
+	//待确认
 	TASK_STATUS_NOT_CONFIRM = 5
 	//完成
 	TASK_STATUS_FINISH = 6

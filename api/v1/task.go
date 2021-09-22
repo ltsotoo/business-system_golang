@@ -26,3 +26,10 @@ func QueryTasks(c *gin.Context) {
 	tasks, code = model.SelectTasks(&task)
 	msg.Message(c, code, tasks)
 }
+
+func ApproveTask(c *gin.Context) {
+	var taskFlowQuery model.TaskFlowQuery
+	_ = c.ShouldBindJSON(&taskFlowQuery)
+	code = model.ApproveTask(taskFlowQuery.UID, taskFlowQuery.Status, taskFlowQuery.EmployeeUID)
+	msg.Message(c, code, nil)
+}
