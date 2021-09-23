@@ -60,6 +60,11 @@ type ContractQuery struct {
 	CollectionStatus int    `json:"collectionStatus"`
 }
 
+type ContractFlowQuery struct {
+	UID    string `json:"UID"`
+	Status int    `json:"status"`
+}
+
 func InsertContract(contract *Contract) (code int) {
 	contract.UID = uid.Generate()
 	if contract.IsEntryCustomer {
@@ -172,10 +177,19 @@ func SelectContracts(pageSize int, pageNo int, contractQuery *ContractQuery) (co
 	return contracts, msg.SUCCESS, total
 }
 
-//变更合同状态
-func UpdateContractStatus(uid string, status int, employeeUID string) (code int) {
+//审批合同
+func ApproveContract(uid string, status int, employeeUID string) (code int) {
+	var maps = make(map[string]interface{})
+	maps["Status"] = status
+	maps["AuditorUID"] = employeeUID
+
+	if status == 2 {
+		maps["CollectionStatus"] = 1
+		maps["ProductionStatus"] = 1
+	}
+
 	err = db.Model(&Contract{}).Where("uid = ?", uid).
-		Updates(Contract{Status: status, AuditorUID: employeeUID}).Error
+		Updates(maps).Error
 
 	if err != nil {
 		code = msg.ERROR_CONTRACT_UPDATE_STATUS

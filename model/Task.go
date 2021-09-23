@@ -1,7 +1,6 @@
 package model
 
 import (
-	"business-system_golang/utils/magic"
 	"business-system_golang/utils/msg"
 )
 
@@ -30,9 +29,12 @@ type Task struct {
 }
 
 type TaskFlowQuery struct {
-	UID         string `json:"UID"`
-	EmployeeUID string `json:"employeeUID"`
-	Status      int    `json:"status"`
+	UID              string `json:"UID"`
+	Status           int    `json:"status"`
+	TechnicianManUID string `json:"technicianManUID"`
+	PurchaseManUID   string `json:"purchaseManUID"`
+	InventoryManUID  string `json:"inventoryManUID"`
+	ShipmentManUID   string `json:"shipmentManUID"`
 }
 
 func DeleteTask(uid string) (code int) {
@@ -53,27 +55,31 @@ func SelectTasks(task *Task) (tasks []Task, code int) {
 	return tasks, msg.SUCCESS
 }
 
-func ApproveTask(uid string, status int, employeeUID string) (code int) {
+func ApproveTask(taskFlowQuery *TaskFlowQuery) (code int) {
 	var maps = make(map[string]interface{})
-	maps["status"] = status
-	maps["TechnicianManUID"] = nil
-	maps["PurchaseManUID"] = nil
-	maps["InventoryManUID"] = nil
-	maps["ShipmentManUID"] = nil
-	if employeeUID != "" {
-		switch status {
-		case magic.TASK_STATUS_NOT_DESIGN:
-			maps["TechnicianManUID"] = employeeUID
-		case magic.TASK_STATUS_NOT_PURCHASE:
-			maps["PurchaseManUID"] = employeeUID
-		case magic.TASK_STATUS_NOT_STORAGE:
-			maps["InventoryManUID"] = employeeUID
-		case magic.TASK_STATUS_NOT_SHIPMENT:
-			maps["ShipmentManUID"] = employeeUID
-		}
+	maps["status"] = taskFlowQuery.Status
+	if taskFlowQuery.TechnicianManUID != "" {
+		maps["TechnicianManUID"] = taskFlowQuery.TechnicianManUID
+	} else {
+		maps["TechnicianManUID"] = nil
+	}
+	if taskFlowQuery.PurchaseManUID != "" {
+		maps["PurchaseManUID"] = taskFlowQuery.PurchaseManUID
+	} else {
+		maps["PurchaseManUID"] = nil
+	}
+	if taskFlowQuery.InventoryManUID != "" {
+		maps["InventoryManUID"] = taskFlowQuery.InventoryManUID
+	} else {
+		maps["InventoryManUID"] = nil
+	}
+	if taskFlowQuery.ShipmentManUID != "" {
+		maps["ShipmentManUID"] = taskFlowQuery.ShipmentManUID
+	} else {
+		maps["ShipmentManUID"] = nil
 	}
 
-	err = db.Model(&Task{}).Where("uid = ?", uid).Updates(maps).Error
+	err = db.Model(&Task{}).Where("uid = ?", taskFlowQuery.UID).Updates(maps).Error
 
 	if err != nil {
 		code = msg.ERROR_CONTRACT_UPDATE_STATUS
@@ -83,30 +89,9 @@ func ApproveTask(uid string, status int, employeeUID string) (code int) {
 	return
 }
 
-func UpdateTaskStatus(uid string, status int, employeeUID string) (code int) {
+func UpdateTaskStatus(uid string, status int) (code int) {
 	var maps = make(map[string]interface{})
 	maps["status"] = status
-
-	switch status {
-	case magic.TASK_STATUS_NOT_DESIGN:
-		err = db.Model(&Task{}).Where("uid = ?", uid).
-			Updates(Task{Status: status, TechnicianManUID: employeeUID}).Error
-	case magic.TASK_STATUS_NOT_PURCHASE:
-		err = db.Model(&Task{}).Where("uid = ?", uid).
-			Updates(Task{Status: status, PurchaseManUID: employeeUID}).Error
-	case magic.TASK_STATUS_NOT_STORAGE:
-		err = db.Model(&Task{}).Where("uid = ?", uid).
-			Updates(Task{Status: status, InventoryManUID: employeeUID}).Error
-	case magic.TASK_STATUS_NOT_SHIPMENT:
-		err = db.Model(&Task{}).Where("uid = ?", uid).
-			Updates(Task{Status: status, ShipmentManUID: employeeUID}).Error
-	case magic.TASK_STATUS_NOT_CONFIRM:
-		err = db.Model(&Task{}).Where("uid = ?", uid).
-			Update("Status", status).Error
-	case magic.TASK_STATUS_FINISH:
-		err = db.Model(&Task{}).Where("uid = ?", uid).
-			Update("Status", status).Error
-	}
 
 	err = db.Model(&Task{}).Where("uid = ?", uid).Updates(maps).Error
 

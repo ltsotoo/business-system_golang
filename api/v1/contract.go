@@ -85,3 +85,15 @@ func QueryContracts(c *gin.Context) {
 	contracts, code, total = model.SelectContracts(pageSize, pageNo, &contractQuery)
 	msg.MessageForList(c, msg.SUCCESS, contracts, pageSize, pageNo, total)
 }
+
+func ApproveContract(c *gin.Context) {
+	code = rbac.Check(c, "contract", "approve")
+	if code == msg.ERROR {
+		msg.MessageForNotPermission(c)
+	} else {
+		var contractFlowQuery model.ContractFlowQuery
+		_ = c.ShouldBindJSON(&contractFlowQuery)
+		code = model.ApproveContract(contractFlowQuery.UID, contractFlowQuery.Status, c.MustGet("employeeUID").(string))
+		msg.Message(c, code, nil)
+	}
+}
