@@ -19,6 +19,7 @@ type Task struct {
 	PurchaseManUID   string `gorm:"type:varchar(32);comment:采购负责人ID;default:(-)" json:"purchaseManUID"`
 	InventoryManUID  string `gorm:"type:varchar(32);comment:库存负责人ID;default:(-)" json:"inventoryManUID"`
 	ShipmentManUID   string `gorm:"type:varchar(32);comment:发货人员ID;default:(-)" json:"shipmentManUID"`
+	Remarks          string `gorm:"type:varchar(200);comment:备注" json:"remarks"`
 
 	Contract      Contract `gorm:"foreignKey:ContractUID;references:UID" json:"contract"`
 	Product       Product  `gorm:"foreignKey:ProductUID;references:UID" json:"product"`
