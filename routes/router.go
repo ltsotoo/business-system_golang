@@ -72,6 +72,7 @@ func InitRouter() {
 		//任务模块接口
 		auth.DELETE("task/:uid", v1.DelTask)
 		auth.POST("tasks", v1.QueryTasks)
+		auth.GET("mytasks", v1.QueryMyTasks)
 		//任务流程模块接口
 		auth.PUT("task/flow/approve", v1.ApproveTask)
 		//客户模块接口

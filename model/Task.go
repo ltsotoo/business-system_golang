@@ -56,6 +56,20 @@ func SelectTasks(task *Task) (tasks []Task, code int) {
 	return tasks, msg.SUCCESS
 }
 
+func SelectMyTasks(uid string) (tasks []Task, code int) {
+	err = db.Preload("Product").Preload("TechnicianMan").
+		Preload("PurchaseMan").Preload("InventoryMan").Preload("ShipmentMan").
+		Where("technician_man_uid = ?", uid).
+		Or("purchase_man_uid = ?", uid).
+		Or("inventory_man_uid = ?", uid).
+		Or("shipment_man_uid = ?", uid).
+		Find(&tasks).Error
+	if err != nil {
+		return tasks, msg.ERROR
+	}
+	return tasks, msg.SUCCESS
+}
+
 func ApproveTask(taskFlowQuery *TaskFlowQuery) (code int) {
 	var maps = make(map[string]interface{})
 	maps["status"] = taskFlowQuery.Status
