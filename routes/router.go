@@ -2,7 +2,6 @@ package routes
 
 import (
 	v1 "business-system_golang/api/v1"
-	v2 "business-system_golang/api/v2"
 	"business-system_golang/config"
 	"business-system_golang/middleware"
 
@@ -14,13 +13,6 @@ func InitRouter() {
 	r := gin.Default()
 
 	r.Use(middleware.Cors())
-
-	V2 := r.Group("api/v2")
-	{
-		//SYSTEM接口
-		V2.POST("customers", v2.QueryCustomers)
-		V2.POST("dictionaryType", v2.AddDictionaryType)
-	}
 
 	router := r.Group("api/v1")
 	{
@@ -75,6 +67,11 @@ func InitRouter() {
 		auth.GET("mytasks", v1.QueryMyTasks)
 		//任务流程模块接口
 		auth.PUT("task/flow/approve", v1.ApproveTask)
+		//任务采购接口
+		auth.POST("taskProcurement", v1.AddTaskProcurement)
+		auth.GET("myApplicationTaskProcurements", v1.QueryMyApplicationTaskProcurements)
+		auth.GET("myTaskProcurements", v1.QueryMyTaskProcurements)
+		auth.PUT("nextTaskProcurements", v1.NextTaskProcurement)
 		//客户模块接口
 		auth.POST("customer", v1.EntryCustomer)
 		auth.DELETE("customer/:uid", v1.DelCustomer)
