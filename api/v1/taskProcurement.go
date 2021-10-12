@@ -12,6 +12,7 @@ func AddTaskProcurement(c *gin.Context) {
 	var taskProcurement model.TaskProcurement
 	_ = c.ShouldBindJSON(&taskProcurement)
 	taskProcurement.EmployeeUID = c.MustGet("employeeUID").(string)
+	taskProcurement.Status = 1
 	code = model.InsertTaskProcurements(&taskProcurement)
 	msg.Message(c, code, taskProcurement)
 }
@@ -25,6 +26,14 @@ func NextTaskProcurement(c *gin.Context) {
 		code = msg.ERROR
 	}
 	msg.Message(c, code, nil)
+}
+
+//查询目标的采购任务
+func QueryTaskProcurements(c *gin.Context) {
+	var taskProcurements []model.TaskProcurement
+	taskUID := c.Param("taskUID")
+	taskProcurements, code = model.SelectTaskProcurements(taskUID)
+	msg.Message(c, code, taskProcurements)
 }
 
 //查询我发起的采购任务

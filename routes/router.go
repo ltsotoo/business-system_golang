@@ -69,6 +69,7 @@ func InitRouter() {
 		auth.PUT("task/flow/approve", v1.ApproveTask)
 		//任务采购接口
 		auth.POST("taskProcurement", v1.AddTaskProcurement)
+		auth.GET("taskProcurement/:taskUID", v1.QueryTaskProcurements)
 		auth.GET("myApplicationTaskProcurements", v1.QueryMyApplicationTaskProcurements)
 		auth.GET("myTaskProcurements", v1.QueryMyTaskProcurements)
 		auth.PUT("nextTaskProcurements", v1.NextTaskProcurement)
