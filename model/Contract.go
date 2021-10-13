@@ -6,6 +6,7 @@ import (
 	"business-system_golang/utils/uid"
 	"strconv"
 	"strings"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -201,7 +202,10 @@ func ApproveContract(uid string, status int, employeeUID string) (code int) {
 
 //变更合同生产状态为已完成
 func UpdateContractProductionStatusToFinish(uid string) (code int) {
-	err = db.Model(&Contract{}).Where("uid = ?", uid).Update("production_status", magic.CONTATCT_PRODUCTION_STATUS_FINISH).Error
+	var maps = make(map[string]interface{})
+	maps["production_status"] = magic.CONTATCT_PRODUCTION_STATUS_FINISH
+	maps["end_delivery_date"] = time.Now().Format("2006-01-02 15:04:05")
+	err = db.Model(&Contract{}).Where("uid = ?", uid).Updates(maps).Error
 
 	if err != nil {
 		code = msg.ERROR_CONTRACT_UPDATE_P_STATUS

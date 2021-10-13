@@ -12,7 +12,7 @@ type TaskProcurement struct {
 	EmployeeUID    string `gorm:"type:varchar(32);comment:采购发起人UID" json:"employeeUID"`
 	PurchaseManUID string `gorm:"type:varchar(32);comment:采购负责人ID;default:(-)" json:"purchaseManUID"`
 	Text           string `gorm:"type:varchar(499);comment:采购内容" json:"text"`
-	Status         int    `gorm:"type:int;comment:状态(-1:采购取消，1:发起采购，2:采购中，3:采购完成)" json:"status"`
+	Status         int    `gorm:"type:int;comment:状态(-1:采购取消，1:采购中，2:采购完成)" json:"status"`
 
 	PurchaseMan Employee `gorm:"foreignKey:PurchaseManUID;references:UID" json:"purchaseMan"`
 }

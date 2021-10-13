@@ -1,6 +1,7 @@
 package model
 
 import (
+	"business-system_golang/utils/magic"
 	"business-system_golang/utils/msg"
 )
 
@@ -20,6 +21,7 @@ type Task struct {
 	InventoryManUID  string `gorm:"type:varchar(32);comment:库存负责人ID;default:(-)" json:"inventoryManUID"`
 	ShipmentManUID   string `gorm:"type:varchar(32);comment:发货人员ID;default:(-)" json:"shipmentManUID"`
 	Remarks          string `gorm:"type:varchar(200);comment:备注" json:"remarks"`
+	NextRemarks      string `gorm:"type:varchar(200);comment:流程备注" json:"nextRemarks"`
 
 	Contract      Contract `gorm:"foreignKey:ContractUID;references:UID" json:"contract"`
 	Product       Product  `gorm:"foreignKey:ProductUID;references:UID" json:"product"`
@@ -46,6 +48,14 @@ func DeleteTask(uid string) (code int) {
 	return msg.SUCCESS
 }
 
+func SelectTask(uid string) (task Task, code int) {
+	err = db.Where("uid = ?", uid).First(&task).Error
+	if err != nil {
+		return task, msg.ERROR
+	}
+	return task, msg.SUCCESS
+}
+
 func SelectTasks(task *Task) (tasks []Task, code int) {
 	err = db.Preload("Contract").Preload("Product").Preload("TechnicianMan").
 		Preload("PurchaseMan").Preload("InventoryMan").Preload("ShipmentMan").
@@ -56,14 +66,32 @@ func SelectTasks(task *Task) (tasks []Task, code int) {
 	return tasks, msg.SUCCESS
 }
 
-func SelectMyTasks(uid string) (tasks []Task, code int) {
+func SelectMyTasks(uid string, status int) (tasks []Task, code int) {
+	var maps = make(map[string]interface{})
+	maps["status"] = status
+	switch status {
+	case magic.TASK_STATUS_NOT_DESIGN:
+		maps["technician_man_uid"] = uid
+	case magic.TASK_STATUS_NOT_PURCHASE:
+		maps["purchase_man_uid"] = uid
+	case magic.TASK_STATUS_NOT_STORAGE:
+		maps["inventory_man_uid"] = uid
+	case magic.TASK_STATUS_NOT_SHIPMENT:
+		maps["shipment_man_uid"] = uid
+	case magic.TASK_STATUS_NOT_CONFIRM:
+		maps["shipment_man_uid"] = uid
+	}
 	err = db.Preload("Product").Preload("TechnicianMan").
 		Preload("PurchaseMan").Preload("InventoryMan").Preload("ShipmentMan").
-		Where("technician_man_uid = ?", uid).
-		Or("purchase_man_uid = ?", uid).
-		Or("inventory_man_uid = ?", uid).
-		Or("shipment_man_uid = ?", uid).
-		Find(&tasks).Error
+		Where(maps).Find(&tasks).Error
+	if err != nil {
+		return tasks, msg.ERROR
+	}
+	return tasks, msg.SUCCESS
+}
+
+func SelectTasksByContractUID(contractUID string) (tasks []Task, code int) {
+	err = db.Where("contract_uid = ?", contractUID).Find(&tasks).Error
 	if err != nil {
 		return tasks, msg.ERROR
 	}
@@ -104,9 +132,10 @@ func ApproveTask(taskFlowQuery *TaskFlowQuery) (code int) {
 	return
 }
 
-func UpdateTaskStatus(uid string, status int) (code int) {
+func NextTaskStatus(uid string, status int, nextRemarks string) (code int) {
 	var maps = make(map[string]interface{})
 	maps["status"] = status
+	maps["next_remarks"] = nextRemarks
 
 	err = db.Model(&Task{}).Where("uid = ?", uid).Updates(maps).Error
 
