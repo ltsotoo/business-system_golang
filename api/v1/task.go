@@ -35,19 +35,6 @@ func ApproveTask(c *gin.Context) {
 	msg.Message(c, code, nil)
 }
 
-func LastTask(c *gin.Context) {
-	var task, dbTask model.Task
-	_ = c.ShouldBindJSON(&task)
-	dbTask, code = model.SelectTask(task.UID)
-	if code == msg.SUCCESS && task.Status == dbTask.Status && task.Status >= 2 && task.Status <= 4 {
-		task.Status = dbTask.Status - 1
-		code = model.NextTaskStatus(task.UID, task.Status, task.NextRemarks)
-		msg.Message(c, code, nil)
-	} else {
-		msg.Message(c, code, nil)
-	}
-}
-
 func NextTask(c *gin.Context) {
 	var task, dbTask model.Task
 	_ = c.ShouldBindJSON(&task)

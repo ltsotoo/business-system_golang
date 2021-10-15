@@ -1,7 +1,6 @@
 package model
 
 import (
-	"business-system_golang/utils/magic"
 	"business-system_golang/utils/msg"
 )
 
@@ -66,24 +65,14 @@ func SelectTasks(task *Task) (tasks []Task, code int) {
 	return tasks, msg.SUCCESS
 }
 
-func SelectMyTasks(uid string, status int) (tasks []Task, code int) {
-	var maps = make(map[string]interface{})
-	maps["status"] = status
-	switch status {
-	case magic.TASK_STATUS_NOT_DESIGN:
-		maps["technician_man_uid"] = uid
-	case magic.TASK_STATUS_NOT_PURCHASE:
-		maps["purchase_man_uid"] = uid
-	case magic.TASK_STATUS_NOT_STORAGE:
-		maps["inventory_man_uid"] = uid
-	case magic.TASK_STATUS_NOT_SHIPMENT:
-		maps["shipment_man_uid"] = uid
-	case magic.TASK_STATUS_NOT_CONFIRM:
-		maps["shipment_man_uid"] = uid
-	}
+func SelectMyTasks(uid string) (tasks []Task, code int) {
 	err = db.Preload("Product").Preload("TechnicianMan").
 		Preload("PurchaseMan").Preload("InventoryMan").Preload("ShipmentMan").
-		Where(maps).Find(&tasks).Error
+		Where("technician_man_uid = ?", uid).
+		Or("purchase_man_uid = ?", uid).
+		Or("inventory_man_uid = ?", uid).
+		Or("shipment_man_uid = ?", uid).
+		Find(&tasks).Error
 	if err != nil {
 		return tasks, msg.ERROR
 	}
