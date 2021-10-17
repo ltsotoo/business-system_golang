@@ -74,6 +74,9 @@ func InitRouter() {
 		auth.GET("myApplicationTaskProcurements", v1.QueryMyApplicationTaskProcurements)
 		auth.GET("myTaskProcurements", v1.QueryMyTaskProcurements)
 		auth.PUT("nextTaskProcurements", v1.NextTaskProcurement)
+		//回款模块接口
+		auth.POST("payment", v1.AddPayment)
+		auth.DELETE("payment", v1.DelPayment)
 		//客户模块接口
 		auth.POST("customer", v1.EntryCustomer)
 		auth.DELETE("customer/:uid", v1.DelCustomer)

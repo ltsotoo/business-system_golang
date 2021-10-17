@@ -56,7 +56,7 @@ func checkTasksUpdateContract(contractUID string) int {
 	var finsh = true
 	if len(tasks) != 0 {
 		for _, task := range tasks {
-			if task.Status != magic.TASK_STATUS_FINISH {
+			if task.Status != magic.TASK_STATUS_SHIPMENT {
 				finsh = false
 				break
 			}

@@ -39,6 +39,7 @@ type Contract struct {
 	Customer     Customer   `gorm:"foreignKey:CustomerUID;references:UID" json:"customer"`
 	ContractUnit Dictionary `gorm:"foreignKey:ContractUnitUID;references:UID" json:"contractUnit"`
 	Tasks        []Task     `gorm:"foreignKey:ContractUID;references:UID" json:"tasks"`
+	Payments     []Payment  `gorm:"foreignKey:ContractUID;references:UID" json:"payments"`
 }
 
 //回款记录Model
