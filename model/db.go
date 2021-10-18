@@ -47,7 +47,6 @@ func InitDb() {
 		&Product{},
 		&Supplier{},
 		&Task{},
-		&TaskProcurement{},
 		&Payment{},
 		&Expense{},
 		&DictionaryType{},

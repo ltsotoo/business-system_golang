@@ -24,6 +24,13 @@ func AddPayment(c *gin.Context) {
 	msg.Message(c, code, payment)
 }
 
+func QueryPaymentsForContract(c *gin.Context) {
+	var payments []model.Payment
+	contractUID := c.Param("contractUID")
+	payments, code = model.SelectPaymentsByContractUID(contractUID)
+	msg.Message(c, code, payments)
+}
+
 func checkPaymentsUpdateContract(contractUID string) int {
 	var payments []model.Payment
 	var contract model.Contract

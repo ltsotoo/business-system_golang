@@ -18,6 +18,7 @@ func EntryContract(c *gin.Context) {
 	} else {
 		var contract model.Contract
 		_ = c.ShouldBindJSON(&contract)
+		contract.TotalAmount = 0
 		for i := range contract.Tasks {
 			contract.Tasks[i].UID = uid.Generate()
 			contract.TotalAmount += contract.Tasks[i].TotalPrice
@@ -83,6 +84,27 @@ func QueryContracts(c *gin.Context) {
 	}
 
 	contracts, code, total = model.SelectContracts(pageSize, pageNo, &contractQuery)
+	msg.MessageForList(c, code, contracts, pageSize, pageNo, total)
+}
+
+//查询首页待回款合同
+func QueryContractsForIndex(c *gin.Context) {
+	var contracts []model.Contract
+	var total int64
+	var contractQuery model.ContractQuery
+
+	_ = c.ShouldBindJSON(&contractQuery)
+
+	pageSize, pageSizeErr := strconv.Atoi(c.Query("pageSize"))
+	pageNo, pageNoErr := strconv.Atoi(c.Query("pageNo"))
+	if pageSizeErr != nil || pageSize < 0 {
+		pageSize = 10
+	}
+	if pageNoErr != nil || pageNo < 0 {
+		pageNo = 1
+	}
+
+	contracts, code, total = model.SelectContractsForPayment(pageSize, pageNo, &contractQuery)
 	msg.MessageForList(c, msg.SUCCESS, contracts, pageSize, pageNo, total)
 }
 

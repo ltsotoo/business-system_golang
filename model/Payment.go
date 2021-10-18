@@ -12,8 +12,8 @@ type Payment struct {
 	UID         string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
 	ContractUID string `gorm:"type:varchar(32);comment:合同ID" json:"contractUID"`
 	EmployeeUID string `gorm:"type:varchar(32);comment:技术负责人ID" json:"employeeUID"`
-	Money       int    `gorm:"type:int;comment:回款金额" json:"money"`
-	Remarks     string `gorm:"type:varchar(200);comment:备注" json:"remarks"`
+	Money       int    `gorm:"type:int;comment:回款金额(元)" json:"money"`
+	Remarks     string `gorm:"type:varchar(499);comment:备注" json:"remarks"`
 }
 
 func InsertPayment(payment *Payment) (code int) {

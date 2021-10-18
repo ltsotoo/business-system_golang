@@ -20,7 +20,7 @@ type Product struct {
 	PurchasedPrice int    `gorm:"type:int;comment:采购价格(元)" json:"purchasedPrice"`
 	StandardPrice  int    `gorm:"type:int;comment:标准价格(元)" json:"standardPrice"`
 	DeliveryCycle  string `gorm:"type:varchar(20);comment:供货周期" json:"deliveryCycle"`
-	Remarks        string `gorm:"type:varchar(200);comment:备注" json:"remarks"`
+	Remarks        string `gorm:"type:varchar(499);comment:备注" json:"remarks"`
 	SourceTypeUID  string `gorm:"type:varchar(32);comment:来源类型;default:(-)" json:"sourceTypeUID"`
 	SubtypeUID     string `gorm:"type:varchar(32);comment:子类型;default:(-)" json:"subtypeUID"`
 

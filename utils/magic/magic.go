@@ -24,10 +24,19 @@ const (
 	TASK_STATUS_NOT_DESIGN = 1
 	//待采购
 	TASK_STATUS_NOT_PURCHASE = 2
-	//待入库
+	//待入/出库
 	TASK_STATUS_NOT_STORAGE = 3
+	//待装配（非标设计流程独占）
+	TASK_STATUS_NOT_ASSEMBLY = 4
 	//待发货
-	TASK_STATUS_NOT_SHIPMENT = 4
-	//待确认
-	TASK_STATUS_SHIPMENT = 5
+	TASK_STATUS_NOT_SHIPMENT = 5
+	//已发货
+	TASK_STATUS_SHIPMENT = 6
+
+	//标准/第三方有库存
+	TASK_TYPE_1 = 1
+	//标准/第三方无库存
+	TASK_TYPE_2 = 2
+	//非标准定制
+	TASK_TYPE_3 = 3
 )
