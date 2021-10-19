@@ -239,8 +239,11 @@ func SelectPermissions() (permissions []Permission, code int) {
 }
 
 func SelectUrls(uids []string) (urls []Url) {
+	// db.Raw("SELECT distinct url.* FROM url LEFT JOIN permission "+
+	// 	"ON url.uid = permission.url_uid WHERE permission.uid IN (?) or url.id = 1 order by url.no", uids).
+	// 	Scan(&urls)
 	db.Raw("SELECT distinct url.* FROM url LEFT JOIN permission "+
-		"ON url.uid = permission.url_uid WHERE permission.uid IN (?) or url.id = 1 order by url.no", uids).
+		"ON url.uid = permission.url_uid WHERE permission.uid IN (?) order by url.no", uids).
 		Scan(&urls)
 	return
 }

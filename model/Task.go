@@ -72,8 +72,14 @@ func SelectTasks(task *Task) (tasks []Task, code int) {
 	return tasks, msg.SUCCESS
 }
 
-func SelectMyTasks(pageSize int, pageNo int, uid string) (tasks []Task, code int, total int64) {
-	err = db.Joins("Contract").Where("Contract.status = ?", 2).
+func SelectMyTasks(pageSize int, pageNo int, task *Task, uid string) (tasks []Task, code int, total int64) {
+	var maps = make(map[string]interface{})
+	if task.Status != 0 {
+		maps["task.status"] = task.Status
+	}
+	maps["Contract.status"] = 2
+
+	err = db.Joins("Contract").Where(maps).
 		Where(db.Where("technician_man_uid = ?", uid).
 			Or("purchase_man_uid = ?", uid).
 			Or("inventory_man_uid = ?", uid).

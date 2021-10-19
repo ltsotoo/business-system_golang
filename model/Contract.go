@@ -60,6 +60,7 @@ type ContractQuery struct {
 	Status           int    `json:"status"`
 	ProductionStatus int    `json:"productionStatus"`
 	CollectionStatus int    `json:"collectionStatus"`
+	EmployeeUID      string `json:"employeeUID"`
 }
 
 type ContractFlowQuery struct {
@@ -120,6 +121,9 @@ func SelectContract(uid string) (contract Contract, code int) {
 		Preload("Employee").Preload("Employee.Office").
 		Preload("Customer").Preload("Customer.Company").
 		Preload("Tasks").Preload("Tasks.Product").
+		Preload("Tasks.TechnicianMan").Preload("Tasks.PurchaseMan").
+		Preload("Tasks.InventoryMan").Preload("Tasks.ShipmentMan").
+		Preload("Payments").
 		First(&contract, "uid = ?", uid).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -133,6 +137,9 @@ func SelectContract(uid string) (contract Contract, code int) {
 
 func SelectContracts(pageSize int, pageNo int, contractQuery *ContractQuery) (contracts []Contract, code int, total int64) {
 	var maps = make(map[string]interface{})
+	if contractQuery.EmployeeUID != "" {
+		maps["employee_uid"] = contractQuery.EmployeeUID
+	}
 	if contractQuery.AreaUID != "" {
 		maps["area_uid"] = contractQuery.AreaUID
 	}
@@ -170,27 +177,10 @@ func SelectContracts(pageSize int, pageNo int, contractQuery *ContractQuery) (co
 		tDb = tDb.Where(maps)
 	}
 	err = tDb.Find(&contracts).Count(&total).
-		Preload("Customer").Preload("Customer.Company").Preload("Area").Preload("Employee").
-		Limit(pageSize).Offset((pageNo - 1) * pageSize).
-		Find(&contracts).Error
-
-	if err != nil && err != gorm.ErrRecordNotFound {
-		return contracts, msg.ERROR, total
-	}
-	return contracts, msg.SUCCESS, total
-}
-
-//查询首页待回款合同
-func SelectContractsForPayment(pageSize int, pageNo int, contractQuery *ContractQuery) (contracts []Contract, code int, total int64) {
-	var maps = make(map[string]interface{})
-	maps["status"] = 2
-	if contractQuery.CollectionStatus != 0 {
-		maps["collection_status"] = contractQuery.CollectionStatus
-	}
-	err = db.Where(maps).Find(&contracts).Count(&total).
 		Preload("Customer").Preload("Customer.Company").Preload("Area").Preload("Area.Office").Preload("Employee").
 		Limit(pageSize).Offset((pageNo - 1) * pageSize).
 		Find(&contracts).Error
+
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return contracts, msg.ERROR, total
 	}

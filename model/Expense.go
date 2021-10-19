@@ -14,7 +14,7 @@ type Expense struct {
 	TypeUID     string `gorm:"type:varchar(32);comment:部门类型;not null" json:"typeUID"`
 	Text        string `gorm:"type:varchar(499);comment:申请理由" json:"text"`
 	Amount      int    `gorm:"type:int;comment:金额(元)" json:"amount"`
-	Status      int    `gorm:"type:int;comment:状态(-1:拒绝,1:通过);not null" json:"status"`
+	Status      int    `gorm:"type:int;comment:状态(-1:拒绝,1:待审批,2:通过);not null" json:"status"`
 	ApproverUID string `gorm:"type:varchar(32);comment:审批财务员工UID;default:(-)" json:"approverUID"`
 
 	Type     Dictionary `gorm:"foreignKey:TypeUID;references:UID" json:"type"`
@@ -72,7 +72,28 @@ func SelectExpenses(pageSize int, pageNo int, expenseQuery *ExpenseQuery) (expen
 			"%"+expenseQuery.EmployeeName+"%", "%"+expenseQuery.EmployeePhone+"%").
 		Find(&expenses).Count(&total).
 		Preload("Employee.Office").Preload("Approver").Preload("Type").
-		Limit(pageSize).Offset((pageNo - 1) * pageSize).Order("status").
+		Limit(pageSize).Offset((pageNo - 1) * pageSize).
+		Find(&expenses).Error
+
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return expenses, msg.ERROR, total
+	}
+	return expenses, msg.SUCCESS, total
+}
+
+func SelectMyExpenses(pageSize int, pageNo int, expense *Expense) (expenses []Expense, code int, total int64) {
+	var maps = make(map[string]interface{})
+	maps["employee_uid"] = expense.EmployeeUID
+	if expense.TypeUID != "" {
+		maps["type_uid"] = expense.TypeUID
+	}
+	if expense.Status != 0 {
+		maps["status"] = expense.Status
+	}
+	err = db.Joins("Employee").Where(maps).
+		Find(&expenses).Count(&total).
+		Preload("Approver").Preload("Type").
+		Limit(pageSize).Offset((pageNo - 1) * pageSize).
 		Find(&expenses).Error
 
 	if err != nil && err != gorm.ErrRecordNotFound {
