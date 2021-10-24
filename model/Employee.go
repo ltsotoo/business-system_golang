@@ -20,6 +20,8 @@ type Employee struct {
 	OfficeUID     string `gorm:"type:varchar(32);comment:办事处UID;default:(-)" json:"officeUID"`
 	DepartmentUID string `gorm:"type:varchar(32);comment:部门UID;default:(-)" json:"departmentUID"`
 	Number        string `gorm:"type:varchar(20);comment:编号;unique" json:"number"`
+	Money         int    `gorm:"type:int;comment:总报销额度(元)" json:"money"`
+	MoneyAdd      int    `gorm:"type:int;comment:每月报销额度(元)" json:"moneyAdd"`
 
 	Office     Office     `gorm:"foreignKey:OfficeUID;references:UID" json:"office"`
 	Department Department `gorm:"foreignKey:DepartmentUID;references:UID" json:"department"`

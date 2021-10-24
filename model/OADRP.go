@@ -10,8 +10,9 @@ import (
 //Office办事处 Area地区 Department部门 Role角色 Permission权限
 type Office struct {
 	BaseModel
-	UID  string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	Name string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
+	UID   string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
+	Name  string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
+	Money int    `gorm:"type:int;comment:办事处总报销额度(元)" json:"money"`
 
 	Areas []Area `gorm:"foreignKey:OfficeUID;references:UID" json:"areas"`
 }

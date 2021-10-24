@@ -40,7 +40,33 @@ func NextTask(c *gin.Context) {
 	_ = c.ShouldBindJSON(&task)
 	dbTask, code = model.SelectTask(task.UID)
 	if code == msg.SUCCESS && task.Status == dbTask.Status {
-		task.Status = dbTask.Status + 1
+
+		switch task.Status {
+		case magic.TASK_STATUS_NOT_DESIGN:
+			task.Status = magic.TASK_STATUS_NOT_PURCHASE
+		case magic.TASK_STATUS_NOT_PURCHASE:
+			task.Status = magic.TASK_STATUS_NOT_STORAGE
+		case magic.TASK_STATUS_NOT_STORAGE:
+			if task.Type == magic.TASK_TYPE_3 {
+				task.Status = magic.TASK_STATUS_NOT_ASSEMBLY
+			} else {
+				task.Status = magic.TASK_STATUS_NOT_SHIPMENT
+			}
+		case magic.TASK_STATUS_NOT_ASSEMBLY:
+			task.Status = magic.TASK_STATUS_NOT_SHIPMENT
+		case magic.TASK_STATUS_NOT_SHIPMENT:
+			task.Status = magic.TASK_STATUS_SHIPMENT
+		}
+
+		// if task.Status == magic.TASK_STATUS_NOT_STORAGE {
+		// 	if task.Type == magic.TASK_TYPE_3 {
+		// 		task.Status = magic.TASK_STATUS_NOT_ASSEMBLY
+		// 	} else {
+		// 		task.Status = magic.TASK_STATUS_NOT_SHIPMENT
+		// 	}
+		// } else {
+		// 	task.Status = dbTask.Status + 1
+		// }
 		code = model.NextTaskStatus(task.UID, task.Status, task.NextRemarks)
 		if code == msg.SUCCESS {
 			code = checkTasksUpdateContract(task.ContractUID)
