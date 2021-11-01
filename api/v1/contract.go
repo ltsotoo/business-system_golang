@@ -3,7 +3,6 @@ package v1
 import (
 	"business-system_golang/model"
 	"business-system_golang/utils/msg"
-	"business-system_golang/utils/rbac"
 	"business-system_golang/utils/uid"
 	"strconv"
 
@@ -12,58 +11,38 @@ import (
 
 //录入合同
 func EntryContract(c *gin.Context) {
-	code = rbac.Check(c, "contract", "insert")
-	if code == msg.ERROR {
-		msg.MessageForNotPermission(c)
-	} else {
-		var contract model.Contract
-		_ = c.ShouldBindJSON(&contract)
-		contract.TotalAmount = 0
-		for i := range contract.Tasks {
-			contract.Tasks[i].UID = uid.Generate()
-			contract.TotalAmount += contract.Tasks[i].TotalPrice
-		}
-		code = model.InsertContract(&contract)
-		msg.Message(c, code, contract)
+	var contract model.Contract
+	_ = c.ShouldBindJSON(&contract)
+	contract.TotalAmount = 0
+	for i := range contract.Tasks {
+		contract.Tasks[i].UID = uid.Generate()
+		contract.TotalAmount += contract.Tasks[i].TotalPrice
 	}
+	code = model.InsertContract(&contract)
+	msg.Message(c, code, contract)
 }
 
 //删除合同
 func DelContract(c *gin.Context) {
-	code = rbac.Check(c, "contract", "delete")
-	if code == msg.ERROR {
-		msg.MessageForNotPermission(c)
-	} else {
-		uid := c.Param("uid")
-		code = model.DeleteContract(uid)
-		msg.Message(c, code, nil)
-	}
+	uid := c.Param("uid")
+	code = model.DeleteContract(uid)
+	msg.Message(c, code, nil)
 }
 
 //编辑合同
 func EditContract(c *gin.Context) {
-	code = rbac.Check(c, "contract", "update")
-	if code == msg.ERROR {
-		msg.MessageForNotPermission(c)
-	} else {
-		var contract model.Contract
-		_ = c.ShouldBindJSON(&contract)
-		code = model.UpdateContract(&contract)
-		msg.Message(c, code, contract)
-	}
+	var contract model.Contract
+	_ = c.ShouldBindJSON(&contract)
+	code = model.UpdateContract(&contract)
+	msg.Message(c, code, contract)
 }
 
 //查询合同
 func QueryContract(c *gin.Context) {
-	code = rbac.Check(c, "contract", "select")
-	if code == msg.ERROR {
-		msg.MessageForNotPermission(c)
-	} else {
-		var contract model.Contract
-		uid := c.Param("uid")
-		contract, code = model.SelectContract(uid)
-		msg.Message(c, code, contract)
-	}
+	var contract model.Contract
+	uid := c.Param("uid")
+	contract, code = model.SelectContract(uid)
+	msg.Message(c, code, contract)
 }
 
 //查询合同列表
@@ -88,13 +67,8 @@ func QueryContracts(c *gin.Context) {
 }
 
 func ApproveContract(c *gin.Context) {
-	code = rbac.Check(c, "contract", "approve")
-	if code == msg.ERROR {
-		msg.MessageForNotPermission(c)
-	} else {
-		var contractFlowQuery model.ContractFlowQuery
-		_ = c.ShouldBindJSON(&contractFlowQuery)
-		code = model.ApproveContract(contractFlowQuery.UID, contractFlowQuery.Status, c.MustGet("employeeUID").(string))
-		msg.Message(c, code, nil)
-	}
+	var contractFlowQuery model.ContractFlowQuery
+	_ = c.ShouldBindJSON(&contractFlowQuery)
+	code = model.ApproveContract(contractFlowQuery.UID, contractFlowQuery.Status, c.MustGet("employeeUID").(string))
+	msg.Message(c, code, nil)
 }

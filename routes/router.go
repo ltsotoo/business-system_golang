@@ -39,13 +39,15 @@ func InitRouter() {
 		//员工模块接口PLUS
 		auth.POST("office", v1.EntryOffice)
 		auth.DELETE("office/:uid", v1.DelOffice)
-		auth.GET("offices", v1.QueryOffices)
+		auth.PUT("office", v1.EditOffice)
+		auth.POST("offices", v1.QueryOffices)
 		auth.POST("area", v1.EntryArea)
 		auth.DELETE("area/:uid", v1.DelArea)
 		auth.PUT("area", v1.EditArea)
 		auth.POST("areas", v1.QueryAreas)
 		auth.POST("department", v1.EntryDepartment)
 		auth.DELETE("department/:uid", v1.DelDepartment)
+		auth.PUT("department", v1.EditDepartment)
 		auth.POST("departments", v1.QueryDepartments)
 		auth.POST("role", v1.AddRole)
 		auth.PUT("role", v1.EditRole)
@@ -64,6 +66,7 @@ func InitRouter() {
 		//任务模块接口
 		auth.DELETE("task/:uid", v1.DelTask)
 		auth.POST("tasks", v1.QueryTasks)
+		auth.GET("taskRemarks", v1.QueryTaskRemarks)
 		auth.POST("mytasks", v1.QueryMyTasks)
 		//任务流程模块接口
 		auth.PUT("task/flow/approve", v1.ApproveTask)

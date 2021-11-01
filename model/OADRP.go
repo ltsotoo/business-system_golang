@@ -88,6 +88,14 @@ func DeleteOffice(uid string) (code int) {
 	return msg.SUCCESS
 }
 
+func UpdateOffice(office *Office) (code int) {
+	err = db.Model(&Office{}).Where("uid = ?", office.UID).Updates(Office{Name: office.Name, Money: office.Money}).Error
+	if err != nil {
+		return msg.ERROR_OFFICE_UPDATE
+	}
+	return msg.SUCCESS
+}
+
 func SelectOffice(uid string) (office Office, code int) {
 	err = db.First(&office, "uid = ?", uid).Error
 	if err != nil {
@@ -100,8 +108,8 @@ func SelectOffice(uid string) (office Office, code int) {
 	return office, msg.SUCCESS
 }
 
-func SelectOffices(name string) (offices []Office, code int) {
-	err = db.Where("name LIKE ?", "%"+name+"%").Find(&offices).Error
+func SelectOffices(office *Office) (offices []Office, code int) {
+	err = db.Where("name LIKE ?", "%"+office.Name+"%").Find(&offices).Error
 	if err != nil {
 		return offices, msg.ERROR_OFFICE_SELECT
 	}
@@ -169,6 +177,14 @@ func DeleteDepartment(uid string) (code int) {
 	err = db.Where("uid = ?", uid).Delete(&Department{}).Error
 	if err != nil {
 		return msg.ERROR
+	}
+	return msg.SUCCESS
+}
+
+func UpdateDepartment(department *Department) (code int) {
+	err = db.Model(&Department{}).Where("uid = ?", department.UID).Updates(Department{Name: department.Name}).Error
+	if err != nil {
+		return msg.ERROR_DEPARTMENT_UPDATE
 	}
 	return msg.SUCCESS
 }

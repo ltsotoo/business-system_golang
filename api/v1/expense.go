@@ -2,8 +2,8 @@ package v1
 
 import (
 	"business-system_golang/model"
+	"business-system_golang/utils/magic"
 	"business-system_golang/utils/msg"
-	"business-system_golang/utils/rbac"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -14,27 +14,22 @@ func AddExpense(c *gin.Context) {
 	var expense model.Expense
 	_ = c.ShouldBindJSON(&expense)
 	expense.EmployeeUID = c.MustGet("employeeUID").(string)
+	expense.Status = magic.EXPENSE_STATUS_NOT_APPROVAL
 	code = model.InsertExpense(&expense)
 	msg.Message(c, code, expense)
 }
 
 //审核报销
 func ApprovalExpense(c *gin.Context) {
-	code = rbac.Check(c, "expense", "update")
-	if code == msg.ERROR {
-		msg.MessageForNotPermission(c)
-	} else {
-		var expense, expenseDB model.Expense
-		_ = c.ShouldBindJSON(&expense)
-		expenseDB, code = model.SelectExpense(expense.UID)
-		if code == msg.SUCCESS && expenseDB.Status == 0 &&
-			(expense.Status == 1 || expense.Status == 2) {
-			expense.ApproverUID = c.MustGet("employeeUID").(string)
-			code = model.UpdateExpense(&expense)
-
-		}
-		msg.Message(c, code, expense)
+	var expense, expenseDB model.Expense
+	_ = c.ShouldBindJSON(&expense)
+	expenseDB, code = model.SelectExpense(expense.UID)
+	if code == msg.SUCCESS && expenseDB.Status == magic.EXPENSE_STATUS_NOT_APPROVAL &&
+		(expense.Status == magic.EXPENSE_STATUS_FAIL || expense.Status == magic.EXPENSE_STATUS_PASS) {
+		expense.ApproverUID = c.MustGet("employeeUID").(string)
+		code = model.UpdateMoneyExpense(&expense)
 	}
+	msg.Message(c, code, expense)
 }
 
 //查看报销

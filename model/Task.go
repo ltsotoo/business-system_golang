@@ -3,6 +3,8 @@ package model
 import (
 	"business-system_golang/utils/magic"
 	"business-system_golang/utils/msg"
+	uidUtils "business-system_golang/utils/uid"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -10,28 +12,39 @@ import (
 // 合同任务 Model
 type Task struct {
 	BaseModel
-	UID              string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	ContractUID      string `gorm:"type:varchar(32);comment:合同ID" json:"contractUID"`
-	ProductUID       string `gorm:"type:varchar(32);comment:产品ID" json:"productUID"`
-	Number           int    `gorm:"type:int;comment:数量" json:"number"`
-	Unit             string `gorm:"type:varchar(9);comment:单位" json:"unit"`
-	Price            int    `gorm:"type:int;comment:单价(元)" json:"price"`
-	TotalPrice       int    `gorm:"type:int;comment:总价(元)" json:"totalPrice"`
-	Status           int    `gorm:"type:int;comment:状态" json:"status"`
-	Type             int    `gorm:"type:int;comment:状态(1:标准/第三方有库存 2:标准/第三方无库存 3:非标准定制)" json:"type"`
-	TechnicianManUID string `gorm:"type:varchar(32);comment:技术负责人ID;default:(-)" json:"technicianManUID"`
-	PurchaseManUID   string `gorm:"type:varchar(32);comment:采购负责人ID;default:(-)" json:"purchaseManUID"`
-	InventoryManUID  string `gorm:"type:varchar(32);comment:库存负责人ID;default:(-)" json:"inventoryManUID"`
-	ShipmentManUID   string `gorm:"type:varchar(32);comment:发货人员ID;default:(-)" json:"shipmentManUID"`
-	Remarks          string `gorm:"type:varchar(499);comment:备注" json:"remarks"`
-	NextRemarks      string `gorm:"type:varchar(499);comment:流程备注" json:"nextRemarks"`
+	UID                string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
+	ContractUID        string `gorm:"type:varchar(32);comment:合同ID" json:"contractUID"`
+	ProductUID         string `gorm:"type:varchar(32);comment:产品ID" json:"productUID"`
+	Number             int    `gorm:"type:int;comment:数量" json:"number"`
+	Unit               string `gorm:"type:varchar(9);comment:单位" json:"unit"`
+	Price              int    `gorm:"type:int;comment:单价(元)" json:"price"`
+	TotalPrice         int    `gorm:"type:int;comment:总价(元)" json:"totalPrice"`
+	Status             int    `gorm:"type:int;comment:状态" json:"status"`
+	Type               int    `gorm:"type:int;comment:状态(1:标准/第三方有库存 2:标准/第三方无库存 3:非标准定制)" json:"type"`
+	TechnicianManUID   string `gorm:"type:varchar(32);comment:技术负责人ID;default:(-)" json:"technicianManUID"`
+	PurchaseManUID     string `gorm:"type:varchar(32);comment:采购负责人ID;default:(-)" json:"purchaseManUID"`
+	InventoryManUID    string `gorm:"type:varchar(32);comment:库存负责人ID;default:(-)" json:"inventoryManUID"`
+	ShipmentManUID     string `gorm:"type:varchar(32);comment:发货人员ID;default:(-)" json:"shipmentManUID"`
+	CurrentRemarks     string `gorm:"type:varchar(32);comment:上一级备注;default:(-)" json:"currentRemarks"`
+	Remarks            string `gorm:"type:varchar(499);comment:备注" json:"remarks"`
+	CurrentRemarksText string `gorm:"-" json:"currentRemarksText"`
 
-	Contract      Contract `gorm:"foreignKey:ContractUID;references:UID" json:"contract"`
-	Product       Product  `gorm:"foreignKey:ProductUID;references:UID" json:"product"`
-	TechnicianMan Employee `gorm:"foreignKey:TechnicianManUID;references:UID" json:"technicianMan"`
-	PurchaseMan   Employee `gorm:"foreignKey:PurchaseManUID;references:UID" json:"purchaseMan"`
-	InventoryMan  Employee `gorm:"foreignKey:InventoryManUID;references:UID" json:"inventoryMan"`
-	ShipmentMan   Employee `gorm:"foreignKey:ShipmentManUID;references:UID" json:"shipmentMan"`
+	Contract      Contract    `gorm:"foreignKey:ContractUID;references:UID" json:"contract"`
+	Product       Product     `gorm:"foreignKey:ProductUID;references:UID" json:"product"`
+	TechnicianMan Employee    `gorm:"foreignKey:TechnicianManUID;references:UID" json:"technicianMan"`
+	PurchaseMan   Employee    `gorm:"foreignKey:PurchaseManUID;references:UID" json:"purchaseMan"`
+	InventoryMan  Employee    `gorm:"foreignKey:InventoryManUID;references:UID" json:"inventoryMan"`
+	ShipmentMan   Employee    `gorm:"foreignKey:ShipmentManUID;references:UID" json:"shipmentMan"`
+	TaskRemarks   TaskRemarks `gorm:"foreignKey:CurrentRemarks;references:UID" json:"taskRemarks"`
+}
+
+type TaskRemarks struct {
+	BaseModel
+	UID     string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
+	TaskUID string `gorm:"type:varchar(32);comment:合同ID" json:"taskUID"`
+	From    int    `gorm:"type:int;comment:原合同状态" json:"from"`
+	To      int    `gorm:"type:int;comment:目标合同状态" json:"to"`
+	Text    string `gorm:"type:varchar(499);comment:备注文本" json:"text"`
 }
 
 type TaskFlowQuery struct {
@@ -145,15 +158,42 @@ func ApproveTask(taskFlowQuery *TaskFlowQuery) (code int) {
 	return
 }
 
-func NextTaskStatus(uid string, status int, nextRemarks string) (code int) {
+func NextTaskStatus(uid string, from int, to int, currentRemarksText string) (code int) {
 	var maps = make(map[string]interface{})
-	maps["status"] = status
-	maps["next_remarks"] = nextRemarks
-
-	err = db.Model(&Task{}).Where("uid = ?", uid).Updates(maps).Error
+	maps["status"] = to
+	err = db.Transaction(func(tdb *gorm.DB) error {
+		if currentRemarksText != "" {
+			remarksUID := uidUtils.Generate()
+			if tErr := tdb.Model(&TaskRemarks{}).Create(map[string]interface{}{
+				"CreatedAt": time.Now().Format("2006-01-02 15:04:05"),
+				"UID":       remarksUID,
+				"TaskUID":   uid,
+				"From":      from,
+				"To":        to,
+				"Text":      currentRemarksText,
+			}).Error; tErr != nil {
+				return tErr
+			}
+			maps["CurrentRemarks"] = remarksUID
+		}
+		if tErr := tdb.Model(&Task{}).Where("uid = ?", uid).Updates(maps).Error; tErr != nil {
+			return tErr
+		}
+		return nil
+	})
 
 	if err != nil {
 		code = msg.ERROR_CONTRACT_UPDATE_STATUS
+	} else {
+		code = msg.SUCCESS
+	}
+	return
+}
+
+func SelectTaskRemarks(taskUID string) (taskRemarksList []TaskRemarks, code int) {
+	err = db.Where("task_uid = ?", taskUID).Find(&taskRemarksList).Error
+	if err != nil {
+		code = msg.ERROR
 	} else {
 		code = msg.SUCCESS
 	}

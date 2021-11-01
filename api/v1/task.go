@@ -4,20 +4,14 @@ import (
 	"business-system_golang/model"
 	"business-system_golang/utils/magic"
 	"business-system_golang/utils/msg"
-	"business-system_golang/utils/rbac"
 
 	"github.com/gin-gonic/gin"
 )
 
 func DelTask(c *gin.Context) {
-	code = rbac.Check(c, "contract", "delete")
-	if code == msg.ERROR {
-		msg.MessageForNotPermission(c)
-	} else {
-		uid := c.Param("uid")
-		code = model.DeleteTask(uid)
-		msg.Message(c, code, nil)
-	}
+	uid := c.Param("uid")
+	code = model.DeleteTask(uid)
+	msg.Message(c, code, nil)
 }
 
 func QueryTasks(c *gin.Context) {
@@ -40,7 +34,7 @@ func NextTask(c *gin.Context) {
 	_ = c.ShouldBindJSON(&task)
 	dbTask, code = model.SelectTask(task.UID)
 	if code == msg.SUCCESS && task.Status == dbTask.Status {
-
+		from := task.Status
 		switch task.Status {
 		case magic.TASK_STATUS_NOT_DESIGN:
 			task.Status = magic.TASK_STATUS_NOT_PURCHASE
@@ -57,17 +51,7 @@ func NextTask(c *gin.Context) {
 		case magic.TASK_STATUS_NOT_SHIPMENT:
 			task.Status = magic.TASK_STATUS_SHIPMENT
 		}
-
-		// if task.Status == magic.TASK_STATUS_NOT_STORAGE {
-		// 	if task.Type == magic.TASK_TYPE_3 {
-		// 		task.Status = magic.TASK_STATUS_NOT_ASSEMBLY
-		// 	} else {
-		// 		task.Status = magic.TASK_STATUS_NOT_SHIPMENT
-		// 	}
-		// } else {
-		// 	task.Status = dbTask.Status + 1
-		// }
-		code = model.NextTaskStatus(task.UID, task.Status, task.NextRemarks)
+		code = model.NextTaskStatus(task.UID, from, task.Status, task.CurrentRemarksText)
 		if code == msg.SUCCESS {
 			code = checkTasksUpdateContract(task.ContractUID)
 		}
@@ -92,4 +76,11 @@ func checkTasksUpdateContract(contractUID string) int {
 		code = model.UpdateContractProductionStatusToFinish(contractUID)
 	}
 	return code
+}
+
+func QueryTaskRemarks(c *gin.Context) {
+	var taskRemarksList []model.TaskRemarks
+	taskUID := c.Query("taskUID")
+	taskRemarksList, code = model.SelectTaskRemarks(taskUID)
+	msg.Message(c, code, taskRemarksList)
 }

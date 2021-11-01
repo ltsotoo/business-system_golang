@@ -39,4 +39,13 @@ const (
 	TASK_TYPE_2 = 2
 	//非标准定制
 	TASK_TYPE_3 = 3
+
+	// 财务审批状态
+	EXPENSE_STATUS_NOT_APPROVAL = 1
+	EXPENSE_STATUS_FAIL         = -1
+	EXPENSE_STATUS_PASS         = 2
+
+	// 财务类型
+	EXPENSE_TYPE_EMPLOYEE = 1
+	EXPENSE_TYPE_OFFICE   = 2
 )
