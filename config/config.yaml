@@ -16,6 +16,6 @@ db:
   type : 'mysql'
   username : 'zyhk'
   password : 'zyhk'
-  host : '192.168.60.234'
+  host : '192.168.92.128'
   port : '3306'
   name : 'zyhk'

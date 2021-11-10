@@ -27,8 +27,6 @@ func InitRouter() {
 		//字典表接口
 		auth.POST("dictionary", v1.AddDictionary)
 		auth.DELETE("dictionary/:uid", v1.DelDictionary)
-		auth.GET("dictionaryType", v1.QueryDictionaryType)
-		auth.GET("dictionaryTypes", v1.QueryDictionaryTypes)
 		auth.GET("dictionaries", v1.QueryDictionaries)
 		//员工模块接口
 		auth.POST("employee", v1.EntryEmployee)

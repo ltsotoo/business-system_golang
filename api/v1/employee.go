@@ -66,13 +66,6 @@ func QueryEmployees(c *gin.Context) {
 	var employeeQuery model.EmployeeQuery
 
 	_ = c.ShouldBindJSON(&employeeQuery)
-
-	if employeeQuery.OfficeUID == "" && employeeQuery.DepartmentUID == "" {
-		visitor, _ := model.SelectEmployee(c.MustGet("employeeUID").(string))
-		employeeQuery.OfficeUID = visitor.OfficeUID
-		employeeQuery.DepartmentUID = visitor.DepartmentUID
-	}
-
 	pageSize, pageSizeErr := strconv.Atoi(c.Query("pageSize"))
 	pageNo, pageNoErr := strconv.Atoi(c.Query("pageNo"))
 	if pageSizeErr != nil || pageSize < 0 {
@@ -82,6 +75,11 @@ func QueryEmployees(c *gin.Context) {
 		pageNo = 1
 	}
 
-	employees, code, total = model.SelectEmployees(pageSize, pageNo, &employeeQuery)
-	msg.MessageForList(c, msg.SUCCESS, employees, pageSize, pageNo, total)
+	if employeeQuery.OfficeUID != "" {
+		employees, code, total = model.SelectEmployees(pageSize, pageNo, &employeeQuery)
+	} else {
+		code = msg.ERROR
+	}
+
+	msg.MessageForList(c, code, employees, pageSize, pageNo, total)
 }

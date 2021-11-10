@@ -66,12 +66,13 @@ func EditArea(c *gin.Context) {
 func EntryDepartment(c *gin.Context) {
 	var department model.Department
 	_ = c.ShouldBindJSON(&department)
-	if department.OfficeUID == "" {
-		visitor, _ := model.SelectEmployee(c.MustGet("employeeUID").(string))
-		department.OfficeUID = visitor.OfficeUID
+	if department.OfficeUID != "" {
+		code = model.InsertDepartment(&department)
+	} else {
+		code = msg.ERROR
 	}
-	code = model.InsertDepartment(&department)
 	msg.Message(c, code, department)
+
 }
 
 func DelDepartment(c *gin.Context) {
@@ -91,11 +92,11 @@ func QueryDepartments(c *gin.Context) {
 	var departments []model.Department
 	var department model.Department
 	_ = c.ShouldBindJSON(&department)
-	if department.OfficeUID == "" {
-		visitor, _ := model.SelectEmployee(c.MustGet("employeeUID").(string))
-		department.OfficeUID = visitor.OfficeUID
+	if department.OfficeUID != "" {
+		departments, code = model.SelectDepartments(&department)
+	} else {
+		code = msg.ERROR
 	}
-	departments, code = model.SelectDepartments(&department)
 	msg.Message(c, code, departments)
 }
 

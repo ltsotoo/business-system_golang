@@ -58,19 +58,19 @@ func UpdateMoneyExpense(expense *Expense) (code int) {
 	}
 	if expense.Status == magic.EXPENSE_STATUS_PASS {
 		if expense.Type == magic.EXPENSE_TYPE_OFFICE {
-			var employee Employee
-			err = db.Transaction(func(tdb *gorm.DB) error {
-				if tErr := tdb.Model(&Expense{}).Where("uid = ?", expense.UID).Updates(maps).Error; tErr != nil {
-					return tErr
-				}
-				if tErr := tdb.Preload("Office").Where("uid = ?", expense.EmployeeUID).First(&employee).Error; tErr != nil {
-					return tErr
-				}
-				if tErr := tdb.Model(&Office{}).Where("uid = ?", employee.Office.UID).Update("money", employee.Office.Money-expense.Amount).Error; tErr != nil {
-					return tErr
-				}
-				return nil
-			})
+			// var employee Employee
+			// err = db.Transaction(func(tdb *gorm.DB) error {
+			// 	if tErr := tdb.Model(&Expense{}).Where("uid = ?", expense.UID).Updates(maps).Error; tErr != nil {
+			// 		return tErr
+			// 	}
+			// 	if tErr := tdb.Preload("Office").Where("uid = ?", expense.EmployeeUID).First(&employee).Error; tErr != nil {
+			// 		return tErr
+			// 	}
+			// 	if tErr := tdb.Model(&Office{}).Where("uid = ?", employee.Office.UID).Update("money", employee.Office.Money-expense.Amount).Error; tErr != nil {
+			// 		return tErr
+			// 	}
+			// 	return nil
+			// })
 		}
 		if expense.Type == magic.EXPENSE_TYPE_EMPLOYEE {
 			//TODO

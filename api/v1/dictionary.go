@@ -7,21 +7,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func QueryDictionaryType(c *gin.Context) {
-	var dictionaryType model.DictionaryType
-	module := c.Query("module")
-	name := c.Query("name")
-	dictionaryType, code = model.SelectDictionaryType(module, name)
-	msg.Message(c, code, dictionaryType)
-}
-
-func QueryDictionaryTypes(c *gin.Context) {
-	module := c.Query("module")
-	var dictionaryTypes []model.DictionaryType
-	dictionaryTypes, code = model.SelectDictionaryTypes(module)
-	msg.Message(c, code, dictionaryTypes)
-}
-
 func AddDictionary(c *gin.Context) {
 	var dictionary model.Dictionary
 	_ = c.ShouldBindJSON(&dictionary)
@@ -38,9 +23,18 @@ func DelDictionary(c *gin.Context) {
 //字典表查询
 func QueryDictionaries(c *gin.Context) {
 	var dictionaries []model.Dictionary
-	parentUID := c.Query("parentUID")
-	DictionaryTypeUID := c.Query("dictionaryTypeUID")
-	dictionaries, code = model.SelectDictionaries(parentUID, DictionaryTypeUID)
+	text := c.Query("Text")
+	typeName := c.Query("TypeName")
+	if typeName != "" {
+		dictionaries, code = model.SelectDictionariesByTypeName(typeName, text)
+	} else {
+		parentUID := c.Query("ParentUID")
+		if parentUID != "" {
+			dictionaries, code = model.SelectDictionaries(parentUID, text)
+		} else {
+			code = msg.ERROR
+		}
+	}
 
 	msg.Message(c, code, dictionaries)
 }

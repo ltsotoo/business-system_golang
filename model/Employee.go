@@ -11,17 +11,17 @@ import (
 // 员工 Model
 type Employee struct {
 	BaseModel
-	UID           string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	Phone         string `gorm:"type:varchar(20);comment:电话;not null" json:"phone"`
-	Name          string `gorm:"type:varchar(20);comment:姓名;not null" json:"name"`
-	Password      string `gorm:"type:varchar(20);comment:密码;not null" json:"password"`
-	WechatID      string `gorm:"type:varchar(20);comment:微信号" json:"wechatID"`
-	Email         string `gorm:"type:varchar(20);comment:邮箱" json:"email"`
-	OfficeUID     string `gorm:"type:varchar(32);comment:办事处UID;default:(-)" json:"officeUID"`
-	DepartmentUID string `gorm:"type:varchar(32);comment:部门UID;default:(-)" json:"departmentUID"`
-	Number        string `gorm:"type:varchar(20);comment:编号;unique" json:"number"`
-	Money         int    `gorm:"type:int;comment:总报销额度(元)" json:"money"`
-	MoneyAdd      int    `gorm:"type:int;comment:每月报销额度(元)" json:"moneyAdd"`
+	UID           string  `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
+	Phone         string  `gorm:"type:varchar(20);comment:电话;not null" json:"phone"`
+	Name          string  `gorm:"type:varchar(20);comment:姓名;not null" json:"name"`
+	Password      string  `gorm:"type:varchar(20);comment:密码;not null" json:"password"`
+	WechatID      string  `gorm:"type:varchar(20);comment:微信号" json:"wechatID"`
+	Email         string  `gorm:"type:varchar(20);comment:邮箱" json:"email"`
+	OfficeUID     string  `gorm:"type:varchar(32);comment:办事处UID;default:(-)" json:"officeUID"`
+	DepartmentUID string  `gorm:"type:varchar(32);comment:部门UID;default:(-)" json:"departmentUID"`
+	Number        string  `gorm:"type:varchar(20);comment:编号;unique" json:"number"`
+	Money         float64 `gorm:"type:decimal(20,6);comment:总报销额度(元)" json:"money"`
+	Credit        float64 `gorm:"type:decimal(20,6);comment:每月报销额度(元)" json:"credit"`
 
 	Office     Office     `gorm:"foreignKey:OfficeUID;references:UID" json:"office"`
 	Department Department `gorm:"foreignKey:DepartmentUID;references:UID" json:"department"`
@@ -115,9 +115,7 @@ func SelectEmployee(uid string) (employee Employee, code int) {
 
 func SelectEmployees(pageSize int, pageNo int, employeeQuery *EmployeeQuery) (employees []Employee, code int, total int64) {
 	var maps = make(map[string]interface{})
-	if employeeQuery.OfficeUID != "" {
-		maps["office_uid"] = employeeQuery.OfficeUID
-	}
+	maps["office_uid"] = employeeQuery.OfficeUID
 	if employeeQuery.DepartmentUID != "" {
 		maps["department_uid"] = employeeQuery.DepartmentUID
 	}

@@ -10,9 +10,9 @@ import (
 //Office办事处 Area地区 Department部门 Role角色 Permission权限
 type Office struct {
 	BaseModel
-	UID   string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	Name  string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
-	Money int    `gorm:"type:int;comment:办事处总报销额度(元)" json:"money"`
+	UID   string  `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
+	Name  string  `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
+	Money float64 `gorm:"type:decimal(20,6);comment:办事处总报销额度(元)" json:"money"`
 
 	Areas []Area `gorm:"foreignKey:OfficeUID;references:UID" json:"areas"`
 }
@@ -134,7 +134,7 @@ func DeleteArea(uid string) (code int) {
 }
 
 func UpdateArea(area *Area) (code int) {
-	err = db.Model(&Area{}).Where("uid = ?", area.UID).Updates(Area{Name: area.Name, OfficeUID: area.OfficeUID}).Error
+	err = db.Model(&Area{}).Where("uid = ?", area.UID).Updates(Area{Name: area.Name, OfficeUID: area.OfficeUID, Number: area.Number}).Error
 	if err != nil {
 		return msg.ERROR_AREA_UPDATE
 	}
