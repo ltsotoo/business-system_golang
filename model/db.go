@@ -29,16 +29,6 @@ func InitDb() {
 		fmt.Println("Database connection failed,please check arguments:", err)
 	}
 
-	//AutoMigrate 用于自动迁移您的 schema，保持您的 schema 是最新的
-	// db.AutoMigrate(
-	// 	&Office{},
-	// 	&Area{},
-	// 	&Customer{},
-	// 	&CustomerCompany{},
-	// 	&DictionaryType{},
-	// 	&Dictionary{},
-	// )
-
 	db.AutoMigrate(
 		&Contract{},
 		&Customer{},
@@ -52,6 +42,8 @@ func InitDb() {
 		&Expense{},
 		&DictionaryType{},
 		&Dictionary{},
+		&PreResearch{},
+		&PreResearchTask{},
 
 		&Office{},
 		&Area{},

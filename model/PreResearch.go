@@ -1,0 +1,197 @@
+package model
+
+import (
+	"business-system_golang/utils/msg"
+	"business-system_golang/utils/uid"
+	"time"
+
+	"gorm.io/gorm"
+)
+
+type PreResearch struct {
+	BaseModel
+	UID         string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
+	EmployeeUID string `gorm:"type:varchar(32);comment:业务员UID;default:(-)" json:"employeeUID"`
+	AuditorUID  string `gorm:"type:varchar(32);comment:审核员ID;default:(-)" json:"auditor"`
+	Remarks     string `gorm:"type:varchar(499);comment:备注" json:"remarks"`
+	Status      int    `gorm:"type:int;comment:状态(-1:驳回 1:未审批 2:未完成 3:已完成);not null" json:"status"`
+
+	Employee Employee `gorm:"foreignKey:EmployeeUID;references:UID" json:"employee"`
+}
+
+type PreResearchTask struct {
+	BaseModel
+	UID            string    `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
+	PreResearchUID string    `gorm:"type:varchar(32);comment:预研UID;not null" json:"preResearchUID"`
+	EmployeeUID    string    `gorm:"type:varchar(32);comment:技术负责人UID;default:(-)" json:"employeeUID"`
+	AuditorUID     string    `gorm:"type:varchar(32);comment:审核员ID;default:(-)" json:"auditorUID"`
+	Requirement    string    `gorm:"type:varchar(499);comment:设计要求" json:"requirement"`
+	Remarks        string    `gorm:"type:varchar(499);comment:备注" json:"remarks"`
+	Days           int       `gorm:"type:int;comment:分配工作天数" json:"days"`
+	StartDate      time.Time `gorm:"type:date;comment:开始工作日期" json:"startDate"`
+	EndDate        time.Time `gorm:"type:date;comment:预计结束工作日期" json:"endDate"`
+	RealEndDate    time.Time `gorm:"type:date;comment:实际结束工作日期;default:(-)" json:"realEndDate"`
+	Status         int       `gorm:"type:int;comment:状态( 1:未完成 2:未审核 3:未通过 4:已通过);not null" json:"status"`
+}
+
+type PreResearchQuery struct {
+	UID         string `json:"UID"`
+	AuditorUID  string `json:"auditorUID"`
+	EmployeeUID string `json:"employeeUID"`
+	Status      int    `json:"status"`
+	Days        int    `json:"days"`
+	Requirement string `json:"requirement"`
+}
+
+func InsertPreResearch(preResearch *PreResearch) (code int) {
+	preResearch.UID = uid.Generate()
+	preResearch.Status = 1
+	err = db.Create(&preResearch).Error
+	if err != nil {
+		return msg.ERROR
+	}
+	return msg.SUCCESS
+}
+
+func DeletePreResearch(uid string) (code int) {
+	err = db.Delete(&PreResearch{}, "uid = ?", uid).Error
+	if err != nil {
+		return msg.ERROR
+	}
+	return msg.SUCCESS
+}
+
+func UpdatePreResearch(preResearch *PreResearch) (code int) {
+	var maps = make(map[string]interface{})
+	maps["Remarks"] = preResearch.Remarks
+	err = db.Model(&PreResearch{}).Where("uid = ?", preResearch.UID).Updates(maps).Error
+	if err != nil {
+		return msg.ERROR
+	}
+	return msg.SUCCESS
+}
+
+func SelectPreReasearch(uid string) (preResearch PreResearch, code int) {
+	err = db.First(&preResearch, "uid = ?", uid).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return preResearch, msg.ERROR
+	}
+	return preResearch, msg.SUCCESS
+}
+
+func SelectPreReasearchs(pageSize int, pageNo int, preResearchQuery *PreResearchQuery) (preResearchs []PreResearch, code int, total int64) {
+	var maps = make(map[string]interface{})
+	err = db.Preload("Employee.Office").Where(maps).Find(&preResearchs).Count(&total).
+		Limit(pageSize).Offset((pageNo - 1) * pageSize).Error
+
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return preResearchs, msg.ERROR, total
+	}
+	return preResearchs, msg.SUCCESS, total
+}
+
+func SelectPreReasearchTasks(pageSize int, pageNo int, preResearchTask *PreResearchTask) (preResearchTasks []PreResearchTask, code int, total int64) {
+	var maps = make(map[string]interface{})
+	err = db.Where(maps).Find(&preResearchTasks).Count(&total).
+		Limit(pageSize).Offset((pageNo - 1) * pageSize).Error
+
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return preResearchTasks, msg.ERROR, total
+	}
+	return preResearchTasks, msg.SUCCESS, total
+}
+
+func UpdatePreResearchStatus(preResearchQuery *PreResearchQuery) (code int) {
+	var maps = make(map[string]interface{})
+	maps["Status"] = preResearchQuery.Status
+	maps["AuditorUID"] = preResearchQuery.AuditorUID
+
+	if preResearchQuery.Status == 2 {
+
+		var preResearchTask PreResearchTask
+		preResearchTask.UID = uid.Generate()
+		preResearchTask.Status = 1
+		preResearchTask.PreResearchUID = preResearchQuery.UID
+		preResearchTask.AuditorUID = preResearchQuery.AuditorUID
+		preResearchTask.EmployeeUID = preResearchQuery.EmployeeUID
+		preResearchTask.Days = preResearchQuery.Days
+		preResearchTask.Requirement = preResearchQuery.Requirement
+
+		t1s := time.Now().Format("2006-01-02")
+		t1, _ := time.Parse("2006-01-02", t1s)
+		t2 := t1.AddDate(0, 0, preResearchTask.Days)
+
+		preResearchTask.StartDate = t1
+		preResearchTask.EndDate = t2
+
+		err = db.Transaction(func(tdb *gorm.DB) error {
+			if tErr := tdb.Model(&PreResearch{}).Where("uid = ?", preResearchQuery.UID).Updates(maps).Error; tErr != nil {
+				return tErr
+			}
+			if tErr := tdb.Create(&preResearchTask).Error; tErr != nil {
+				return tErr
+			}
+			return nil
+		})
+	} else {
+		err = db.Model(&PreResearch{}).Where("uid = ?", preResearchQuery.UID).Updates(maps).Error
+	}
+
+	if err != nil {
+		return msg.ERROR
+	}
+	return msg.SUCCESS
+}
+
+func UpdatePreResearchTaskStatus(preResearchTask *PreResearchTask) (code int) {
+	var maps = make(map[string]interface{})
+	maps["Status"] = preResearchTask.Status
+	if preResearchTask.Status == 2 {
+		maps["Remarks"] = preResearchTask.Remarks
+		t := time.Now().Format("2006-01-02")
+		maps["RealEndDate"] = t
+
+		err = db.Model(&PreResearchTask{}).Where("uid = ?", preResearchTask.UID).Updates(maps).Error
+	} else if preResearchTask.Status == 3 {
+
+		var newPreResearchTask PreResearchTask
+		newPreResearchTask.UID = uid.Generate()
+		newPreResearchTask.Status = 1
+		newPreResearchTask.PreResearchUID = preResearchTask.PreResearchUID
+		newPreResearchTask.AuditorUID = preResearchTask.AuditorUID
+		newPreResearchTask.EmployeeUID = preResearchTask.EmployeeUID
+		newPreResearchTask.Days = preResearchTask.Days
+		newPreResearchTask.Requirement = preResearchTask.Requirement
+
+		t1s := time.Now().Format("2006-01-02")
+		t1, _ := time.Parse("2006-01-02", t1s)
+		t2 := t1.AddDate(0, 0, preResearchTask.Days)
+
+		newPreResearchTask.StartDate = t1
+		newPreResearchTask.EndDate = t2
+
+		err = db.Transaction(func(tdb *gorm.DB) error {
+			if tErr := tdb.Model(&PreResearchTask{}).Where("uid = ?", preResearchTask.UID).Updates(maps).Error; tErr != nil {
+				return tErr
+			}
+			if tErr := tdb.Create(&newPreResearchTask).Error; tErr != nil {
+				return tErr
+			}
+			return nil
+		})
+	} else if preResearchTask.Status == 4 {
+		err = db.Transaction(func(tdb *gorm.DB) error {
+			if tErr := tdb.Model(&PreResearchTask{}).Where("uid = ?", preResearchTask.UID).Updates(maps).Error; tErr != nil {
+				return tErr
+			}
+			if tErr := tdb.Model(&PreResearch{}).Where("uid = ?", preResearchTask.PreResearchUID).Update("status", 3).Error; tErr != nil {
+				return tErr
+			}
+			return nil
+		})
+	}
+	if err != nil {
+		return msg.ERROR
+	}
+	return msg.SUCCESS
+}

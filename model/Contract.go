@@ -117,10 +117,8 @@ func UpdateContract(contract *Contract) (code int) {
 }
 
 func SelectContract(uid string) (contract Contract, code int) {
-	err = db.Preload("Area").Preload("ContractUnit").
-		Preload("Employee").Preload("Employee.Office").
-		Preload("Customer").Preload("Customer.Company").
-		Preload("Tasks").Preload("Tasks.Product").
+	err = db.Preload("Area.Office").Preload("ContractUnit").
+		Preload("Customer.Company").Preload("Tasks.Product").
 		Preload("Tasks.TechnicianMan").Preload("Tasks.PurchaseMan").
 		Preload("Tasks.InventoryMan").Preload("Tasks.ShipmentMan").
 		Preload("Payments").
@@ -177,7 +175,7 @@ func SelectContracts(pageSize int, pageNo int, contractQuery *ContractQuery) (co
 		tDb = tDb.Where(maps)
 	}
 	err = tDb.Find(&contracts).Count(&total).
-		Preload("Customer").Preload("Customer.Company").Preload("Area").Preload("Area.Office").Preload("Employee").
+		Preload("Customer").Preload("Customer.Company").Preload("Area.Office").Preload("Employee").
 		Limit(pageSize).Offset((pageNo - 1) * pageSize).
 		Find(&contracts).Error
 

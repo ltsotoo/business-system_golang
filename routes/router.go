@@ -99,6 +99,15 @@ func InitRouter() {
 		auth.GET("expense/:uid", v1.QueryExpense)
 		auth.POST("expenses", v1.QueryExpenses)
 		auth.POST("myexpenses", v1.QueryMyExpenses)
+		//预研究模块
+		auth.POST("preResearch", v1.CreatePreResearch)
+		auth.DELETE("preResearch/:uid", v1.DelPreResearch)
+		auth.GET("preResearch/:uid", v1.QueryPreResearch)
+		auth.POST("preResearchs", v1.QueryPreResearchs)
+		auth.POST("preResearchTasks", v1.QueryPreResearchTasks)
+		// auth.PUT("preResearch", v1.EditPreResearch)
+		auth.PUT("preResearch", v1.UpdatePreResearch)
+		auth.PUT("preResearchTask", v1.UpdatePreResearchTask)
 	}
 
 	_ = r.Run(config.SystemConfig.Server.Port)
