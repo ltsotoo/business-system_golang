@@ -16,18 +16,8 @@ func EntryEmployee(c *gin.Context) {
 	_ = c.ShouldBindJSON(&employee)
 	code = model.CheckEmployee(employee.Phone)
 	if code == msg.ERROR_EMPLOYEE_NOT_EXIST {
-		//对录入员工的办事处和部门信息补充
-		if employee.OfficeUID == "" || employee.DepartmentUID == "" {
-			visitor, _ := model.SelectEmployee(c.MustGet("employeeUID").(string))
-			if employee.OfficeUID == "" {
-				employee.OfficeUID = visitor.OfficeUID
-			}
-			if employee.DepartmentUID == "" {
-				employee.DepartmentUID = visitor.DepartmentUID
-			}
-		}
-		//默认密码等于手机号
-		employee.Password = employee.Phone
+		//默认密码等于手机号+编号
+		employee.Password = employee.Phone + employee.Number
 		code = model.InsertEmployee(&employee)
 	}
 	msg.Message(c, code, employee)
@@ -75,11 +65,7 @@ func QueryEmployees(c *gin.Context) {
 		pageNo = 1
 	}
 
-	if employeeQuery.OfficeUID != "" {
-		employees, code, total = model.SelectEmployees(pageSize, pageNo, &employeeQuery)
-	} else {
-		code = msg.ERROR
-	}
+	employees, code, total = model.SelectEmployees(pageSize, pageNo, &employeeQuery)
 
 	msg.MessageForList(c, code, employees, pageSize, pageNo, total)
 }

@@ -35,13 +35,12 @@ type AreaQuery struct {
 type Department struct {
 	BaseModel
 	UID       string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	TypeUID   string `gorm:"type:varchar(32);comment:部门类型;not null" json:"typeUID"`
 	OfficeUID string `gorm:"type:varchar(32);comment:办事处ID;not null" json:"officeUID"`
 	Name      string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
 	RoleUID   string `gorm:"type:varchar(32);comment:部门员工默认拥有职位" json:"roleUID"`
 
-	Type Dictionary `gorm:"foreignKey:TypeUID;references:UID" json:"type"`
-	Role Role       `gorm:"foreignKey:RoleUID;references:UID" json:"role"`
+	Office Office `gorm:"foreignKey:OfficeUID;references:UID" json:"office"`
+	Role   Role   `gorm:"foreignKey:RoleUID;references:UID" json:"role"`
 }
 
 type Role struct {
@@ -189,7 +188,7 @@ func UpdateDepartment(department *Department) (code int) {
 }
 
 func SelectDepartments(department *Department) (departments []Department, code int) {
-	err = db.Preload("Type").Where("office_uid = ? AND name LIKE ?", department.OfficeUID, "%"+department.Name+"%").
+	err = db.Preload("Role").Where("office_uid = ? AND name LIKE ?", department.OfficeUID, "%"+department.Name+"%").
 		Find(&departments).Error
 	if err != nil {
 		return departments, msg.ERROR_DEPARTMENT_SELECT
@@ -231,7 +230,8 @@ func SelectRoles() (roles []Role, code int) {
 }
 
 func SelectAllRoles(name string) (roles []Role, code int) {
-	err = db.Preload("Department").Where("name LIKE ?", "%"+name+"%").Find(&roles).Error
+	err = db.Where("name LIKE ?", "%"+name+"%").Find(&roles).Error
+
 	if err != nil {
 		return roles, msg.ERROR_ROLE_SELECT
 	}
