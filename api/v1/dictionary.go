@@ -9,8 +9,15 @@ import (
 
 func AddDictionary(c *gin.Context) {
 	var dictionary model.Dictionary
+	var dictionaryType model.DictionaryType
 	_ = c.ShouldBindJSON(&dictionary)
-	code = model.InsertDictionary(&dictionary)
+	dictionaryType, _ = model.SelectDictionaryType(dictionary.DictionaryTypeUID)
+	if dictionaryType.UID != "" {
+		dictionary.DictionaryTypeUID = dictionaryType.UID
+		code = model.InsertDictionary(&dictionary)
+	} else {
+		code = msg.ERROR
+	}
 	msg.Message(c, code, dictionary)
 }
 
@@ -25,16 +32,7 @@ func QueryDictionaries(c *gin.Context) {
 	var dictionaries []model.Dictionary
 	text := c.Query("Text")
 	typeName := c.Query("TypeName")
-	if typeName != "" {
-		dictionaries, code = model.SelectDictionariesByTypeName(typeName, text)
-	} else {
-		parentUID := c.Query("ParentUID")
-		if parentUID != "" {
-			dictionaries, code = model.SelectDictionaries(parentUID, text)
-		} else {
-			code = msg.ERROR
-		}
-	}
+	dictionaries, code = model.SelectDictionaries(typeName, text)
 
 	msg.Message(c, code, dictionaries)
 }

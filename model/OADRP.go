@@ -38,18 +38,17 @@ type Department struct {
 	TypeUID   string `gorm:"type:varchar(32);comment:部门类型;not null" json:"typeUID"`
 	OfficeUID string `gorm:"type:varchar(32);comment:办事处ID;not null" json:"officeUID"`
 	Name      string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
+	RoleUID   string `gorm:"type:varchar(32);comment:部门员工默认拥有职位" json:"roleUID"`
 
 	Type Dictionary `gorm:"foreignKey:TypeUID;references:UID" json:"type"`
+	Role Role       `gorm:"foreignKey:RoleUID;references:UID" json:"role"`
 }
 
 type Role struct {
 	BaseModel
-	UID           string       `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	Name          string       `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
-	DepartmentUID string       `gorm:"type:varchar(32);comment:部门UID;default:(-)" json:"departmentUID"`
-	Permissions   []Permission `gorm:"many2many:role_permission;foreignKey:UID;References:UID" json:"permissions"`
-
-	Department Dictionary `gorm:"foreignKey:DepartmentUID;references:UID" json:"department"`
+	UID         string       `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
+	Name        string       `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
+	Permissions []Permission `gorm:"many2many:role_permission;foreignKey:UID;References:UID" json:"permissions"`
 }
 
 type Permission struct {
@@ -200,7 +199,7 @@ func SelectDepartments(department *Department) (departments []Department, code i
 
 func InsertRole(role *Role) (code int) {
 	role.UID = uid.Generate()
-	err = db.Debug().Create(&role).Error
+	err = db.Create(&role).Error
 	if err != nil {
 		return msg.ERROR_OFFICE_INSERT
 	}

@@ -21,7 +21,6 @@ type DictionaryType struct {
 type Dictionary struct {
 	BaseModel
 	UID               string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	ParentUID         string `gorm:"type:varchar(32);comment:父ID" json:"parentUID"`
 	DictionaryTypeUID string `gorm:"type:varchar(32);comment:类型ID;default:(-)" json:"dictionaryTypeUID"`
 	Text              string `gorm:"type:varchar(20);comment:文本" json:"text"`
 
@@ -70,16 +69,8 @@ func DeleteDictionary(uid string) (code int) {
 	return msg.SUCCESS
 }
 
-func SelectDictionariesByTypeName(name string, text string) (dictionaries []Dictionary, code int) {
+func SelectDictionaries(name string, text string) (dictionaries []Dictionary, code int) {
 	err = db.Joins("DictionaryType").Where("DictionaryType.name = ? AND dictionary.text LIKE ?", name, "%"+text+"%").Find(&dictionaries).Error
-	if err != nil {
-		return dictionaries, msg.ERROR
-	}
-	return dictionaries, msg.SUCCESS
-}
-
-func SelectDictionaries(parentUID string, text string) (dictionaries []Dictionary, code int) {
-	err = db.Where("parent_uid = ? AND text LIKE ?", parentUID, "%"+text+"%").Find(&dictionaries).Error
 	if err != nil {
 		return dictionaries, msg.ERROR
 	}

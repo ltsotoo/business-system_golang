@@ -13,10 +13,11 @@ type PreResearch struct {
 	UID         string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
 	EmployeeUID string `gorm:"type:varchar(32);comment:业务员UID;default:(-)" json:"employeeUID"`
 	AuditorUID  string `gorm:"type:varchar(32);comment:审核员ID;default:(-)" json:"auditor"`
-	Remarks     string `gorm:"type:varchar(499);comment:备注" json:"remarks"`
+	Remarks     string `gorm:"type:varchar(499);comment:设计需求" json:"remarks"`
 	Status      int    `gorm:"type:int;comment:状态(-1:驳回 1:未审批 2:未完成 3:已完成);not null" json:"status"`
 
-	Employee Employee `gorm:"foreignKey:EmployeeUID;references:UID" json:"employee"`
+	PreResearchTasks []PreResearchTask `gorm:"-" json:"preResearchTasks"`
+	Employee         Employee          `gorm:"foreignKey:EmployeeUID;references:UID" json:"employee"`
 }
 
 type PreResearchTask struct {
@@ -32,6 +33,8 @@ type PreResearchTask struct {
 	EndDate        time.Time `gorm:"type:date;comment:预计结束工作日期" json:"endDate"`
 	RealEndDate    time.Time `gorm:"type:date;comment:实际结束工作日期;default:(-)" json:"realEndDate"`
 	Status         int       `gorm:"type:int;comment:状态( 1:未完成 2:未审核 3:未通过 4:已通过);not null" json:"status"`
+
+	Employee Employee `gorm:"foreignKey:EmployeeUID;references:UID" json:"employee"`
 }
 
 type PreResearchQuery struct {
@@ -72,9 +75,14 @@ func UpdatePreResearch(preResearch *PreResearch) (code int) {
 }
 
 func SelectPreReasearch(uid string) (preResearch PreResearch, code int) {
-	err = db.First(&preResearch, "uid = ?", uid).Error
+	err = db.Preload("Employee.Office").First(&preResearch, "uid = ?", uid).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return preResearch, msg.ERROR
+	}
+	var preResearchTasks []PreResearchTask
+	err = db.Debug().Where("pre_research_uid = ?", uid).Find(&preResearchTasks).Error
+	if err == nil {
+		preResearch.PreResearchTasks = preResearchTasks
 	}
 	return preResearch, msg.SUCCESS
 }
@@ -92,7 +100,7 @@ func SelectPreReasearchs(pageSize int, pageNo int, preResearchQuery *PreResearch
 
 func SelectPreReasearchTasks(pageSize int, pageNo int, preResearchTask *PreResearchTask) (preResearchTasks []PreResearchTask, code int, total int64) {
 	var maps = make(map[string]interface{})
-	err = db.Where(maps).Find(&preResearchTasks).Count(&total).
+	err = db.Preload("Employee").Where(maps).Find(&preResearchTasks).Count(&total).
 		Limit(pageSize).Offset((pageNo - 1) * pageSize).Error
 
 	if err != nil && err != gorm.ErrRecordNotFound {
