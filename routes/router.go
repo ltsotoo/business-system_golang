@@ -28,6 +28,7 @@ func InitRouter() {
 		auth.POST("dictionary", v1.AddDictionary)
 		auth.DELETE("dictionary/:uid", v1.DelDictionary)
 		auth.GET("dictionaries", v1.QueryDictionaries)
+		auth.GET("dictionarieTypes", v1.QueryDictionarieTypes)
 		//员工模块接口
 		auth.POST("employee", v1.EntryEmployee)
 		auth.DELETE("employee/:uid", v1.DelEmployee)
@@ -80,7 +81,9 @@ func InitRouter() {
 		auth.GET("customer/:uid", v1.QueryCustomer)
 		auth.POST("customers", v1.QueryCustomers)
 		//客户模块接口PLUS
-		auth.POST("companys", v1.QueryCompanys)
+		auth.POST("company", v1.AddCustomerCompany)
+		auth.DELETE("company/:uid", v1.DelCustomerCompany)
+		auth.POST("companys", v1.QueryCustomerCompanys)
 		//产品模块接口
 		auth.POST("product", v1.EntryProduct)
 		auth.DELETE("product/:uid", v1.DelProduct)

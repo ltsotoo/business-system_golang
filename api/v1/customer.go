@@ -60,9 +60,22 @@ func QueryCustomers(c *gin.Context) {
 	msg.MessageForList(c, msg.SUCCESS, customers, pageSize, pageNo, total)
 }
 
+func AddCustomerCompany(c *gin.Context) {
+	var customerCompany model.CustomerCompany
+	_ = c.ShouldBindJSON(&customerCompany)
+	code = model.InsertCustomerCompany(&customerCompany)
+	msg.Message(c, code, customerCompany)
+}
+
+func DelCustomerCompany(c *gin.Context) {
+	uid := c.Param("uid")
+	code = model.DeleteCustomerCompany(uid)
+	msg.Message(c, code, nil)
+}
+
 //查询客户公司列表
-func QueryCompanys(c *gin.Context) {
+func QueryCustomerCompanys(c *gin.Context) {
 	var companys []model.CustomerCompany
-	companys, code = model.SelectCompanys("")
+	companys, code = model.SelectCustomerCompanys("")
 	msg.Message(c, code, companys)
 }

@@ -16,7 +16,7 @@ type Customer struct {
 	ResearchGroup string `gorm:"type:varchar(20);comment:课题组" json:"researchGroup"`
 	Phone         string `gorm:"type:varchar(20);comment:电话" json:"phone"`
 	WechatID      string `gorm:"type:varchar(20);comment:微信号" json:"wechatID"`
-	Email         string `gorm:"type:varchar(20);comment:邮箱" json:"email"`
+	Email         string `gorm:"type:varchar(50);comment:邮箱" json:"email"`
 	Status        int    `gorm:"type:int;comment:状态(0:未审核,1:通过审核)" json:"status"`
 
 	Company CustomerCompany `gorm:"foreignKey:CompanyUID;references:UID" json:"company"`
@@ -34,7 +34,7 @@ type CustomerQuery struct {
 type CustomerCompany struct {
 	BaseModel
 	UID     string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	AreaUID string `gorm:"type:varchar(32);comment:地区UID;not null" json:"areaUID"`
+	AreaUID string `gorm:"type:varchar(32);comment:区域UID;not null" json:"areaUID"`
 	Name    string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
 	Address string `gorm:"type:varchar(20);comment:地址" json:"address"`
 
@@ -108,8 +108,25 @@ func SelectCustomers(pageSize int, pageNo int, customerQuery *CustomerQuery) (cu
 	return customers, msg.SUCCESS, total
 }
 
-func SelectCompanys(areaUID string) (CustomerCompanys []CustomerCompany, code int) {
-	err = db.Find(&CustomerCompanys).Error
+func InsertCustomerCompany(customerCompany *CustomerCompany) (code int) {
+	customerCompany.UID = uid.Generate()
+	err = db.Create(&customerCompany).Error
+	if err != nil {
+		return msg.ERROR
+	}
+	return msg.SUCCESS
+}
+
+func DeleteCustomerCompany(uid string) (code int) {
+	err = db.Where("uid = ?", uid).Delete(&CustomerCompany{}).Error
+	if err != nil {
+		return msg.ERROR
+	}
+	return msg.SUCCESS
+}
+
+func SelectCustomerCompanys(areaUID string) (CustomerCompanys []CustomerCompany, code int) {
+	err = db.Preload("Area").Find(&CustomerCompanys).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return CustomerCompanys, msg.ERROR
 	}

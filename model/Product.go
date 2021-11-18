@@ -10,23 +10,25 @@ import (
 // 产品 Model
 type Product struct {
 	BaseModel
-	UID            string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	Name           string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
-	Brand          string `gorm:"type:varchar(20);comment:品牌" json:"brand"`
-	Specification  string `gorm:"type:varchar(50);comment:规格" json:"specification"`
-	SupplierUID    string `gorm:"type:varchar(32);comment:供应商ID;default:(-)" json:"supplierUID"`
-	Number         int    `gorm:"type:int;comment:数量" json:"number"`
-	Unit           string `gorm:"type:varchar(20);comment:单位" json:"unit"`
-	PurchasedPrice int    `gorm:"type:int;comment:采购价格(元)" json:"purchasedPrice"`
-	StandardPrice  int    `gorm:"type:int;comment:标准价格(元)" json:"standardPrice"`
-	DeliveryCycle  string `gorm:"type:varchar(20);comment:供货周期" json:"deliveryCycle"`
-	Remarks        string `gorm:"type:varchar(499);comment:备注" json:"remarks"`
-	SourceTypeUID  string `gorm:"type:varchar(32);comment:来源类型;default:(-)" json:"sourceTypeUID"`
-	SubtypeUID     string `gorm:"type:varchar(32);comment:子类型;default:(-)" json:"subtypeUID"`
+	UID              string  `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
+	Name             string  `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
+	Brand            string  `gorm:"type:varchar(20);comment:品牌" json:"brand"`
+	Specification    string  `gorm:"type:varchar(50);comment:规格" json:"specification"`
+	SupplierUID      string  `gorm:"type:varchar(32);comment:供应商ID;default:(-)" json:"supplierUID"`
+	Number           int     `gorm:"type:int;comment:可售数量(库存数量-订单锁定但未出库的数量)" json:"number"`
+	NumberCount      int     `gorm:"type:int;comment:库存数量" json:"numberCount"`
+	Unit             string  `gorm:"type:varchar(20);comment:单位" json:"unit"`
+	PurchasedPrice   float64 `gorm:"type:decimal(20,6);comment:采购价格(元)" json:"purchasedPrice"`
+	StandardPrice    float64 `gorm:"type:decimal(20,6);comment:标准价格(元)" json:"standardPrice"`
+	StandardPriceUSD float64 `gorm:"type:decimal(20,6);comment:标准价格(美元)" json:"standardPriceUSD"`
+	DeliveryCycle    string  `gorm:"type:varchar(20);comment:供货周期" json:"deliveryCycle"`
+	Remarks          string  `gorm:"type:varchar(600);comment:备注" json:"remarks"`
+	SourceTypeUID    string  `gorm:"type:varchar(32);comment:来源类型;default:(-)" json:"sourceTypeUID"`
+	SubtypeUID       string  `gorm:"type:varchar(32);comment:子类型;default:(-)" json:"subtypeUID"`
 
-	Supplier   Supplier   `gorm:"foreignKey:SupplierUID;references:UID" json:"supplier"`
-	SourceType Dictionary `gorm:"foreignKey:SourceTypeUID;references:UID" json:"sourceType"`
-	Subtype    Dictionary `gorm:"foreignKey:SubtypeUID;references:UID" json:"subtype"`
+	Supplier   Supplier       `gorm:"foreignKey:SupplierUID;references:UID" json:"supplier"`
+	SourceType DictionaryType `gorm:"foreignKey:SourceTypeUID;references:UID" json:"sourceType"`
+	Subtype    Dictionary     `gorm:"foreignKey:SubtypeUID;references:UID" json:"subtype"`
 }
 
 type ProductQuery struct {
@@ -55,7 +57,8 @@ func DeleteProduct(uid string) (code int) {
 
 func UpdateProduct(product *Product) (code int) {
 	var maps = make(map[string]interface{})
-	maps["Remarks"] = product.Remarks
+	maps["Number"] = product.Number
+	maps["NumberCount"] = product.NumberCount
 	err = db.Model(&Product{}).Where("uid = ?", product.UID).Updates(maps).Error
 	if err != nil {
 		return msg.ERROR_PRODUCT_UPDATE

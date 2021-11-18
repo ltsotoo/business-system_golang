@@ -10,9 +10,10 @@ import (
 //字典类型表 Model
 type DictionaryType struct {
 	BaseModel
-	UID  string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	Name string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
-	Text string `gorm:"type:varchar(20);comment:文本;not null" json:"text"`
+	UID      string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
+	Name     string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
+	Text     string `gorm:"type:varchar(20);comment:文本;not null" json:"text"`
+	Category string `gorm:"type:varchar(20);comment:类别;default:(-)" json:"category"`
 
 	Dictionaries []Dictionary `gorm:"foreignKey:DictionaryTypeUID;references:UID" json:"dictionaries"`
 }
@@ -50,6 +51,14 @@ func SelectDictionaryType(name string) (dictionaryType DictionaryType, code int)
 		return dictionaryType, msg.ERROR_SYSTE_DIC_TYPE_SELECT
 	}
 	return dictionaryType, msg.SUCCESS
+}
+
+func SelectDictionaryTypes(category string) (dictionaryTypes []DictionaryType, code int) {
+	err = db.Where("category = ?", category).Find(&dictionaryTypes).Error
+	if err != nil {
+		return dictionaryTypes, msg.ERROR_SYSTE_DIC_TYPE_SELECT
+	}
+	return dictionaryTypes, msg.SUCCESS
 }
 
 func InsertDictionary(dictionary *Dictionary) (code int) {

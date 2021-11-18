@@ -36,3 +36,11 @@ func QueryDictionaries(c *gin.Context) {
 
 	msg.Message(c, code, dictionaries)
 }
+
+func QueryDictionarieTypes(c *gin.Context) {
+	var dictionarieTypes []model.DictionaryType
+	category := c.Query("Category")
+	dictionarieTypes, code = model.SelectDictionaryTypes(category)
+
+	msg.Message(c, code, dictionarieTypes)
+}
