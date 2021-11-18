@@ -13,7 +13,7 @@ type PreResearch struct {
 	UID         string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
 	EmployeeUID string `gorm:"type:varchar(32);comment:业务员UID;default:(-)" json:"employeeUID"`
 	AuditorUID  string `gorm:"type:varchar(32);comment:审核员ID;default:(-)" json:"auditor"`
-	Remarks     string `gorm:"type:varchar(499);comment:设计需求" json:"remarks"`
+	Remarks     string `gorm:"type:varchar(600);comment:设计需求" json:"remarks"`
 	Status      int    `gorm:"type:int;comment:状态(-1:驳回 1:未审批 2:未完成 3:已完成);not null" json:"status"`
 
 	PreResearchTasks []PreResearchTask `gorm:"-" json:"preResearchTasks"`
@@ -26,8 +26,8 @@ type PreResearchTask struct {
 	PreResearchUID string    `gorm:"type:varchar(32);comment:预研UID;not null" json:"preResearchUID"`
 	EmployeeUID    string    `gorm:"type:varchar(32);comment:技术负责人UID;default:(-)" json:"employeeUID"`
 	AuditorUID     string    `gorm:"type:varchar(32);comment:审核员ID;default:(-)" json:"auditorUID"`
-	Requirement    string    `gorm:"type:varchar(499);comment:设计要求" json:"requirement"`
-	Remarks        string    `gorm:"type:varchar(499);comment:备注" json:"remarks"`
+	Requirement    string    `gorm:"type:varchar(600);comment:设计要求" json:"requirement"`
+	Remarks        string    `gorm:"type:varchar(600);comment:备注" json:"remarks"`
 	Days           int       `gorm:"type:int;comment:分配工作天数" json:"days"`
 	StartDate      time.Time `gorm:"type:date;comment:开始工作日期" json:"startDate"`
 	EndDate        time.Time `gorm:"type:date;comment:预计结束工作日期" json:"endDate"`
@@ -38,12 +38,13 @@ type PreResearchTask struct {
 }
 
 type PreResearchQuery struct {
-	UID         string `json:"UID"`
-	AuditorUID  string `json:"auditorUID"`
-	EmployeeUID string `json:"employeeUID"`
-	Status      int    `json:"status"`
-	Days        int    `json:"days"`
-	Requirement string `json:"requirement"`
+	UID          string `json:"UID"`
+	AuditorUID   string `json:"auditorUID"`
+	EmployeeUID  string `json:"employeeUID"`
+	EmployeeName string `json:"employeeName"`
+	Status       int    `json:"status"`
+	Days         int    `json:"days"`
+	Requirement  string `json:"requirement"`
 }
 
 func InsertPreResearch(preResearch *PreResearch) (code int) {
@@ -89,7 +90,12 @@ func SelectPreReasearch(uid string) (preResearch PreResearch, code int) {
 
 func SelectPreReasearchs(pageSize int, pageNo int, preResearchQuery *PreResearchQuery) (preResearchs []PreResearch, code int, total int64) {
 	var maps = make(map[string]interface{})
-	err = db.Preload("Employee.Office").Where(maps).Find(&preResearchs).Count(&total).
+	if preResearchQuery.Status != 0 {
+		maps["status"] = preResearchQuery.Status
+	}
+	err = db.Joins("Employee").Where(maps).
+		Where("Employee.name Like ?", "%"+preResearchQuery.EmployeeName+"%").
+		Preload("Employee.Office").Find(&preResearchs).Count(&total).
 		Limit(pageSize).Offset((pageNo - 1) * pageSize).Error
 
 	if err != nil && err != gorm.ErrRecordNotFound {
@@ -100,7 +106,12 @@ func SelectPreReasearchs(pageSize int, pageNo int, preResearchQuery *PreResearch
 
 func SelectPreReasearchTasks(pageSize int, pageNo int, preResearchTask *PreResearchTask) (preResearchTasks []PreResearchTask, code int, total int64) {
 	var maps = make(map[string]interface{})
-	err = db.Preload("Employee").Where(maps).Find(&preResearchTasks).Count(&total).
+	if preResearchTask.Status != 0 {
+		maps["status"] = preResearchTask.Status
+	}
+	err = db.Joins("Employee").Where(maps).
+		Where("Employee.name Like ?", "%"+preResearchTask.EmployeeUID+"%").
+		Preload("Employee").Find(&preResearchTasks).Count(&total).
 		Limit(pageSize).Offset((pageNo - 1) * pageSize).Error
 
 	if err != nil && err != gorm.ErrRecordNotFound {

@@ -14,7 +14,7 @@ func AddExpense(c *gin.Context) {
 	var expense model.Expense
 	_ = c.ShouldBindJSON(&expense)
 	expense.EmployeeUID = c.MustGet("employeeUID").(string)
-	expense.Status = magic.EXPENSE_STATUS_NOT_APPROVAL
+	expense.Status = magic.EXPENSE_STATUS_NOT_APPROVAL_1
 	code = model.InsertExpense(&expense)
 	msg.Message(c, code, expense)
 }
@@ -24,8 +24,10 @@ func ApprovalExpense(c *gin.Context) {
 	var expense, expenseDB model.Expense
 	_ = c.ShouldBindJSON(&expense)
 	expenseDB, code = model.SelectExpense(expense.UID)
-	if code == msg.SUCCESS && expenseDB.Status == magic.EXPENSE_STATUS_NOT_APPROVAL &&
-		(expense.Status == magic.EXPENSE_STATUS_FAIL || expense.Status == magic.EXPENSE_STATUS_PASS) {
+	if code == msg.SUCCESS && expenseDB.Status > 0 && expenseDB.Status < 3 &&
+		(expense.Status == magic.EXPENSE_STATUS_FAIL ||
+			expense.Status == magic.EXPENSE_STATUS_NOT_APPROVAL_2 ||
+			expense.Status == magic.EXPENSE_STATUS_PASS) {
 		expense.ApproverUID = c.MustGet("employeeUID").(string)
 		code = model.UpdateMoneyExpense(&expense)
 	}

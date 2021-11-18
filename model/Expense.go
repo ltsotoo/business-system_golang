@@ -10,13 +10,13 @@ import (
 
 type Expense struct {
 	BaseModel
-	UID         string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	EmployeeUID string `gorm:"type:varchar(32);comment:申请员工UID;default:(-)" json:"employeeUID"`
-	Type        int    `gorm:"type:int;comment:部门类型(1:个人,2:办事处)" json:"type"`
-	Text        string `gorm:"type:varchar(499);comment:申请理由" json:"text"`
-	Amount      int    `gorm:"type:int;comment:金额(元)" json:"amount"`
-	Status      int    `gorm:"type:int;comment:状态(-1:拒绝,1:待审批,2:通过)" json:"status"`
-	ApproverUID string `gorm:"type:varchar(32);comment:审批财务员工UID;default:(-)" json:"approverUID"`
+	UID         string  `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
+	EmployeeUID string  `gorm:"type:varchar(32);comment:申请员工UID;default:(-)" json:"employeeUID"`
+	Type        int     `gorm:"type:int;comment:部门类型(1:个人,2:办事处)" json:"type"`
+	Text        string  `gorm:"type:varchar(600);comment:申请理由" json:"text"`
+	Amount      float64 `gorm:"type:decimal(20,6);comment:金额(元)" json:"amount"`
+	Status      int     `gorm:"type:int;comment:状态(-1:拒绝,1:待办事处审批,2:待财务审批,3:通过)" json:"status"`
+	ApproverUID string  `gorm:"type:varchar(32);comment:审批财务员工UID;default:(-)" json:"approverUID"`
 
 	Employee Employee `gorm:"foreignKey:EmployeeUID;references:UID" json:"employee"`
 	Approver Employee `gorm:"foreignKey:ApproverUID;references:UID" json:"approver"`
@@ -53,27 +53,40 @@ func UpdateMoneyExpense(expense *Expense) (code int) {
 	var maps = make(map[string]interface{})
 	maps["approver_uid"] = expense.ApproverUID
 	maps["status"] = expense.Status
-	if expense.Status == magic.EXPENSE_STATUS_FAIL {
+	if expense.Status == magic.EXPENSE_STATUS_FAIL ||
+		expense.Status == magic.EXPENSE_STATUS_NOT_APPROVAL_2 {
 		err = db.Model(&Expense{}).Where("uid = ?", expense.UID).Updates(maps).Error
 	}
 	if expense.Status == magic.EXPENSE_STATUS_PASS {
 		if expense.Type == magic.EXPENSE_TYPE_OFFICE {
-			// var employee Employee
-			// err = db.Transaction(func(tdb *gorm.DB) error {
-			// 	if tErr := tdb.Model(&Expense{}).Where("uid = ?", expense.UID).Updates(maps).Error; tErr != nil {
-			// 		return tErr
-			// 	}
-			// 	if tErr := tdb.Preload("Office").Where("uid = ?", expense.EmployeeUID).First(&employee).Error; tErr != nil {
-			// 		return tErr
-			// 	}
-			// 	if tErr := tdb.Model(&Office{}).Where("uid = ?", employee.Office.UID).Update("money", employee.Office.Money-expense.Amount).Error; tErr != nil {
-			// 		return tErr
-			// 	}
-			// 	return nil
-			// })
+			office, _ := SelectOffice(expense.Employee.OfficeUID)
+			office.Money = office.Money - expense.Amount
+			err = db.Transaction(func(tdb *gorm.DB) error {
+				if tErr := tdb.Model(&Expense{}).Where("uid = ?", expense.UID).Updates(maps).Error; tErr != nil {
+					return tErr
+				}
+				if tErr := tdb.Model(&Office{}).Where("uid = ?", office.UID).Update("money", office.Money).Error; tErr != nil {
+					return tErr
+				}
+				return nil
+			})
 		}
 		if expense.Type == magic.EXPENSE_TYPE_EMPLOYEE {
-			//TODO
+			employee, _ := SelectEmployee(expense.EmployeeUID)
+			if employee.Money > expense.Amount {
+				employee.Money = employee.Money - expense.Amount
+				err = db.Transaction(func(tdb *gorm.DB) error {
+					if tErr := tdb.Model(&Expense{}).Where("uid = ?", expense.UID).Updates(maps).Error; tErr != nil {
+						return tErr
+					}
+					if tErr := tdb.Model(&Employee{}).Where("uid = ?", employee.UID).Update("money", employee.Money).Error; tErr != nil {
+						return tErr
+					}
+					return nil
+				})
+			} else {
+				return msg.ERROR_EXPENSE_EMPLOYEE_MONEY_LESS
+			}
 		}
 	}
 	if err != nil {
@@ -83,8 +96,16 @@ func UpdateMoneyExpense(expense *Expense) (code int) {
 }
 
 func SelectExpense(uid string) (expense Expense, code int) {
-	err = db.Preload("Employee").Preload("Approver").Preload("Type").
+	err = db.Preload("Employee").Preload("Approver").
 		Where("uid = ?", uid).First(&expense).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return expense, msg.ERROR_EXPENSE_SELECT
+	}
+	return expense, msg.SUCCESS
+}
+
+func SelectBaseExpense(uid string) (expense Expense, code int) {
+	err = db.Where("uid = ?", uid).First(&expense).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return expense, msg.ERROR_EXPENSE_SELECT
 	}
@@ -123,7 +144,7 @@ func SelectMyExpenses(pageSize int, pageNo int, expense *Expense) (expenses []Ex
 	if expense.Status != 0 {
 		maps["status"] = expense.Status
 	}
-	err = db.Joins("Employee").Where(maps).
+	err = db.Debug().Joins("Employee").Where(maps).
 		Find(&expenses).Count(&total).
 		Preload("Approver").
 		Limit(pageSize).Offset((pageNo - 1) * pageSize).
