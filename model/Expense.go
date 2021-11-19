@@ -144,7 +144,7 @@ func SelectMyExpenses(pageSize int, pageNo int, expense *Expense) (expenses []Ex
 	if expense.Status != 0 {
 		maps["status"] = expense.Status
 	}
-	err = db.Debug().Joins("Employee").Where(maps).
+	err = db.Joins("Employee").Where(maps).
 		Find(&expenses).Count(&total).
 		Preload("Approver").
 		Limit(pageSize).Offset((pageNo - 1) * pageSize).

@@ -12,12 +12,13 @@ type PreResearch struct {
 	BaseModel
 	UID         string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
 	EmployeeUID string `gorm:"type:varchar(32);comment:业务员UID;default:(-)" json:"employeeUID"`
-	AuditorUID  string `gorm:"type:varchar(32);comment:审核员ID;default:(-)" json:"auditor"`
+	AuditorUID  string `gorm:"type:varchar(32);comment:审核员ID;default:(-)" json:"auditorUID"`
 	Remarks     string `gorm:"type:varchar(600);comment:设计需求" json:"remarks"`
 	Status      int    `gorm:"type:int;comment:状态(-1:驳回 1:未审批 2:未完成 3:已完成);not null" json:"status"`
 
 	PreResearchTasks []PreResearchTask `gorm:"-" json:"preResearchTasks"`
 	Employee         Employee          `gorm:"foreignKey:EmployeeUID;references:UID" json:"employee"`
+	Auditor          Employee          `gorm:"foreignKey:AuditorUID;references:UID" json:"auditor"`
 }
 
 type PreResearchTask struct {
@@ -32,9 +33,10 @@ type PreResearchTask struct {
 	StartDate      time.Time `gorm:"type:date;comment:开始工作日期" json:"startDate"`
 	EndDate        time.Time `gorm:"type:date;comment:预计结束工作日期" json:"endDate"`
 	RealEndDate    time.Time `gorm:"type:date;comment:实际结束工作日期;default:(-)" json:"realEndDate"`
-	Status         int       `gorm:"type:int;comment:状态( 1:未完成 2:未审核 3:未通过 4:已通过);not null" json:"status"`
+	Status         int       `gorm:"type:int;comment:状态( 1:未完成 2:未审核 3:未通过 4:已通过)" json:"status"`
 
 	Employee Employee `gorm:"foreignKey:EmployeeUID;references:UID" json:"employee"`
+	Auditor  Employee `gorm:"foreignKey:AuditorUID;references:UID" json:"auditor"`
 }
 
 type PreResearchQuery struct {
@@ -76,12 +78,12 @@ func UpdatePreResearch(preResearch *PreResearch) (code int) {
 }
 
 func SelectPreReasearch(uid string) (preResearch PreResearch, code int) {
-	err = db.Preload("Employee.Office").First(&preResearch, "uid = ?", uid).Error
+	err = db.Preload("Employee.Office").Preload("Auditor").First(&preResearch, "uid = ?", uid).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return preResearch, msg.ERROR
 	}
 	var preResearchTasks []PreResearchTask
-	err = db.Debug().Where("pre_research_uid = ?", uid).Find(&preResearchTasks).Error
+	err = db.Where("pre_research_uid = ?", uid).Find(&preResearchTasks).Error
 	if err == nil {
 		preResearch.PreResearchTasks = preResearchTasks
 	}
@@ -95,13 +97,21 @@ func SelectPreReasearchs(pageSize int, pageNo int, preResearchQuery *PreResearch
 	}
 	err = db.Joins("Employee").Where(maps).
 		Where("Employee.name Like ?", "%"+preResearchQuery.EmployeeName+"%").
-		Preload("Employee.Office").Find(&preResearchs).Count(&total).
+		Preload("Employee.Office").Preload("Auditor").Find(&preResearchs).Count(&total).
 		Limit(pageSize).Offset((pageNo - 1) * pageSize).Error
 
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return preResearchs, msg.ERROR, total
 	}
 	return preResearchs, msg.SUCCESS, total
+}
+
+func SelectPreReasearchTask(uid string) (preResearchTask PreResearchTask, code int) {
+	err = db.Preload("Employee").Preload("Auditor").First(&preResearchTask, "uid = ?", uid).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return preResearchTask, msg.ERROR
+	}
+	return preResearchTask, msg.SUCCESS
 }
 
 func SelectPreReasearchTasks(pageSize int, pageNo int, preResearchTask *PreResearchTask) (preResearchTasks []PreResearchTask, code int, total int64) {
@@ -111,7 +121,7 @@ func SelectPreReasearchTasks(pageSize int, pageNo int, preResearchTask *PreResea
 	}
 	err = db.Joins("Employee").Where(maps).
 		Where("Employee.name Like ?", "%"+preResearchTask.EmployeeUID+"%").
-		Preload("Employee").Find(&preResearchTasks).Count(&total).
+		Preload("Employee").Preload("Auditor").Find(&preResearchTasks).Count(&total).
 		Limit(pageSize).Offset((pageNo - 1) * pageSize).Error
 
 	if err != nil && err != gorm.ErrRecordNotFound {
@@ -165,6 +175,7 @@ func UpdatePreResearchStatus(preResearchQuery *PreResearchQuery) (code int) {
 func UpdatePreResearchTaskStatus(preResearchTask *PreResearchTask) (code int) {
 	var maps = make(map[string]interface{})
 	maps["Status"] = preResearchTask.Status
+	maps["AuditorUID"] = preResearchTask.AuditorUID
 	if preResearchTask.Status == 2 {
 		maps["Remarks"] = preResearchTask.Remarks
 		t := time.Now().Format("2006-01-02")
@@ -190,20 +201,20 @@ func UpdatePreResearchTaskStatus(preResearchTask *PreResearchTask) (code int) {
 		newPreResearchTask.EndDate = t2
 
 		err = db.Transaction(func(tdb *gorm.DB) error {
-			if tErr := tdb.Model(&PreResearchTask{}).Where("uid = ?", preResearchTask.UID).Updates(maps).Error; tErr != nil {
+			if tErr := tdb.Debug().Model(&PreResearchTask{}).Where("uid = ?", preResearchTask.UID).Updates(maps).Error; tErr != nil {
 				return tErr
 			}
-			if tErr := tdb.Create(&newPreResearchTask).Error; tErr != nil {
+			if tErr := tdb.Debug().Create(&newPreResearchTask).Error; tErr != nil {
 				return tErr
 			}
 			return nil
 		})
 	} else if preResearchTask.Status == 4 {
 		err = db.Transaction(func(tdb *gorm.DB) error {
-			if tErr := tdb.Model(&PreResearchTask{}).Where("uid = ?", preResearchTask.UID).Updates(maps).Error; tErr != nil {
+			if tErr := tdb.Debug().Model(&PreResearchTask{}).Where("uid = ?", preResearchTask.UID).Updates(maps).Error; tErr != nil {
 				return tErr
 			}
-			if tErr := tdb.Model(&PreResearch{}).Where("uid = ?", preResearchTask.PreResearchUID).Update("status", 3).Error; tErr != nil {
+			if tErr := tdb.Debug().Model(&PreResearch{}).Where("uid = ?", preResearchTask.PreResearchUID).Update("status", 3).Error; tErr != nil {
 				return tErr
 			}
 			return nil

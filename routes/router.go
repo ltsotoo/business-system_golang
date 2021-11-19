@@ -107,6 +107,7 @@ func InitRouter() {
 		auth.DELETE("preResearch/:uid", v1.DelPreResearch)
 		auth.GET("preResearch/:uid", v1.QueryPreResearch)
 		auth.POST("preResearchs", v1.QueryPreResearchs)
+		auth.GET("preResearchTask/:uid", v1.QueryPreResearchTask)
 		auth.POST("preResearchTasks", v1.QueryPreResearchTasks)
 		// auth.PUT("preResearch", v1.EditPreResearch)
 		auth.PUT("preResearch", v1.UpdatePreResearch)

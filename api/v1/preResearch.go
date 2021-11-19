@@ -57,6 +57,13 @@ func QueryPreResearchs(c *gin.Context) {
 	msg.MessageForList(c, code, preResearchs, pageSize, pageNo, total)
 }
 
+func QueryPreResearchTask(c *gin.Context) {
+	var preResearchTask model.PreResearchTask
+	uid := c.Param("uid")
+	preResearchTask, code = model.SelectPreReasearchTask(uid)
+	msg.Message(c, code, preResearchTask)
+}
+
 func QueryPreResearchTasks(c *gin.Context) {
 	var preResearchTasks []model.PreResearchTask
 	var total int64
@@ -88,6 +95,7 @@ func UpdatePreResearch(c *gin.Context) {
 func UpdatePreResearchTask(c *gin.Context) {
 	var preResearchTask model.PreResearchTask
 	_ = c.ShouldBindJSON(&preResearchTask)
+	preResearchTask.AuditorUID = c.MustGet("employeeUID").(string)
 	code = model.UpdatePreResearchTaskStatus(&preResearchTask)
 	msg.Message(c, code, nil)
 }
