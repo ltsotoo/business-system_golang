@@ -14,25 +14,27 @@ import (
 // 合同 Model
 type Contract struct {
 	BaseModel
-	No                    string `gorm:"type:varchar(32);comment:合同编号" json:"no"`
-	UID                   string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	AreaUID               string `gorm:"type:varchar(32);comment:所属区域UID;default:(-)" json:"areaUID"`
-	EmployeeUID           string `gorm:"type:varchar(32);comment:业务员UID;default:(-)" json:"employeeUID"`
-	IsEntryCustomer       bool   `gorm:"type:boolean;comment:客户是否录入" json:"isEntryCustomer"`
-	CustomerUID           string `gorm:"type:varchar(32);comment:客户ID;default:(-)" json:"customerUID"`
-	ContractDate          string `gorm:"type:varchar(20);comment:签订日期" json:"contractDate"`
-	ContractUnitUID       string `gorm:"type:varchar(32);comment:签订单位;default:(-)" json:"contractUnitUID"`
-	EstimatedDeliveryDate string `gorm:"type:varchar(20);comment:合同交货日期" json:"estimatedDeliveryDate"`
-	EndDeliveryDate       string `gorm:"type:varchar(20);comment:实际交货日期" json:"endDeliveryDate"`
-	InvoiceType           int    `gorm:"type:int;comment:开票类型" json:"invoiceType"`
-	InvoiceContent        string `gorm:"type:varchar(499);comment:开票内容" json:"invoiceContent"`
-	IsSpecial             bool   `gorm:"type:boolean;comment:特殊合同?" json:"isSpecial"`
-	TotalAmount           int    `gorm:"type:int;comment:总金额(元)" json:"totalAmount"`
-	Remarks               string `gorm:"type:varchar(499);comment:备注" json:"remarks"`
-	Status                int    `gorm:"type:int;comment:状态;not null" json:"status"`
-	ProductionStatus      int    `gorm:"type:int;comment:生产状态" json:"productionStatus"`
-	CollectionStatus      int    `gorm:"type:int;comment:回款状态" json:"collectionStatus"`
-	AuditorUID            string `gorm:"type:varchar(32);comment:审核员ID;default:(-)" json:"auditor"`
+	No                    string  `gorm:"type:varchar(32);comment:合同编号" json:"no"`
+	UID                   string  `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
+	AreaUID               string  `gorm:"type:varchar(32);comment:所属区域UID;default:(-)" json:"areaUID"`
+	EmployeeUID           string  `gorm:"type:varchar(32);comment:业务员UID;default:(-)" json:"employeeUID"`
+	IsEntryCustomer       bool    `gorm:"type:boolean;comment:客户是否录入" json:"isEntryCustomer"`
+	CustomerUID           string  `gorm:"type:varchar(32);comment:客户ID;default:(-)" json:"customerUID"`
+	ContractDate          string  `gorm:"type:varchar(20);comment:签订日期" json:"contractDate"`
+	ContractUnitUID       string  `gorm:"type:varchar(32);comment:签订单位;default:(-)" json:"contractUnitUID"`
+	EstimatedDeliveryDate string  `gorm:"type:varchar(20);comment:合同交货日期" json:"estimatedDeliveryDate"`
+	EndDeliveryDate       string  `gorm:"type:varchar(20);comment:实际交货日期" json:"endDeliveryDate"`
+	InvoiceType           int     `gorm:"type:int;comment:开票类型" json:"invoiceType"`
+	InvoiceContent        string  `gorm:"type:varchar(600);comment:开票内容" json:"invoiceContent"`
+	IsSpecial             bool    `gorm:"type:boolean;comment:特殊合同?" json:"isSpecial"`
+	PayType               int     `gorm:"type:int;comment:付款类型(1:人民币 2:美元)" json:"payType"`
+	TotalAmount           float64 `gorm:"type:decimal(20,6);comment:总金额(元)" json:"totalAmount"`
+	Remarks               string  `gorm:"type:varchar(600);comment:备注" json:"remarks"`
+	Status                int     `gorm:"type:int;comment:状态(-1:审批驳回 1:待审批 2:未完成 3:已完成);not null" json:"status"`
+	ProductionStatus      int     `gorm:"type:int;comment:生产状态(1:生产中 2:生产完成)" json:"productionStatus"`
+	CollectionStatus      int     `gorm:"type:int;comment:回款状态(1:回款中 2:回款完成)" json:"collectionStatus"`
+	AuditorUID            string  `gorm:"type:varchar(32);comment:审核员ID;default:(-)" json:"auditorUID"`
+	FinalAuditorUID       string  `gorm:"type:varchar(32);comment:最终审核员ID;default:(-)" json:"finalAuditorUID"`
 
 	Area         Area       `gorm:"foreignKey:AreaUID;references:UID" json:"area"`
 	Employee     Employee   `gorm:"foreignKey:EmployeeUID;references:UID" json:"employee"`
@@ -117,7 +119,7 @@ func UpdateContract(contract *Contract) (code int) {
 }
 
 func SelectContract(uid string) (contract Contract, code int) {
-	err = db.Preload("Area.Office").Preload("ContractUnit").
+	err = db.Preload("Area.Office").Preload("ContractUnit").Preload("Employee").
 		Preload("Customer.Company").Preload("Tasks.Product").
 		Preload("Tasks.TechnicianMan").Preload("Tasks.PurchaseMan").
 		Preload("Tasks.InventoryMan").Preload("Tasks.ShipmentMan").
@@ -188,12 +190,17 @@ func SelectContracts(pageSize int, pageNo int, contractQuery *ContractQuery) (co
 //审批合同
 func ApproveContract(uid string, status int, employeeUID string) (code int) {
 	var maps = make(map[string]interface{})
-	maps["Status"] = status
-	maps["AuditorUID"] = employeeUID
 
 	if status == 2 {
+		maps["Status"] = status
+		maps["AuditorUID"] = employeeUID
 		maps["CollectionStatus"] = 1
 		maps["ProductionStatus"] = 1
+	} else if status == 3 {
+		maps["Status"] = status
+		maps["FinalAuditorUID"] = employeeUID
+		maps["CollectionStatus"] = 2
+		maps["ProductionStatus"] = 2
 	}
 
 	err = db.Model(&Contract{}).Where("uid = ?", uid).
@@ -232,4 +239,23 @@ func UpdateContractCollectionStatusToFinish(uid string) (code int) {
 		code = msg.SUCCESS
 	}
 	return
+}
+
+func Reject(uid string) (code int) {
+	err = db.Transaction(func(tdb *gorm.DB) error {
+		if tErr := tdb.Model(&Contract{}).Where("uid = ?", uid).Update("status", -1).Error; tErr != nil {
+			return tErr
+		}
+		if tErr := tdb.Delete(&Payment{}, "contract_uid = ?", uid).Error; tErr != nil {
+			return tErr
+		}
+		if tErr := tdb.Delete(&Task{}, "contract_uid = ?", uid).Error; tErr != nil {
+			return tErr
+		}
+		return nil
+	})
+	if err != nil {
+		return msg.ERROR
+	}
+	return msg.SUCCESS
 }

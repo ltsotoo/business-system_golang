@@ -24,6 +24,13 @@ func AddPayment(c *gin.Context) {
 	msg.Message(c, code, payment)
 }
 
+func EditPayment(c *gin.Context) {
+	var payment model.Payment
+	_ = c.ShouldBindJSON(&payment)
+	code = model.UpdatePayment(&payment)
+	msg.Message(c, code, nil)
+}
+
 func QueryPaymentsForContract(c *gin.Context) {
 	var payments []model.Payment
 	contractUID := c.Param("contractUID")
@@ -34,7 +41,7 @@ func QueryPaymentsForContract(c *gin.Context) {
 func checkPaymentsUpdateContract(contractUID string) int {
 	var payments []model.Payment
 	var contract model.Contract
-	var amount int
+	var amount float64
 	payments, _ = model.SelectPaymentsByContractUID(contractUID)
 	contract, _ = model.SelectContract(contractUID)
 	for _, payment := range payments {

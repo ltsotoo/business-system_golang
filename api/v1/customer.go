@@ -75,7 +75,11 @@ func DelCustomerCompany(c *gin.Context) {
 
 //查询客户公司列表
 func QueryCustomerCompanys(c *gin.Context) {
+	var company model.CustomerCompany
 	var companys []model.CustomerCompany
-	companys, code = model.SelectCustomerCompanys("")
+
+	_ = c.ShouldBindJSON(&company)
+
+	companys, code = model.SelectCustomerCompanys(&company)
 	msg.Message(c, code, companys)
 }

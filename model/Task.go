@@ -12,21 +12,29 @@ import (
 // 合同任务 Model
 type Task struct {
 	BaseModel
-	UID                string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	ContractUID        string `gorm:"type:varchar(32);comment:合同ID" json:"contractUID"`
-	ProductUID         string `gorm:"type:varchar(32);comment:产品ID" json:"productUID"`
-	Number             int    `gorm:"type:int;comment:数量" json:"number"`
-	Unit               string `gorm:"type:varchar(9);comment:单位" json:"unit"`
-	Price              int    `gorm:"type:int;comment:单价(元)" json:"price"`
-	TotalPrice         int    `gorm:"type:int;comment:总价(元)" json:"totalPrice"`
-	Status             int    `gorm:"type:int;comment:状态" json:"status"`
-	Type               int    `gorm:"type:int;comment:状态(1:标准/第三方有库存 2:标准/第三方无库存 3:非标准定制)" json:"type"`
-	TechnicianManUID   string `gorm:"type:varchar(32);comment:技术负责人ID;default:(-)" json:"technicianManUID"`
-	PurchaseManUID     string `gorm:"type:varchar(32);comment:采购负责人ID;default:(-)" json:"purchaseManUID"`
-	InventoryManUID    string `gorm:"type:varchar(32);comment:库存负责人ID;default:(-)" json:"inventoryManUID"`
-	ShipmentManUID     string `gorm:"type:varchar(32);comment:发货人员ID;default:(-)" json:"shipmentManUID"`
-	CurrentRemarks     string `gorm:"type:varchar(32);comment:上一级备注;default:(-)" json:"currentRemarks"`
-	Remarks            string `gorm:"type:varchar(499);comment:备注" json:"remarks"`
+	UID              string  `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
+	ContractUID      string  `gorm:"type:varchar(32);comment:合同ID" json:"contractUID"`
+	ProductUID       string  `gorm:"type:varchar(32);comment:产品ID" json:"productUID"`
+	Number           int     `gorm:"type:int;comment:数量" json:"number"`
+	Unit             string  `gorm:"type:varchar(9);comment:单位" json:"unit"`
+	Price            float64 `gorm:"type:decimal(20,6);comment:单价(元)" json:"price"`
+	TotalPrice       float64 `gorm:"type:decimal(20,6);comment:总价(元)" json:"totalPrice"`
+	Status           int     `gorm:"type:int;comment:状态" json:"status"`
+	Type             int     `gorm:"type:int;comment:状态(1:标准/第三方有库存 2:标准/第三方无库存 3:非标准定制)" json:"type"`
+	TechnicianManUID string  `gorm:"type:varchar(32);comment:技术负责人ID;default:(-)" json:"technicianManUID"`
+	PurchaseManUID   string  `gorm:"type:varchar(32);comment:采购负责人ID;default:(-)" json:"purchaseManUID"`
+	InventoryManUID  string  `gorm:"type:varchar(32);comment:库存负责人ID;default:(-)" json:"inventoryManUID"`
+	ShipmentManUID   string  `gorm:"type:varchar(32);comment:发货人员ID;default:(-)" json:"shipmentManUID"`
+	CurrentRemarks   string  `gorm:"type:varchar(32);comment:上一级备注;default:(-)" json:"currentRemarks"`
+	Remarks          string  `gorm:"type:varchar(600);comment:备注" json:"remarks"`
+
+	TechnicianDays        int   `gorm:"type:int;comment:技术预计工作天数;default:(-)" json:"technicianDays"`
+	PurchaseDays          int   `gorm:"type:int;comment:采购预计工作天数;default:(-)" json:"purchaseDays"`
+	TechnicianStartDate   XTime `gorm:"type:datetime;comment:技术开始工作日期;default:(-)" json:"technicianStartDate"`
+	TechnicianRealEndDate XTime `gorm:"type:datetime;comment:技术实际结束工作日期;default:(-)" json:"technicianRealEndDate"`
+	PurchaseStartDate     XTime `gorm:"type:datetime;comment:采购开始工作日期";default:(-) json:"purchaseStartDate"`
+	PurchaseRealEndDate   XTime `gorm:"type:datetime;comment:采购实际结束工作日期;default:(-)" json:"purchaseRealEndDate"`
+
 	CurrentRemarksText string `gorm:"-" json:"currentRemarksText"`
 
 	Contract      Contract    `gorm:"foreignKey:ContractUID;references:UID" json:"contract"`
@@ -42,19 +50,25 @@ type TaskRemarks struct {
 	BaseModel
 	UID     string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
 	TaskUID string `gorm:"type:varchar(32);comment:合同ID" json:"taskUID"`
-	From    int    `gorm:"type:int;comment:原合同状态" json:"from"`
-	To      int    `gorm:"type:int;comment:目标合同状态" json:"to"`
+	Status  int    `gorm:"type:int;comment:合同状态" json:"status"`
+	From    string `gorm:"type:varchar(32);comment:填写人" json:"from"`
+	To      string `gorm:"type:varchar(32);comment:接受人" json:"to"`
 	Text    string `gorm:"type:varchar(499);comment:备注文本" json:"text"`
 }
 
 type TaskFlowQuery struct {
 	UID              string `json:"UID"`
+	ContractUID      string `json:"contractUID"`
 	Status           int    `json:"status"`
 	Type             int    `json:"type"`
 	TechnicianManUID string `json:"technicianManUID"`
 	PurchaseManUID   string `json:"purchaseManUID"`
 	InventoryManUID  string `json:"inventoryManUID"`
 	ShipmentManUID   string `json:"shipmentManUID"`
+	IsReset          bool   `json:"isReset"`
+
+	TechnicianDays int `json:"technicianDays"`
+	PurchaseDays   int `json:"purchaseDays"`
 }
 
 func DeleteTask(uid string) (code int) {
@@ -121,34 +135,57 @@ func ApproveTask(taskFlowQuery *TaskFlowQuery) (code int) {
 	maps["type"] = taskFlowQuery.Type
 	switch taskFlowQuery.Type {
 	case magic.TASK_TYPE_1:
-		maps["STATUS"] = magic.TASK_STATUS_NOT_STORAGE
-	case magic.TASK_TYPE_2:
-		maps["STATUS"] = magic.TASK_STATUS_NOT_PURCHASE
-	case magic.TASK_TYPE_3:
-		maps["STATUS"] = magic.TASK_STATUS_NOT_DESIGN
-	}
-	if taskFlowQuery.TechnicianManUID != "" {
-		maps["TechnicianManUID"] = taskFlowQuery.TechnicianManUID
-	} else {
-		maps["TechnicianManUID"] = nil
-	}
-	if taskFlowQuery.PurchaseManUID != "" {
-		maps["PurchaseManUID"] = taskFlowQuery.PurchaseManUID
-	} else {
-		maps["PurchaseManUID"] = nil
-	}
-	if taskFlowQuery.InventoryManUID != "" {
-		maps["InventoryManUID"] = taskFlowQuery.InventoryManUID
-	} else {
-		maps["InventoryManUID"] = nil
-	}
-	if taskFlowQuery.ShipmentManUID != "" {
-		maps["ShipmentManUID"] = taskFlowQuery.ShipmentManUID
-	} else {
-		maps["ShipmentManUID"] = nil
-	}
+		maps["Status"] = magic.TASK_STATUS_NOT_STORAGE
 
-	err = db.Model(&Task{}).Where("uid = ?", taskFlowQuery.UID).Updates(maps).Error
+		maps["TechnicianManUID"] = nil
+		maps["PurchaseManUID"] = nil
+		maps["TechnicianDays"] = nil
+		maps["PurchaseDays"] = nil
+		maps["TechnicianStartDate"] = nil
+		maps["PurchaseStartDate"] = nil
+
+	case magic.TASK_TYPE_2:
+		maps["Status"] = magic.TASK_STATUS_NOT_PURCHASE
+
+		maps["TechnicianManUID"] = nil
+		maps["PurchaseManUID"] = taskFlowQuery.PurchaseManUID
+		maps["TechnicianDays"] = nil
+		maps["PurchaseDays"] = taskFlowQuery.PurchaseDays
+		t := time.Now().Format("2006-01-02 15:04:05")
+		maps["TechnicianStartDate"] = nil
+		maps["PurchaseStartDate"] = t
+
+	case magic.TASK_TYPE_3:
+		maps["Status"] = magic.TASK_STATUS_NOT_DESIGN
+
+		maps["TechnicianManUID"] = taskFlowQuery.TechnicianManUID
+		maps["PurchaseManUID"] = taskFlowQuery.PurchaseManUID
+		maps["TechnicianDays"] = taskFlowQuery.TechnicianDays
+		maps["PurchaseDays"] = taskFlowQuery.PurchaseDays
+		t := time.Now().Format("2006-01-02 15:04:05")
+		maps["TechnicianStartDate"] = t
+		maps["PurchaseStartDate"] = nil
+
+	}
+	maps["InventoryManUID"] = taskFlowQuery.InventoryManUID
+	maps["ShipmentManUID"] = taskFlowQuery.ShipmentManUID
+
+	if taskFlowQuery.IsReset {
+		err = db.Transaction(func(tdb *gorm.DB) error {
+			if tErr := tdb.Model(&Task{}).Where("uid = ?", taskFlowQuery.UID).Updates(maps).Error; tErr != nil {
+				return tErr
+			}
+			if tErr := tdb.Where("task_uid = ?", taskFlowQuery.UID).Delete(&TaskRemarks{}).Error; tErr != nil {
+				return tErr
+			}
+			if tErr := tdb.Model(&Contract{}).Where("uid = ?", taskFlowQuery.ContractUID).Update("production_status", 1).Error; tErr != nil {
+				return tErr
+			}
+			return nil
+		})
+	} else {
+		err = db.Model(&Task{}).Where("uid = ?", taskFlowQuery.UID).Updates(maps).Error
+	}
 
 	if err != nil {
 		code = msg.ERROR_CONTRACT_UPDATE_STATUS
@@ -158,9 +195,9 @@ func ApproveTask(taskFlowQuery *TaskFlowQuery) (code int) {
 	return
 }
 
-func NextTaskStatus(uid string, from int, to int, currentRemarksText string) (code int) {
+func NextTaskStatus(uid string, lastStatus int, from string, to string, status int, currentRemarksText string) (code int) {
 	var maps = make(map[string]interface{})
-	maps["status"] = to
+	maps["status"] = status
 	err = db.Transaction(func(tdb *gorm.DB) error {
 		if currentRemarksText != "" {
 			remarksUID := uidUtils.Generate()
@@ -168,13 +205,13 @@ func NextTaskStatus(uid string, from int, to int, currentRemarksText string) (co
 				"CreatedAt": time.Now().Format("2006-01-02 15:04:05"),
 				"UID":       remarksUID,
 				"TaskUID":   uid,
+				"Status":    lastStatus,
 				"From":      from,
 				"To":        to,
 				"Text":      currentRemarksText,
 			}).Error; tErr != nil {
 				return tErr
 			}
-			maps["CurrentRemarks"] = remarksUID
 		}
 		if tErr := tdb.Model(&Task{}).Where("uid = ?", uid).Updates(maps).Error; tErr != nil {
 			return tErr
@@ -190,8 +227,8 @@ func NextTaskStatus(uid string, from int, to int, currentRemarksText string) (co
 	return
 }
 
-func SelectTaskRemarks(taskUID string) (taskRemarksList []TaskRemarks, code int) {
-	err = db.Where("task_uid = ?", taskUID).Find(&taskRemarksList).Error
+func SelectTaskRemarks(taskUID string, to string) (taskRemarksList []TaskRemarks, code int) {
+	err = db.Where("task_uid = ? AND `to` = ?", taskUID, to).Find(&taskRemarksList).Error
 	if err != nil {
 		code = msg.ERROR
 	} else {

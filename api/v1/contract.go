@@ -72,3 +72,10 @@ func ApproveContract(c *gin.Context) {
 	code = model.ApproveContract(contractFlowQuery.UID, contractFlowQuery.Status, c.MustGet("employeeUID").(string))
 	msg.Message(c, code, nil)
 }
+
+func RejectContract(c *gin.Context) {
+	var contract model.Contract
+	_ = c.ShouldBindJSON(&contract)
+	code = model.Reject(contract.UID)
+	msg.Message(c, code, nil)
+}

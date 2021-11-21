@@ -9,11 +9,11 @@ import (
 
 type Payment struct {
 	BaseModel
-	UID         string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	ContractUID string `gorm:"type:varchar(32);comment:合同ID" json:"contractUID"`
-	EmployeeUID string `gorm:"type:varchar(32);comment:技术负责人ID" json:"employeeUID"`
-	Money       int    `gorm:"type:int;comment:回款金额(元)" json:"money"`
-	Remarks     string `gorm:"type:varchar(499);comment:备注" json:"remarks"`
+	UID         string  `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
+	ContractUID string  `gorm:"type:varchar(32);comment:合同ID" json:"contractUID"`
+	EmployeeUID string  `gorm:"type:varchar(32);comment:技术负责人ID" json:"employeeUID"`
+	Money       float64 `gorm:"type:decimal(20,6);comment:回款金额(元)" json:"money"`
+	Remarks     string  `gorm:"type:varchar(600);comment:备注" json:"remarks"`
 }
 
 func InsertPayment(payment *Payment) (code int) {
@@ -27,6 +27,17 @@ func InsertPayment(payment *Payment) (code int) {
 
 func DeletePayment(uid string) (code int) {
 	err = db.Where("uid = ?", uid).Delete(&Payment{}).Error
+	if err != nil {
+		return msg.ERROR
+	}
+	return msg.SUCCESS
+}
+
+func UpdatePayment(payment *Payment) (code int) {
+	var maps = make(map[string]interface{})
+	maps["money"] = payment.Money
+	maps["remarks"] = payment.Remarks
+	err = db.Model(&Payment{}).Where("uid = ?", payment.UID).Updates(maps).Error
 	if err != nil {
 		return msg.ERROR
 	}

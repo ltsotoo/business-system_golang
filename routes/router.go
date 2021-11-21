@@ -60,6 +60,7 @@ func InitRouter() {
 		auth.PUT("contract", v1.EditContract)
 		auth.GET("contract/:uid", v1.QueryContract)
 		auth.POST("contracts", v1.QueryContracts)
+		auth.POST("rejectContract", v1.RejectContract)
 		//合同流程模块接口
 		auth.PUT("task/contract/approve", v1.ApproveContract)
 		//任务模块接口
@@ -73,6 +74,7 @@ func InitRouter() {
 		//回款模块接口
 		auth.POST("payment", v1.AddPayment)
 		auth.DELETE("payment", v1.DelPayment)
+		auth.PUT("payment", v1.EditPayment)
 		auth.GET("payments/:contractUID", v1.QueryPaymentsForContract)
 		//客户模块接口
 		auth.POST("customer", v1.EntryCustomer)

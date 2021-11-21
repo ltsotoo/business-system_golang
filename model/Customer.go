@@ -88,6 +88,9 @@ func SelectCustomers(pageSize int, pageNo int, customerQuery *CustomerQuery) (cu
 	if customerQuery.AreaUID != "" {
 		tDb = tDb.Where("Company.area_uid = ?", customerQuery.AreaUID)
 	}
+	if customerQuery.CompanyUID != "" {
+		tDb = tDb.Where("customer.company_uid = ?", customerQuery.CompanyUID)
+	}
 	if customerQuery.CompanyName != "" {
 		tDb = tDb.Where("Company.name LIKE ?", "%"+customerQuery.CompanyName+"%")
 	}
@@ -125,8 +128,12 @@ func DeleteCustomerCompany(uid string) (code int) {
 	return msg.SUCCESS
 }
 
-func SelectCustomerCompanys(areaUID string) (CustomerCompanys []CustomerCompany, code int) {
-	err = db.Preload("Area").Find(&CustomerCompanys).Error
+func SelectCustomerCompanys(customerCompany *CustomerCompany) (CustomerCompanys []CustomerCompany, code int) {
+	var maps = make(map[string]interface{})
+	if customerCompany.AreaUID != "" {
+		maps["area_uid"] = customerCompany.AreaUID
+	}
+	err = db.Preload("Area").Where(maps).Where("name LIKE ?", "%"+customerCompany.Name+"%").Find(&CustomerCompanys).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return CustomerCompanys, msg.ERROR
 	}

@@ -23,17 +23,17 @@ type PreResearch struct {
 
 type PreResearchTask struct {
 	BaseModel
-	UID            string    `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	PreResearchUID string    `gorm:"type:varchar(32);comment:预研UID;not null" json:"preResearchUID"`
-	EmployeeUID    string    `gorm:"type:varchar(32);comment:技术负责人UID;default:(-)" json:"employeeUID"`
-	AuditorUID     string    `gorm:"type:varchar(32);comment:审核员ID;default:(-)" json:"auditorUID"`
-	Requirement    string    `gorm:"type:varchar(600);comment:设计要求" json:"requirement"`
-	Remarks        string    `gorm:"type:varchar(600);comment:备注" json:"remarks"`
-	Days           int       `gorm:"type:int;comment:分配工作天数" json:"days"`
-	StartDate      time.Time `gorm:"type:date;comment:开始工作日期" json:"startDate"`
-	EndDate        time.Time `gorm:"type:date;comment:预计结束工作日期" json:"endDate"`
-	RealEndDate    time.Time `gorm:"type:date;comment:实际结束工作日期;default:(-)" json:"realEndDate"`
-	Status         int       `gorm:"type:int;comment:状态( 1:未完成 2:未审核 3:未通过 4:已通过)" json:"status"`
+	UID            string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
+	PreResearchUID string `gorm:"type:varchar(32);comment:预研UID;not null" json:"preResearchUID"`
+	EmployeeUID    string `gorm:"type:varchar(32);comment:技术负责人UID;default:(-)" json:"employeeUID"`
+	AuditorUID     string `gorm:"type:varchar(32);comment:审核员ID;default:(-)" json:"auditorUID"`
+	Requirement    string `gorm:"type:varchar(600);comment:设计要求" json:"requirement"`
+	Remarks        string `gorm:"type:varchar(600);comment:备注" json:"remarks"`
+	Days           int    `gorm:"type:int;comment:分配工作天数" json:"days"`
+	StartDate      XTime  `gorm:"type:datetime;comment:开始工作日期" json:"startDate"`
+	EndDate        XTime  `gorm:"type:datetime;comment:预计结束工作日期" json:"endDate"`
+	RealEndDate    XTime  `gorm:"type:datetime;comment:实际结束工作日期;default:(-)" json:"realEndDate"`
+	Status         int    `gorm:"type:int;comment:状态( 1:未完成 2:未审核 3:未通过 4:已通过)" json:"status"`
 
 	Employee Employee `gorm:"foreignKey:EmployeeUID;references:UID" json:"employee"`
 	Auditor  Employee `gorm:"foreignKey:AuditorUID;references:UID" json:"auditor"`
@@ -146,12 +146,14 @@ func UpdatePreResearchStatus(preResearchQuery *PreResearchQuery) (code int) {
 		preResearchTask.Days = preResearchQuery.Days
 		preResearchTask.Requirement = preResearchQuery.Requirement
 
-		t1s := time.Now().Format("2006-01-02")
-		t1, _ := time.Parse("2006-01-02", t1s)
+		t1 := time.Now()
 		t2 := t1.AddDate(0, 0, preResearchTask.Days)
 
-		preResearchTask.StartDate = t1
-		preResearchTask.EndDate = t2
+		xt1 := &XTime{t1}
+		xt2 := &XTime{t2}
+
+		preResearchTask.StartDate = *xt1
+		preResearchTask.EndDate = *xt2
 
 		err = db.Transaction(func(tdb *gorm.DB) error {
 			if tErr := tdb.Model(&PreResearch{}).Where("uid = ?", preResearchQuery.UID).Updates(maps).Error; tErr != nil {
@@ -178,7 +180,7 @@ func UpdatePreResearchTaskStatus(preResearchTask *PreResearchTask) (code int) {
 	maps["AuditorUID"] = preResearchTask.AuditorUID
 	if preResearchTask.Status == 2 {
 		maps["Remarks"] = preResearchTask.Remarks
-		t := time.Now().Format("2006-01-02")
+		t := time.Now().Format("2006-01-02 15:04:05")
 		maps["RealEndDate"] = t
 
 		err = db.Model(&PreResearchTask{}).Where("uid = ?", preResearchTask.UID).Updates(maps).Error
@@ -193,12 +195,14 @@ func UpdatePreResearchTaskStatus(preResearchTask *PreResearchTask) (code int) {
 		newPreResearchTask.Days = preResearchTask.Days
 		newPreResearchTask.Requirement = preResearchTask.Requirement
 
-		t1s := time.Now().Format("2006-01-02")
-		t1, _ := time.Parse("2006-01-02", t1s)
+		t1 := time.Now()
 		t2 := t1.AddDate(0, 0, preResearchTask.Days)
 
-		newPreResearchTask.StartDate = t1
-		newPreResearchTask.EndDate = t2
+		xt1 := &XTime{t1}
+		xt2 := &XTime{t2}
+
+		newPreResearchTask.StartDate = *xt1
+		newPreResearchTask.EndDate = *xt2
 
 		err = db.Transaction(func(tdb *gorm.DB) error {
 			if tErr := tdb.Debug().Model(&PreResearchTask{}).Where("uid = ?", preResearchTask.UID).Updates(maps).Error; tErr != nil {
