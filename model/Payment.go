@@ -3,6 +3,7 @@ package model
 import (
 	"business-system_golang/utils/msg"
 	"business-system_golang/utils/uid"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -14,6 +15,12 @@ type Payment struct {
 	EmployeeUID string  `gorm:"type:varchar(32);comment:技术负责人ID" json:"employeeUID"`
 	Money       float64 `gorm:"type:decimal(20,6);comment:回款金额(元)" json:"money"`
 	Remarks     string  `gorm:"type:varchar(600);comment:备注" json:"remarks"`
+}
+
+type PaymentQuery struct {
+	UID                string    `json:"UID"`
+	EndPaymentDate     time.Time `json:"endPaymentDate"`
+	PaymentTotalAmount float64   `json:"paymentTotalAmount"`
 }
 
 func InsertPayment(payment *Payment) (code int) {

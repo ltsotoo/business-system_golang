@@ -23,12 +23,14 @@ type Contract struct {
 	ContractDate          string  `gorm:"type:varchar(20);comment:签订日期" json:"contractDate"`
 	ContractUnitUID       string  `gorm:"type:varchar(32);comment:签订单位;default:(-)" json:"contractUnitUID"`
 	EstimatedDeliveryDate string  `gorm:"type:varchar(20);comment:合同交货日期" json:"estimatedDeliveryDate"`
-	EndDeliveryDate       string  `gorm:"type:varchar(20);comment:实际交货日期" json:"endDeliveryDate"`
+	EndDeliveryDate       XTime   `gorm:"type:datetime;comment:实际交货日期;default:(-)" json:"endDeliveryDate"`
+	EndPaymentDate        string  `gorm:"type:varchar(20);comment:最终回款日期;default:(-)" json:"endPaymentDate"`
 	InvoiceType           int     `gorm:"type:int;comment:开票类型" json:"invoiceType"`
 	InvoiceContent        string  `gorm:"type:varchar(600);comment:开票内容" json:"invoiceContent"`
 	IsSpecial             bool    `gorm:"type:boolean;comment:特殊合同?" json:"isSpecial"`
 	PayType               int     `gorm:"type:int;comment:付款类型(1:人民币 2:美元)" json:"payType"`
-	TotalAmount           float64 `gorm:"type:decimal(20,6);comment:总金额(元)" json:"totalAmount"`
+	TotalAmount           float64 `gorm:"type:decimal(20,6);comment:总金额" json:"totalAmount"`
+	PaymentTotalAmount    float64 `gorm:"type:decimal(20,6);comment:回款总金额(人民币)" json:"paymentTotalAmount"`
 	Remarks               string  `gorm:"type:varchar(600);comment:备注" json:"remarks"`
 	Status                int     `gorm:"type:int;comment:状态(-1:审批驳回 1:待审批 2:未完成 3:已完成);not null" json:"status"`
 	ProductionStatus      int     `gorm:"type:int;comment:生产状态(1:生产中 2:生产完成)" json:"productionStatus"`
@@ -68,6 +70,14 @@ type ContractQuery struct {
 type ContractFlowQuery struct {
 	UID    string `json:"UID"`
 	Status int    `json:"status"`
+}
+
+type ContractPushMoney struct {
+	ContractUID      string  `json:"contractUID"`
+	Tasks            []Task  `json:"tasks"`
+	TaskTotalMoney   float64 `json:"taskTotalMoney"`
+	PaymenTotalMoney float64 `json:"paymenTotalMoney"`
+	TotalMoney       float64 `json:"totalMoney"`
 }
 
 func InsertContract(contract *Contract) (code int) {
@@ -244,8 +254,12 @@ func UpdateContractProductionStatusToFinish(uid string) (code int) {
 }
 
 //变更合同回款状态为已完成
-func UpdateContractCollectionStatusToFinish(uid string) (code int) {
-	err = db.Model(&Contract{}).Where("uid = ?", uid).Update("collection_status", magic.CONTATCT_COLLECTION_STATUS_FINISH).Error
+func UpdateContractCollectionStatusToFinish(contract *Contract) (code int) {
+	var maps = make(map[string]interface{})
+	maps["collection_status"] = magic.CONTATCT_COLLECTION_STATUS_FINISH
+	maps["end_payment_date"] = contract.EndPaymentDate
+	maps["payment_total_amount"] = contract.PaymentTotalAmount
+	err = db.Model(&Contract{}).Where("uid = ?", contract.UID).Updates(maps).Error
 
 	if err != nil {
 		code = msg.ERROR_CONTRACT_UPDATE_P_STATUS

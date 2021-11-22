@@ -26,6 +26,10 @@ type Product struct {
 	SourceTypeUID    string  `gorm:"type:varchar(32);comment:来源类型;default:(-)" json:"sourceTypeUID"`
 	SubtypeUID       string  `gorm:"type:varchar(32);comment:子类型;default:(-)" json:"subtypeUID"`
 
+	PushMoneyPercentages     float64 `gorm:"type:decimal(20,6);comment:标准提成" json:"pushMoneyPercentages"`
+	PushMoneyPercentagesUp   float64 `gorm:"type:decimal(20,6);comment:提成上涨百分比" json:"pushMoneyPercentagesUp"`
+	PushMoneyPercentagesDown float64 `gorm:"type:decimal(20,6);comment:提成下降百分比" json:"pushMoneyPercentagesDown"`
+
 	Supplier   Supplier       `gorm:"foreignKey:SupplierUID;references:UID" json:"supplier"`
 	SourceType DictionaryType `gorm:"foreignKey:SourceTypeUID;references:UID" json:"sourceType"`
 	Subtype    Dictionary     `gorm:"foreignKey:SubtypeUID;references:UID" json:"subtype"`

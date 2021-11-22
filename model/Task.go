@@ -27,6 +27,7 @@ type Task struct {
 	ShipmentManUID   string  `gorm:"type:varchar(32);comment:物流人员ID;default:(-)" json:"shipmentManUID"`
 	Remarks          string  `gorm:"type:varchar(600);comment:业务备注" json:"remarks"`
 	ARemarks         string  `gorm:"type:varchar(600);comment:审批备注" json:"aRemarks"`
+	PushMoney        float64 `gorm:"type:decimal(20,6);comment:提成(元)" json:"pushMoney"`
 
 	TechnicianDays        int   `gorm:"type:int;comment:技术预计工作天数;default:(-)" json:"technicianDays"`
 	PurchaseDays          int   `gorm:"type:int;comment:采购预计工作天数;default:(-)" json:"purchaseDays"`
@@ -203,6 +204,9 @@ func ApproveTask(taskFlowQuery *TaskFlowQuery) (code int) {
 	maps["ShipmentManUID"] = taskFlowQuery.ShipmentManUID
 
 	if taskFlowQuery.IsReset {
+		var contractMaps = make(map[string]interface{})
+		contractMaps["production_status"] = 1
+		contractMaps["end_delivery_date"] = nil
 		err = db.Transaction(func(tdb *gorm.DB) error {
 			if tErr := tdb.Model(&Task{}).Where("uid = ?", taskFlowQuery.UID).Updates(maps).Error; tErr != nil {
 				return tErr
@@ -210,7 +214,7 @@ func ApproveTask(taskFlowQuery *TaskFlowQuery) (code int) {
 			if tErr := tdb.Where("task_uid = ?", taskFlowQuery.UID).Delete(&TaskRemarks{}).Error; tErr != nil {
 				return tErr
 			}
-			if tErr := tdb.Model(&Contract{}).Where("uid = ?", taskFlowQuery.ContractUID).Update("production_status", 1).Error; tErr != nil {
+			if tErr := tdb.Model(&Contract{}).Where("uid = ?", taskFlowQuery.ContractUID).Statement.Updates(contractMaps).Error; tErr != nil {
 				return tErr
 			}
 			return nil
@@ -228,9 +232,6 @@ func ApproveTask(taskFlowQuery *TaskFlowQuery) (code int) {
 }
 
 func NextTaskStatus(uid string, lastStatus int, from string, to string, maps map[string]interface{}, currentRemarksText string) (code int) {
-	// var maps = make(map[string]interface{})
-	// maps["status"] = status
-
 	err = db.Transaction(func(tdb *gorm.DB) error {
 		if currentRemarksText != "" {
 			remarksUID := uidUtils.Generate()

@@ -79,3 +79,12 @@ func RejectContract(c *gin.Context) {
 	code = model.Reject(contract.UID)
 	msg.Message(c, code, nil)
 }
+
+func CalculatePushMoney(c *gin.Context) {
+	var contract model.Contract
+	uid := c.Param("uid")
+	contract, code = model.SelectContract(uid)
+	if contract.UID != "" {
+
+	}
+}

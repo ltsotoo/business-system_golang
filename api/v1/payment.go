@@ -18,9 +18,6 @@ func AddPayment(c *gin.Context) {
 	_ = c.ShouldBindJSON(&payment)
 	payment.EmployeeUID = c.MustGet("employeeUID").(string)
 	code = model.InsertPayment(&payment)
-	if code == msg.SUCCESS {
-		code = checkPaymentsUpdateContract(payment.ContractUID)
-	}
 	msg.Message(c, code, payment)
 }
 
@@ -38,17 +35,15 @@ func QueryPaymentsForContract(c *gin.Context) {
 	msg.Message(c, code, payments)
 }
 
-func checkPaymentsUpdateContract(contractUID string) int {
-	var payments []model.Payment
+func FinishPayments(c *gin.Context) {
 	var contract model.Contract
-	var amount float64
-	payments, _ = model.SelectPaymentsByContractUID(contractUID)
-	contract, _ = model.SelectContract(contractUID)
-	for _, payment := range payments {
-		amount += payment.Money
-	}
-	if contract.TotalAmount <= amount && amount != 0 {
-		code = model.UpdateContractCollectionStatusToFinish(contractUID)
-	}
-	return code
+	_ = c.ShouldBindJSON(&contract)
+
+	// println(contract.UID)
+	// println(contract.EndPaymentDate)
+	// println(contract.PaymentTotalAmount)
+	// contract, _ = model.SelectContract(contract.UID)
+	code = model.UpdateContractCollectionStatusToFinish(&contract)
+
+	msg.Message(c, code, nil)
 }

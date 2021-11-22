@@ -76,6 +76,7 @@ func InitRouter() {
 		auth.DELETE("payment", v1.DelPayment)
 		auth.PUT("payment", v1.EditPayment)
 		auth.GET("payments/:contractUID", v1.QueryPaymentsForContract)
+		auth.POST("finishPayments", v1.FinishPayments)
 		//客户模块接口
 		auth.POST("customer", v1.EntryCustomer)
 		auth.DELETE("customer/:uid", v1.DelCustomer)
