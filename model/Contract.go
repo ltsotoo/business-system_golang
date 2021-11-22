@@ -203,8 +203,22 @@ func ApproveContract(uid string, status int, employeeUID string) (code int) {
 		maps["ProductionStatus"] = 2
 	}
 
-	err = db.Model(&Contract{}).Where("uid = ?", uid).
-		Updates(maps).Error
+	err = db.Transaction(func(tdb *gorm.DB) error {
+		if tErr := tdb.Model(&Contract{}).Where("uid = ?", uid).Updates(maps).Error; tErr != nil {
+			return tErr
+		}
+		t := time.Now().Format("2006-01-02 15:04:05")
+		if tErr := tdb.Model(&Task{}).Where("contract_uid = ? AND type = ?", uid, 1).Update("inventory_start_date", t).Error; tErr != nil {
+			return tErr
+		}
+		if tErr := tdb.Model(&Task{}).Where("contract_uid = ? AND type = ?", uid, 2).Update("purchase_start_date", t).Error; tErr != nil {
+			return tErr
+		}
+		if tErr := tdb.Model(&Task{}).Where("contract_uid = ? AND type = ?", uid, 3).Update("technician_start_date", t).Error; tErr != nil {
+			return tErr
+		}
+		return nil
+	})
 
 	if err != nil {
 		code = msg.ERROR_CONTRACT_UPDATE_STATUS

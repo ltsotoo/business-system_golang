@@ -4,6 +4,7 @@ import (
 	"business-system_golang/model"
 	"business-system_golang/utils/magic"
 	"business-system_golang/utils/msg"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -39,7 +40,10 @@ func NextTask(c *gin.Context) {
 	var task, dbTask model.Task
 	_ = c.ShouldBindJSON(&task)
 	dbTask, code = model.SelectTask(task.UID)
+
 	if code == msg.SUCCESS && task.Status == dbTask.Status {
+		var maps = make(map[string]interface{})
+		t := time.Now().Format("2006-01-02 15:04:05")
 		lastStatus := task.Status
 		from, to := "", ""
 		switch task.Status {
@@ -47,21 +51,27 @@ func NextTask(c *gin.Context) {
 			task.Status = magic.TASK_STATUS_NOT_PURCHASE
 			from = dbTask.TechnicianManUID
 			to = dbTask.PurchaseManUID
+			maps["technician_real_end_date"] = t
+			maps["purchase_start_date"] = t
 		case magic.TASK_STATUS_NOT_PURCHASE:
 			task.Status = magic.TASK_STATUS_NOT_STORAGE
 			from = dbTask.PurchaseManUID
 			to = dbTask.InventoryManUID
+			maps["purchase_real_end_date"] = t
+			maps["inventory_start_date"] = t
 		case magic.TASK_STATUS_NOT_STORAGE:
 			from = dbTask.InventoryManUID
 			if task.Type == magic.TASK_TYPE_3 {
 				task.Status = magic.TASK_STATUS_NOT_ASSEMBLY
 				to = dbTask.TechnicianManUID
 			} else {
+				maps["shipment_start_date"] = t
 				task.Status = magic.TASK_STATUS_NOT_SHIPMENT
 				to = dbTask.ShipmentManUID
 			}
 		case magic.TASK_STATUS_NOT_ASSEMBLY:
 			task.Status = magic.TASK_STATUS_NOT_SHIPMENT
+			maps["shipment_start_date"] = t
 			from = dbTask.TechnicianManUID
 			to = dbTask.ShipmentManUID
 		case magic.TASK_STATUS_NOT_SHIPMENT:
@@ -69,7 +79,8 @@ func NextTask(c *gin.Context) {
 			from = dbTask.ShipmentManUID
 			to = dbTask.ShipmentManUID
 		}
-		code = model.NextTaskStatus(task.UID, lastStatus, from, to, task.Status, task.CurrentRemarksText)
+		maps["status"] = task.Status
+		code = model.NextTaskStatus(task.UID, lastStatus, from, to, maps, task.CurrentRemarksText)
 		if code == msg.SUCCESS {
 			code = checkTasksUpdateContract(task.ContractUID)
 		}
