@@ -98,11 +98,11 @@ func RejectContract(c *gin.Context) {
 
 func CalculatePushMoney(c *gin.Context) {
 	var contract model.Contract
-	var contractPushMoneyQuery model.ContractPushMoneyQuery
+	var contractPushMoney model.ContractPushMoney
 	_ = c.ShouldBindJSON(&contract)
 	contract, code = model.SelectContract(contract.UID)
 	if contract.UID != "" {
-		contractPushMoneyQuery = pushMoney.Calculate(&contract)
+		contractPushMoney = pushMoney.Calculate(&contract)
 	}
-	msg.Message(c, msg.SUCCESS, contractPushMoneyQuery)
+	msg.Message(c, msg.SUCCESS, contractPushMoney)
 }

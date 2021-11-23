@@ -53,7 +53,22 @@ func UpdatePayment(payment *Payment) (code int) {
 	var maps = make(map[string]interface{})
 	maps["money"] = payment.Money
 	maps["remarks"] = payment.Remarks
-	err = db.Model(&Payment{}).Where("uid = ?", payment.UID).Updates(maps).Error
+
+	err = db.Transaction(func(tdb *gorm.DB) error {
+		var temp Payment
+		if tErr := tdb.First(&temp, "uid = ?", payment.UID).Error; tErr != nil {
+			return tErr
+		}
+		if tErr := tdb.Model(&Payment{}).Where("uid = ?", payment.UID).Updates(maps).Error; tErr != nil {
+			return tErr
+		}
+		tempMoney := payment.Money - temp.Money
+		if tErr := tdb.Exec("UPDATE contract SET payment_total_amount = payment_total_amount + ? WHERE uid = ?", tempMoney, temp.ContractUID).Error; tErr != nil {
+			return tErr
+		}
+		return nil
+	})
+
 	if err != nil {
 		return msg.ERROR
 	}

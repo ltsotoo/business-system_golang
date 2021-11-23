@@ -60,3 +60,26 @@ func QueryProducts(c *gin.Context) {
 	products, code, total = model.SelectProducts(pageSize, pageNo, &productQuery)
 	msg.MessageForList(c, msg.SUCCESS, products, pageSize, pageNo, total)
 }
+
+func AddProductType(c *gin.Context) {
+	var productType model.ProductType
+	_ = c.ShouldBindJSON(&productType)
+	code = model.InsertProductType(&productType)
+	msg.Message(c, code, productType)
+}
+
+func DelProductType(c *gin.Context) {
+	uid := c.Param("uid")
+	code = model.DeleteProductType(uid)
+	msg.Message(c, code, nil)
+}
+
+func QueryProductTypes(c *gin.Context) {
+	var productTypes []model.ProductType
+	var productType model.ProductType
+
+	_ = c.ShouldBindJSON(&productType)
+
+	productTypes, code = model.SelectProductTypes(&productType)
+	msg.Message(c, code, productTypes)
+}

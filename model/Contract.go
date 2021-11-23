@@ -38,12 +38,13 @@ type Contract struct {
 	AuditorUID            string  `gorm:"type:varchar(32);comment:审核员ID;default:(-)" json:"auditorUID"`
 	FinalAuditorUID       string  `gorm:"type:varchar(32);comment:最终审核员ID;default:(-)" json:"finalAuditorUID"`
 
-	Area         Area       `gorm:"foreignKey:AreaUID;references:UID" json:"area"`
-	Employee     Employee   `gorm:"foreignKey:EmployeeUID;references:UID" json:"employee"`
-	Customer     Customer   `gorm:"foreignKey:CustomerUID;references:UID" json:"customer"`
-	ContractUnit Dictionary `gorm:"foreignKey:ContractUnitUID;references:UID" json:"contractUnit"`
-	Tasks        []Task     `gorm:"foreignKey:ContractUID;references:UID" json:"tasks"`
-	Payments     []Payment  `gorm:"foreignKey:ContractUID;references:UID" json:"payments"`
+	Area         Area              `gorm:"foreignKey:AreaUID;references:UID" json:"area"`
+	Employee     Employee          `gorm:"foreignKey:EmployeeUID;references:UID" json:"employee"`
+	Customer     Customer          `gorm:"foreignKey:CustomerUID;references:UID" json:"customer"`
+	ContractUnit Dictionary        `gorm:"foreignKey:ContractUnitUID;references:UID" json:"contractUnit"`
+	Tasks        []Task            `gorm:"foreignKey:ContractUID;references:UID" json:"tasks"`
+	Payments     []Payment         `gorm:"foreignKey:ContractUID;references:UID" json:"payments"`
+	PushMoney    ContractPushMoney `gorm:"foreignKey:ContractUID;references:UID" json:"pushMoney"`
 }
 
 type ContractPushMoney struct {
@@ -56,6 +57,8 @@ type ContractPushMoney struct {
 	PaymentDays    int     `gorm:"type:int;comment:回款延迟天数" json:"paymentDays"`
 	PaymentMoneys  float64 `gorm:"type:decimal(20,6);comment:回款延迟扣除总额" json:"paymentMoneys"`
 	TotalMoney     float64 `gorm:"type:decimal(20,6);comment:最终提成总额" json:"totalMoney"`
+
+	Tasks []Task `gorm:"-" json:"tasks"`
 }
 
 type ContractQuery struct {
@@ -75,22 +78,12 @@ type ContractFlowQuery struct {
 	Status int    `json:"status"`
 }
 
-type ContractPushMoneyQuery struct {
-	ContractUID    string  `json:"contractUID"`
-	Tasks          []Task  `json:"tasks"`
-	TaskTotalMoney float64 `json:"taskTotalMoney"`
-	PaymentDays    int     `json:"paymentDays"`
-	PaymentMoneys  float64 `json:"paymentMoneys"`
-	TotalMoney     float64 `json:"totalMoney"`
-}
-
 func InsertContract(contract *Contract) (code int) {
 	contract.UID = uid.Generate()
 	contract.Status = 1
 	if contract.IsEntryCustomer {
 		contract.Customer = Customer{}
 	}
-	// err = db.Create(&contract).Error
 	err = db.Transaction(func(tdb *gorm.DB) error {
 		if tErr := tdb.Create(&contract).Error; tErr != nil {
 			return tErr
@@ -134,10 +127,10 @@ func UpdateContract(contract *Contract) (code int) {
 
 func SelectContract(uid string) (contract Contract, code int) {
 	err = db.Preload("Area.Office").Preload("ContractUnit").Preload("Employee").
-		Preload("Customer.Company").Preload("Tasks.Product").
+		Preload("Customer.Company").Preload("Tasks.Product.Type").
 		Preload("Tasks.TechnicianMan").Preload("Tasks.PurchaseMan").
 		Preload("Tasks.InventoryMan").Preload("Tasks.ShipmentMan").
-		Preload("Payments").
+		Preload("Payments").Preload("PushMoney").
 		First(&contract, "uid = ?", uid).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -220,7 +213,20 @@ func ApproveContract(uid string, status int, employeeUID string) (code int) {
 			if tErr := tdb.Model(&Contract{}).Where("uid = ?", uid).Updates(maps).Error; tErr != nil {
 				return tErr
 			}
+
+			var tasks []Task
+			if tErr := tdb.Find(&tasks, "contract_uid = ?", uid).Error; tErr != nil {
+				return tErr
+			}
+
+			for i := range tasks {
+				if tErr := tdb.Exec("UPDATE product SET number = number - ? WHERE uid = ?", tasks[i].Number, tasks[i].ProductUID).Error; tErr != nil {
+					return tErr
+				}
+			}
+
 			t := time.Now().Format("2006-01-02 15:04:05")
+
 			if tErr := tdb.Model(&Task{}).Where("contract_uid = ? AND type = ?", uid, 1).Update("inventory_start_date", t).Error; tErr != nil {
 				return tErr
 			}
@@ -260,7 +266,18 @@ func FinalApproveContract(contractPushMoney *ContractPushMoney, contract *Contra
 		if tErr := tdb.Model(&Contract{}).Where("uid = ?", contractPushMoney.ContractUID).Updates(maps).Error; tErr != nil {
 			return tErr
 		}
-		if tErr := tdb.Exec("UPDATE office SET money = money + ? WHERE uid = ?", contractPushMoney.TotalMoney, contract.Area.Office).Error; tErr != nil {
+
+		if contractPushMoney.Type == 1 {
+
+			for i := range contractPushMoney.Tasks {
+				if tErr := tdb.Model(&Task{}).Where("uid = ?", contractPushMoney.Tasks[i].UID).Update("push_money", contractPushMoney.Tasks[i].PushMoney).Error; tErr != nil {
+					return tErr
+				}
+			}
+
+		}
+
+		if tErr := tdb.Exec("UPDATE office SET money = money + ? WHERE uid = ?", contractPushMoney.TotalMoney, contract.Area.OfficeUID).Error; tErr != nil {
 			return tErr
 		}
 		return nil

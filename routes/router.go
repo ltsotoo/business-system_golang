@@ -96,6 +96,10 @@ func InitRouter() {
 		auth.PUT("product", v1.EditProduct)
 		auth.GET("product/:uid", v1.QueryProduct)
 		auth.POST("products", v1.QueryProducts)
+		//
+		auth.POST("productType", v1.AddProductType)
+		auth.DELETE("productType/:uid", v1.DelProductType)
+		auth.POST("productTypes", v1.QueryProductTypes)
 		//供应商模块接口
 		auth.POST("supplier", v1.EntrySupplier)
 		auth.DELETE("supplier/:uid", v1.DelSupplier)

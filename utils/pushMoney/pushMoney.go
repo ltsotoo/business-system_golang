@@ -6,47 +6,47 @@ import (
 	"time"
 )
 
-func Calculate(contract *model.Contract) (contractPushMoneyQuery model.ContractPushMoneyQuery) {
+func Calculate(contract *model.Contract) (contractPushMoney model.ContractPushMoney) {
 
 	if contract.PayType == 1 && !contract.IsSpecial {
-		contractPushMoneyQuery.ContractUID = contract.UID
-		contractPushMoneyQuery.TaskTotalMoney = task(&contract.Tasks)
-		contractPushMoneyQuery.Tasks = contract.Tasks
+		contractPushMoney.ContractUID = contract.UID
+		contractPushMoney.TaskTotalMoney = task(&contract.Tasks)
+		contractPushMoney.Tasks = contract.Tasks
 		d1s := contract.EndDeliveryDate.Format("2006-01-02")
 		d2s := contract.EndPaymentDate
-		d1, err1 := time.Parse("2006-01-02 15:04:05", d1s)
-		d2, err2 := time.Parse("2006-01-02 15:04:05", d2s)
+		d1, err1 := time.Parse("2006-01-02", d1s)
+		d2, err2 := time.Parse("2006-01-02", d2s)
 		if err1 == nil && err2 == nil {
-			contractPushMoneyQuery.PaymentDays = payment(d1, d2)
+			contractPushMoney.PaymentDays = payment(d1, d2)
 		} else {
-			contractPushMoneyQuery.PaymentDays = 0
+			contractPushMoney.PaymentDays = 0
 		}
-		if contractPushMoneyQuery.PaymentDays > 60 {
-			temp := (float64(contractPushMoneyQuery.PaymentDays - 60)) * 3 / 1000
+		if contractPushMoney.PaymentDays > 60 {
+			temp := (float64(contractPushMoney.PaymentDays - 60)) * 3 / 1000
 			if temp > 0.5 {
 				temp = 0.5
 			}
-			contractPushMoneyQuery.PaymentMoneys = contractPushMoneyQuery.TaskTotalMoney * temp
-			contractPushMoneyQuery.PaymentMoneys = round(contractPushMoneyQuery.PaymentMoneys, 3)
+			contractPushMoney.PaymentMoneys = contractPushMoney.TaskTotalMoney * temp
+			contractPushMoney.PaymentMoneys = round(contractPushMoney.PaymentMoneys, 3)
 		}
-		contractPushMoneyQuery.TotalMoney = contractPushMoneyQuery.TaskTotalMoney - contractPushMoneyQuery.PaymentMoneys
+		contractPushMoney.TotalMoney = contractPushMoney.TaskTotalMoney - contractPushMoney.PaymentMoneys
 	} else {
 		d1s := contract.EndDeliveryDate.Format("2006-01-02")
 		d2s := contract.EndPaymentDate
-		d1, err1 := time.Parse("2006-01-02 15:04:05", d1s)
-		d2, err2 := time.Parse("2006-01-02 15:04:05", d2s)
+		d1, err1 := time.Parse("2006-01-02", d1s)
+		d2, err2 := time.Parse("2006-01-02", d2s)
 		if err1 == nil && err2 == nil {
-			contractPushMoneyQuery.PaymentDays = payment(d1, d2)
+			contractPushMoney.PaymentDays = payment(d1, d2)
 		} else {
-			contractPushMoneyQuery.PaymentDays = 0
+			contractPushMoney.PaymentDays = 0
 		}
-		if contractPushMoneyQuery.PaymentDays > 60 {
-			temp := (float64(contractPushMoneyQuery.PaymentDays - 60)) * 3 / 1000
+		if contractPushMoney.PaymentDays > 60 {
+			temp := (float64(contractPushMoney.PaymentDays - 60)) * 3 / 1000
 			if temp > 0.5 {
 				temp = 0.5
 			}
-			contractPushMoneyQuery.PaymentMoneys = contract.PaymentTotalAmount * temp
-			contractPushMoneyQuery.PaymentMoneys = round(contractPushMoneyQuery.PaymentMoneys, 3)
+			contractPushMoney.PaymentMoneys = contract.PaymentTotalAmount * temp
+			contractPushMoney.PaymentMoneys = round(contractPushMoney.PaymentMoneys, 3)
 		}
 	}
 	return
@@ -69,15 +69,18 @@ func task(tasks *[]model.Task) (taskTotalMoney float64) {
 	for i, _ := range *tasks {
 		temp := ((*tasks)[i].Price - (*tasks)[i].Product.StandardPrice) / (*tasks)[i].Product.StandardPrice
 		if temp > 0 {
-			temp = (*tasks)[i].Product.PushMoneyPercentages + temp*(*tasks)[i].Product.PushMoneyPercentagesUp*100
+			println(temp)
+			temp = (*tasks)[i].Product.Type.PushMoneyPercentages + temp*100*(*tasks)[i].Product.Type.PushMoneyPercentagesUp
+			println(temp)
 			(*tasks)[i].PushMoney = (*tasks)[i].TotalPrice * temp
+			println((*tasks)[i].PushMoney)
 			(*tasks)[i].PushMoney = round((*tasks)[i].PushMoney, 3)
 		} else if temp < 0 {
-			temp = (*tasks)[i].Product.PushMoneyPercentages + temp*(*tasks)[i].Product.PushMoneyPercentagesDown*100
+			temp = (*tasks)[i].Product.Type.PushMoneyPercentages + temp*(*tasks)[i].Product.Type.PushMoneyPercentagesDown*100
 			(*tasks)[i].PushMoney = (*tasks)[i].TotalPrice * temp
 			(*tasks)[i].PushMoney = round((*tasks)[i].PushMoney, 3)
 		} else {
-			(*tasks)[i].PushMoney = (*tasks)[i].TotalPrice * (*tasks)[i].Product.PushMoneyPercentages
+			(*tasks)[i].PushMoney = (*tasks)[i].TotalPrice * (*tasks)[i].Product.Type.PushMoneyPercentages
 			(*tasks)[i].PushMoney = round((*tasks)[i].PushMoney, 3)
 		}
 		taskTotalMoney += (*tasks)[i].PushMoney

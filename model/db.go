@@ -36,6 +36,7 @@ func InitDb() {
 		&CustomerCompany{},
 		&Employee{},
 		&Product{},
+		&ProductType{},
 		&Supplier{},
 		&Task{},
 		&TaskRemarks{},

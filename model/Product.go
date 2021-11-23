@@ -23,21 +23,23 @@ type Product struct {
 	StandardPriceUSD float64 `gorm:"type:decimal(20,6);comment:标准价格(美元)" json:"standardPriceUSD"`
 	DeliveryCycle    string  `gorm:"type:varchar(20);comment:供货周期" json:"deliveryCycle"`
 	Remarks          string  `gorm:"type:varchar(600);comment:备注" json:"remarks"`
-	SourceTypeUID    string  `gorm:"type:varchar(32);comment:来源类型;default:(-)" json:"sourceTypeUID"`
-	SubtypeUID       string  `gorm:"type:varchar(32);comment:子类型;default:(-)" json:"subtypeUID"`
+	TypeUID          string  `gorm:"type:varchar(32);comment:类型" json:"typeUID"`
 
-	PushMoneyPercentages     float64 `gorm:"type:decimal(20,6);comment:标准提成" json:"pushMoneyPercentages"`
+	Type     ProductType `gorm:"foreignKey:TypeUID;references:UID" json:"type"`
+	Supplier Supplier    `gorm:"foreignKey:SupplierUID;references:UID" json:"supplier"`
+}
+
+type ProductType struct {
+	BaseModel
+	UID                      string  `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
+	Name                     string  `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
+	PushMoneyPercentages     float64 `gorm:"type:decimal(20,6);comment:标准提成百分比" json:"pushMoneyPercentages"`
 	PushMoneyPercentagesUp   float64 `gorm:"type:decimal(20,6);comment:提成上涨百分比" json:"pushMoneyPercentagesUp"`
 	PushMoneyPercentagesDown float64 `gorm:"type:decimal(20,6);comment:提成下降百分比" json:"pushMoneyPercentagesDown"`
-
-	Supplier   Supplier       `gorm:"foreignKey:SupplierUID;references:UID" json:"supplier"`
-	SourceType DictionaryType `gorm:"foreignKey:SourceTypeUID;references:UID" json:"sourceType"`
-	Subtype    Dictionary     `gorm:"foreignKey:SubtypeUID;references:UID" json:"subtype"`
 }
 
 type ProductQuery struct {
-	SourceTypeUID string `json:"sourceTypeUID"`
-	SubtypeUID    string `json:"subtypeUID"`
+	TypeUID       string `json:"typeUID"`
 	Name          string `json:"name"`
 	Specification string `json:"specification"`
 }
@@ -71,8 +73,7 @@ func UpdateProduct(product *Product) (code int) {
 }
 
 func SelectProduct(uid string) (product Product, code int) {
-	err = db.Preload("Supplier").Preload("SourceType").Preload("Subtype").
-		First(&product, "uid = ?", uid).Error
+	err = db.Preload("Supplier").Preload("Type").First(&product, "uid = ?", uid).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return product, msg.ERROR_PRODUCT_NOT_EXIST
@@ -85,20 +86,41 @@ func SelectProduct(uid string) (product Product, code int) {
 
 func SelectProducts(pageSize int, pageNo int, productQuery *ProductQuery) (products []Product, code int, total int64) {
 	var maps = make(map[string]interface{})
-	if productQuery.SourceTypeUID != "" {
-		maps["source_type_uid"] = productQuery.SourceTypeUID
-	}
-	if productQuery.SubtypeUID != "" {
-		maps["subtype_uid"] = productQuery.SubtypeUID
+	if productQuery.TypeUID != "" {
+		maps["type_uid"] = productQuery.TypeUID
 	}
 
 	err = db.Where(maps).Where("name LIKE ? AND specification LIKE ?", "%"+productQuery.Name+"%", "%"+productQuery.Specification+"%").
-		Find(&products).Count(&total).
-		Preload("Supplier").Preload("SourceType").Preload("Subtype").
+		Find(&products).Count(&total).Preload("Supplier").Preload("Type").
 		Limit(pageSize).Offset((pageNo - 1) * pageSize).Find(&products).Error
 
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return products, msg.ERROR, 0
 	}
 	return products, msg.SUCCESS, total
+}
+
+func InsertProductType(productType *ProductType) (code int) {
+	productType.UID = uid.Generate()
+	err = db.Create(&productType).Error
+	if err != nil {
+		return msg.ERROR
+	}
+	return msg.SUCCESS
+}
+
+func DeleteProductType(uid string) (code int) {
+	err = db.Where("uid = ?", uid).Delete(&ProductType{}).Error
+	if err != nil {
+		return msg.ERROR
+	}
+	return msg.SUCCESS
+}
+
+func SelectProductTypes(productType *ProductType) (productTypes []ProductType, code int) {
+	err = db.Where("name LIKE ?", "%"+productType.Name+"%").Find(&productTypes).Error
+	if err != nil {
+		return productTypes, msg.ERROR
+	}
+	return productTypes, msg.SUCCESS
 }

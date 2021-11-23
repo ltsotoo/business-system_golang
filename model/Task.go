@@ -250,6 +250,20 @@ func NextTaskStatus(uid string, lastStatus int, from string, to string, maps map
 		if tErr := tdb.Model(&Task{}).Where("uid = ?", uid).Updates(maps).Error; tErr != nil {
 			return tErr
 		}
+
+		if maps["status"] == magic.TASK_STATUS_SHIPMENT {
+
+			var tempTask Task
+
+			if tErr := tdb.First(&tempTask, "uid = ?", uid).Error; tErr != nil {
+				return tErr
+			}
+
+			if tErr := tdb.Exec("UPDATE product SET number_count = number_count - ? WHERE uid = ?", tempTask.Number, tempTask.ProductUID).Error; tErr != nil {
+				return tErr
+			}
+		}
+
 		return nil
 	})
 
