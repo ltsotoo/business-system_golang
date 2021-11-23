@@ -25,7 +25,16 @@ type PaymentQuery struct {
 
 func InsertPayment(payment *Payment) (code int) {
 	payment.UID = uid.Generate()
-	err = db.Create(&payment).Error
+	// err = db.Create(&payment).Error
+	err = db.Transaction(func(tdb *gorm.DB) error {
+		if tErr := tdb.Create(&payment).Error; tErr != nil {
+			return tErr
+		}
+		if tErr := tdb.Exec("UPDATE contract SET payment_total_amount = payment_total_amount + ? WHERE uid = ?", payment.Money, payment.ContractUID).Error; tErr != nil {
+			return tErr
+		}
+		return nil
+	})
 	if err != nil {
 		return msg.ERROR
 	}

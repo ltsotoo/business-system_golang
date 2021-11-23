@@ -31,6 +31,7 @@ func InitDb() {
 
 	db.AutoMigrate(
 		&Contract{},
+		&ContractPushMoney{},
 		&Customer{},
 		&CustomerCompany{},
 		&Employee{},

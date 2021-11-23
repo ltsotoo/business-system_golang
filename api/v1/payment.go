@@ -39,11 +39,16 @@ func FinishPayments(c *gin.Context) {
 	var contract model.Contract
 	_ = c.ShouldBindJSON(&contract)
 
-	// println(contract.UID)
-	// println(contract.EndPaymentDate)
-	// println(contract.PaymentTotalAmount)
-	// contract, _ = model.SelectContract(contract.UID)
 	code = model.UpdateContractCollectionStatusToFinish(&contract)
+
+	msg.Message(c, code, nil)
+}
+
+func RejectPayments(c *gin.Context) {
+	var contract model.Contract
+	_ = c.ShouldBindJSON(&contract)
+
+	code = model.UpdateContractCollectionStatusToNotFinish(&contract)
 
 	msg.Message(c, code, nil)
 }

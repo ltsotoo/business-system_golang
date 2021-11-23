@@ -46,13 +46,16 @@ type Contract struct {
 	Payments     []Payment  `gorm:"foreignKey:ContractUID;references:UID" json:"payments"`
 }
 
-//回款记录Model
-type Collection struct {
+type ContractPushMoney struct {
 	BaseModel
-	UID         string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	ContractUID string `gorm:"type:varchar(32);comment:合同ID" json:"contractUID"`
-	Amount      int    `gorm:"type:int;comment:金额(元)" json:"totalAmount"`
-	Remarks     string `gorm:"type:varchar(200);comment:回款详情记录" json:"remarks"`
+	UID            string  `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
+	ContractUID    string  `gorm:"type:varchar(32);comment:合同ID" json:"contractUID"`
+	EmployeeUID    string  `gorm:"type:varchar(32);comment:提交用户UID" json:"employeeUID"`
+	Type           int     `gorm:"type:int;comment:状态(1:机器计算 2:手动输入)" json:"type"`
+	TaskTotalMoney float64 `gorm:"type:decimal(20,6);comment:任务提成总额" json:"taskTotalMoney"`
+	PaymentDays    int     `gorm:"type:int;comment:回款延迟天数" json:"paymentDays"`
+	PaymentMoneys  float64 `gorm:"type:decimal(20,6);comment:回款延迟扣除总额" json:"paymentMoneys"`
+	TotalMoney     float64 `gorm:"type:decimal(20,6);comment:最终提成总额" json:"totalMoney"`
 }
 
 type ContractQuery struct {
@@ -72,12 +75,13 @@ type ContractFlowQuery struct {
 	Status int    `json:"status"`
 }
 
-type ContractPushMoney struct {
-	ContractUID      string  `json:"contractUID"`
-	Tasks            []Task  `json:"tasks"`
-	TaskTotalMoney   float64 `json:"taskTotalMoney"`
-	PaymenTotalMoney float64 `json:"paymenTotalMoney"`
-	TotalMoney       float64 `json:"totalMoney"`
+type ContractPushMoneyQuery struct {
+	ContractUID    string  `json:"contractUID"`
+	Tasks          []Task  `json:"tasks"`
+	TaskTotalMoney float64 `json:"taskTotalMoney"`
+	PaymentDays    int     `json:"paymentDays"`
+	PaymentMoneys  float64 `json:"paymentMoneys"`
+	TotalMoney     float64 `json:"totalMoney"`
 }
 
 func InsertContract(contract *Contract) (code int) {
@@ -206,25 +210,57 @@ func ApproveContract(uid string, status int, employeeUID string) (code int) {
 		maps["AuditorUID"] = employeeUID
 		maps["CollectionStatus"] = 1
 		maps["ProductionStatus"] = 1
-	} else if status == 3 {
+	} else if status == -1 {
 		maps["Status"] = status
-		maps["FinalAuditorUID"] = employeeUID
-		maps["CollectionStatus"] = 2
-		maps["ProductionStatus"] = 2
+		maps["AuditorUID"] = employeeUID
 	}
 
+	if status == 2 {
+		err = db.Transaction(func(tdb *gorm.DB) error {
+			if tErr := tdb.Model(&Contract{}).Where("uid = ?", uid).Updates(maps).Error; tErr != nil {
+				return tErr
+			}
+			t := time.Now().Format("2006-01-02 15:04:05")
+			if tErr := tdb.Model(&Task{}).Where("contract_uid = ? AND type = ?", uid, 1).Update("inventory_start_date", t).Error; tErr != nil {
+				return tErr
+			}
+			if tErr := tdb.Model(&Task{}).Where("contract_uid = ? AND type = ?", uid, 2).Update("purchase_start_date", t).Error; tErr != nil {
+				return tErr
+			}
+			if tErr := tdb.Model(&Task{}).Where("contract_uid = ? AND type = ?", uid, 3).Update("technician_start_date", t).Error; tErr != nil {
+				return tErr
+			}
+			return nil
+		})
+	} else if status == -1 {
+		err = db.Model(&Contract{}).Where("uid = ?", uid).Updates(maps).Error
+	}
+
+	if err != nil {
+		code = msg.ERROR_CONTRACT_UPDATE_STATUS
+	} else {
+		code = msg.SUCCESS
+	}
+	return
+}
+
+func FinalApproveContract(contractPushMoney *ContractPushMoney, contract *Contract) (code int) {
+	var maps = make(map[string]interface{})
+
+	maps["Status"] = 3
+	maps["FinalAuditorUID"] = contractPushMoney.EmployeeUID
+	maps["CollectionStatus"] = 2
+	maps["ProductionStatus"] = 2
+
 	err = db.Transaction(func(tdb *gorm.DB) error {
-		if tErr := tdb.Model(&Contract{}).Where("uid = ?", uid).Updates(maps).Error; tErr != nil {
+		contractPushMoney.UID = uid.Generate()
+		if tErr := tdb.Create(&contractPushMoney).Error; tErr != nil {
 			return tErr
 		}
-		t := time.Now().Format("2006-01-02 15:04:05")
-		if tErr := tdb.Model(&Task{}).Where("contract_uid = ? AND type = ?", uid, 1).Update("inventory_start_date", t).Error; tErr != nil {
+		if tErr := tdb.Model(&Contract{}).Where("uid = ?", contractPushMoney.ContractUID).Updates(maps).Error; tErr != nil {
 			return tErr
 		}
-		if tErr := tdb.Model(&Task{}).Where("contract_uid = ? AND type = ?", uid, 2).Update("purchase_start_date", t).Error; tErr != nil {
-			return tErr
-		}
-		if tErr := tdb.Model(&Task{}).Where("contract_uid = ? AND type = ?", uid, 3).Update("technician_start_date", t).Error; tErr != nil {
+		if tErr := tdb.Exec("UPDATE office SET money = money + ? WHERE uid = ?", contractPushMoney.TotalMoney, contract.Area.Office).Error; tErr != nil {
 			return tErr
 		}
 		return nil
@@ -258,7 +294,20 @@ func UpdateContractCollectionStatusToFinish(contract *Contract) (code int) {
 	var maps = make(map[string]interface{})
 	maps["collection_status"] = magic.CONTATCT_COLLECTION_STATUS_FINISH
 	maps["end_payment_date"] = contract.EndPaymentDate
-	maps["payment_total_amount"] = contract.PaymentTotalAmount
+	err = db.Model(&Contract{}).Where("uid = ?", contract.UID).Updates(maps).Error
+
+	if err != nil {
+		code = msg.ERROR_CONTRACT_UPDATE_P_STATUS
+	} else {
+		code = msg.SUCCESS
+	}
+	return
+}
+
+func UpdateContractCollectionStatusToNotFinish(contract *Contract) (code int) {
+	var maps = make(map[string]interface{})
+	maps["collection_status"] = magic.CONTATCT_COLLECTION_STATUS_ING
+	maps["end_payment_date"] = nil
 	err = db.Model(&Contract{}).Where("uid = ?", contract.UID).Updates(maps).Error
 
 	if err != nil {
