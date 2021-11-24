@@ -9,12 +9,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func DelTask(c *gin.Context) {
-	uid := c.Param("uid")
-	code = model.DeleteTask(uid)
-	msg.Message(c, code, nil)
-}
-
 func QueryTasks(c *gin.Context) {
 	var tasks []model.Task
 	var task model.Task

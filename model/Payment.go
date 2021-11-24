@@ -41,14 +41,6 @@ func InsertPayment(payment *Payment) (code int) {
 	return msg.SUCCESS
 }
 
-func DeletePayment(uid string) (code int) {
-	err = db.Where("uid = ?", uid).Delete(&Payment{}).Error
-	if err != nil {
-		return msg.ERROR
-	}
-	return msg.SUCCESS
-}
-
 func UpdatePayment(payment *Payment) (code int) {
 	var maps = make(map[string]interface{})
 	maps["money"] = payment.Money

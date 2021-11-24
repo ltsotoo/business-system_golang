@@ -21,6 +21,9 @@ func InitDb() {
 		config.SystemConfig.Db.Port,
 		config.SystemConfig.Db.Name,
 	)
+
+	fmt.Println(dsn)
+
 	db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{
 		NamingStrategy: schema.NamingStrategy{SingularTable: true},
 	})

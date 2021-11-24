@@ -24,6 +24,7 @@ type Product struct {
 	DeliveryCycle    string  `gorm:"type:varchar(20);comment:供货周期" json:"deliveryCycle"`
 	Remarks          string  `gorm:"type:varchar(600);comment:备注" json:"remarks"`
 	TypeUID          string  `gorm:"type:varchar(32);comment:类型" json:"typeUID"`
+	IsDelete         bool    `gorm:"type:boolean;comment:是否删除" json:"isDelete"`
 
 	Type     ProductType `gorm:"foreignKey:TypeUID;references:UID" json:"type"`
 	Supplier Supplier    `gorm:"foreignKey:SupplierUID;references:UID" json:"supplier"`
@@ -36,6 +37,8 @@ type ProductType struct {
 	PushMoneyPercentages     float64 `gorm:"type:decimal(20,6);comment:标准提成百分比" json:"pushMoneyPercentages"`
 	PushMoneyPercentagesUp   float64 `gorm:"type:decimal(20,6);comment:提成上涨百分比" json:"pushMoneyPercentagesUp"`
 	PushMoneyPercentagesDown float64 `gorm:"type:decimal(20,6);comment:提成下降百分比" json:"pushMoneyPercentagesDown"`
+
+	IsDelete bool `gorm:"type:boolean;comment:是否删除" json:"isDelete"`
 }
 
 type ProductQuery struct {
@@ -54,7 +57,8 @@ func InsertProduct(product *Product) (code int) {
 }
 
 func DeleteProduct(uid string) (code int) {
-	err = db.Where("uid = ?", uid).Delete(&Product{}).Error
+	// err = db.Where("uid = ?", uid).Delete(&Product{}).Error
+	err = db.Model(&Product{}).Where("uid = ?", uid).Update("is_delete", true).Error
 	if err != nil {
 		return msg.ERROR_PRODUCT_DELETE
 	}
@@ -73,7 +77,7 @@ func UpdateProduct(product *Product) (code int) {
 }
 
 func SelectProduct(uid string) (product Product, code int) {
-	err = db.Preload("Supplier").Preload("Type").First(&product, "uid = ?", uid).Error
+	err = db.Preload("Supplier").Preload("Type").Where("is_delete = ?", false).First(&product, "uid = ?", uid).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return product, msg.ERROR_PRODUCT_NOT_EXIST
@@ -86,6 +90,7 @@ func SelectProduct(uid string) (product Product, code int) {
 
 func SelectProducts(pageSize int, pageNo int, productQuery *ProductQuery) (products []Product, code int, total int64) {
 	var maps = make(map[string]interface{})
+	maps["is_delete"] = false
 	if productQuery.TypeUID != "" {
 		maps["type_uid"] = productQuery.TypeUID
 	}
@@ -110,7 +115,8 @@ func InsertProductType(productType *ProductType) (code int) {
 }
 
 func DeleteProductType(uid string) (code int) {
-	err = db.Where("uid = ?", uid).Delete(&ProductType{}).Error
+	// err = db.Where("uid = ?", uid).Delete(&ProductType{}).Error
+	err = db.Model(&ProductType{}).Where("uid = ?", uid).Update("is_delete", true).Error
 	if err != nil {
 		return msg.ERROR
 	}
@@ -118,7 +124,7 @@ func DeleteProductType(uid string) (code int) {
 }
 
 func SelectProductTypes(productType *ProductType) (productTypes []ProductType, code int) {
-	err = db.Where("name LIKE ?", "%"+productType.Name+"%").Find(&productTypes).Error
+	err = db.Where("is_delete = ? AND name LIKE ?", false, "%"+productType.Name+"%").Find(&productTypes).Error
 	if err != nil {
 		return productTypes, msg.ERROR
 	}

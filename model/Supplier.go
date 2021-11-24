@@ -17,6 +17,7 @@ type Supplier struct {
 	Phone    string `gorm:"type:varchar(20);comment:联系电话;not null" json:"phone"`
 	WechatID string `gorm:"type:varchar(20);comment:微信号" json:"wechatID"`
 	Email    string `gorm:"type:varchar(50);comment:邮箱" json:"email"`
+	IsDelete bool   `gorm:"type:boolean;comment:是否删除" json:"isDelete"`
 }
 
 type SupplierQuery struct {
@@ -35,7 +36,8 @@ func InsertSupplier(supplier *Supplier) (code int) {
 }
 
 func DeleteSupplier(uid string) (code int) {
-	err = db.Where("uid = ?", uid).Delete(&Supplier{}).Error
+	// err = db.Where("uid = ?", uid).Delete(&Supplier{}).Error
+	err = db.Model(&Supplier{}).Where("uid = ?", uid).Update("is_delete", true).Error
 	if err != nil {
 		return msg.ERROR_SUPPLIER_DELETE
 	}
@@ -58,7 +60,7 @@ func UpdateSupplier(supplier *Supplier) (code int) {
 }
 
 func SelectSupplier(uid string) (supplier Supplier, code int) {
-	err = db.First(&supplier, "uid = ?", uid).Error
+	err = db.Where("is_delete = ?", false).First(&supplier, "uid = ?", uid).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return supplier, msg.ERROR_SUPPLIER_NOT_EXIST
@@ -70,7 +72,7 @@ func SelectSupplier(uid string) (supplier Supplier, code int) {
 }
 
 func SelectSuppliers(pageSize int, pageNo int, supplierQuery *SupplierQuery) (suppliers []Supplier, code int, total int64) {
-	err = db.Where("name LIKE ? AND linkman LIKE ? AND phone LIKE ?", "%"+supplierQuery.Name+"%", "%"+supplierQuery.Linkman+"%", "%"+supplierQuery.Phone+"%").
+	err = db.Where("is_delete = ?", false).Where("name LIKE ? AND linkman LIKE ? AND phone LIKE ?", "%"+supplierQuery.Name+"%", "%"+supplierQuery.Linkman+"%", "%"+supplierQuery.Phone+"%").
 		Find(&suppliers).Count(&total).
 		Limit(pageSize).Offset((pageNo - 1) * pageSize).
 		Find(&suppliers).Error

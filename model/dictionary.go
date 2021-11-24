@@ -10,10 +10,9 @@ import (
 //字典类型表 Model
 type DictionaryType struct {
 	BaseModel
-	UID      string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	Name     string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
-	Text     string `gorm:"type:varchar(20);comment:文本;not null" json:"text"`
-	Category string `gorm:"type:varchar(20);comment:类别;default:(-)" json:"category"`
+	UID  string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
+	Name string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
+	Text string `gorm:"type:varchar(20);comment:文本;not null" json:"text"`
 
 	Dictionaries []Dictionary `gorm:"foreignKey:DictionaryTypeUID;references:UID" json:"dictionaries"`
 }
@@ -24,6 +23,7 @@ type Dictionary struct {
 	UID               string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
 	DictionaryTypeUID string `gorm:"type:varchar(32);comment:类型ID;default:(-)" json:"dictionaryTypeUID"`
 	Text              string `gorm:"type:varchar(20);comment:文本" json:"text"`
+	IsDelete          bool   `gorm:"type:boolean;comment:是否删除" json:"isDelete"`
 
 	DictionaryType DictionaryType `gorm:"foreignKey:DictionaryTypeUID;references:UID" json:"dictionaryType"`
 }
@@ -33,14 +33,6 @@ func InsertDictionaryType(dictionaryType *DictionaryType) (code int) {
 	err = db.Create(&dictionaryType).Error
 	if err != nil {
 		return msg.ERROR_SYSTE_DIC_TYPE_INSERT
-	}
-	return msg.SUCCESS
-}
-
-func DeleteDictionaryType(uid string) (code int) {
-	err = db.Where("uid = ?", uid).Delete(&DictionaryType{}).Error
-	if err != nil {
-		return msg.ERROR_SYSTE_DIC_TYPE_DELETE
 	}
 	return msg.SUCCESS
 }
@@ -71,7 +63,8 @@ func InsertDictionary(dictionary *Dictionary) (code int) {
 }
 
 func DeleteDictionary(uid string) (code int) {
-	err = db.Where("uid = ?", uid).Delete(&Dictionary{}).Error
+	// err = db.Where("uid = ?", uid).Delete(&Dictionary{}).Error
+	err = db.Model(&Dictionary{}).Where("uid = ?", uid).Update("is_delete", true).Error
 	if err != nil {
 		return msg.ERROR_SYSTE_DIC_DELETE
 	}
@@ -79,7 +72,7 @@ func DeleteDictionary(uid string) (code int) {
 }
 
 func SelectDictionaries(name string, text string) (dictionaries []Dictionary, code int) {
-	err = db.Joins("DictionaryType").Where("DictionaryType.name = ? AND dictionary.text LIKE ?", name, "%"+text+"%").Find(&dictionaries).Error
+	err = db.Joins("DictionaryType").Where("DictionaryType.name = ? AND is_delete = ? AND dictionary.text LIKE ?", name, false, "%"+text+"%").Find(&dictionaries).Error
 	if err != nil {
 		return dictionaries, msg.ERROR
 	}

@@ -4,6 +4,7 @@ import (
 	"business-system_golang/utils/magic"
 	"business-system_golang/utils/msg"
 	"business-system_golang/utils/uid"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -37,6 +38,7 @@ type Contract struct {
 	CollectionStatus      int     `gorm:"type:int;comment:回款状态(1:回款中 2:回款完成)" json:"collectionStatus"`
 	AuditorUID            string  `gorm:"type:varchar(32);comment:审核员ID;default:(-)" json:"auditorUID"`
 	FinalAuditorUID       string  `gorm:"type:varchar(32);comment:最终审核员ID;default:(-)" json:"finalAuditorUID"`
+	IsDelete              bool    `gorm:"type:boolean;comment:是否删除" json:"isDelete"`
 
 	Area         Area              `gorm:"foreignKey:AreaUID;references:UID" json:"area"`
 	Employee     Employee          `gorm:"foreignKey:EmployeeUID;references:UID" json:"employee"`
@@ -83,6 +85,11 @@ func InsertContract(contract *Contract) (code int) {
 	contract.Status = 1
 	if contract.IsEntryCustomer {
 		contract.Customer = Customer{}
+	} else {
+		fmt.Println(contract.Customer.Name)
+		contract.CustomerUID = ""
+		contract.Customer.UID = uid.Generate()
+		contract.Customer.Status = 0
 	}
 	err = db.Transaction(func(tdb *gorm.DB) error {
 		if tErr := tdb.Create(&contract).Error; tErr != nil {
@@ -108,7 +115,8 @@ func CreateNo(contract *Contract) (no string) {
 }
 
 func DeleteContract(uid string) (code int) {
-	err = db.Delete(&Contract{}, "uid = ?", uid).Error
+	// err = db.Delete(&Contract{}, "uid = ?", uid).Error
+	err = db.Model(&Contract{}).Where("uid = ?", uid).Update("is_delete", true).Error
 	if err != nil {
 		return msg.ERROR_CONTRACT_DELETE
 	}
@@ -130,7 +138,7 @@ func SelectContract(uid string) (contract Contract, code int) {
 		Preload("Customer.Company").Preload("Tasks.Product.Type").
 		Preload("Tasks.TechnicianMan").Preload("Tasks.PurchaseMan").
 		Preload("Tasks.InventoryMan").Preload("Tasks.ShipmentMan").
-		Preload("Payments").Preload("PushMoney").
+		Preload("Payments").Preload("PushMoney").Where("is_delete = ?", false).
 		First(&contract, "uid = ?", uid).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -164,7 +172,7 @@ func SelectContracts(pageSize int, pageNo int, contractQuery *ContractQuery) (co
 	if contractQuery.CollectionStatus != 0 {
 		maps["collection_status"] = contractQuery.CollectionStatus
 	}
-	tDb := db
+	tDb := db.Where("contract.is_delete = ?", false)
 
 	if contractQuery.CompanyName != "" {
 		tDb = tDb.Joins("Customer").
@@ -210,17 +218,24 @@ func ApproveContract(uid string, status int, employeeUID string) (code int) {
 
 	if status == 2 {
 		err = db.Transaction(func(tdb *gorm.DB) error {
+
 			if tErr := tdb.Model(&Contract{}).Where("uid = ?", uid).Updates(maps).Error; tErr != nil {
 				return tErr
 			}
 
-			var tasks []Task
-			if tErr := tdb.Find(&tasks, "contract_uid = ?", uid).Error; tErr != nil {
+			var contract Contract
+			if tErr := tdb.Preload("Tasks").First(&contract, "uid = ?", uid).Error; tErr != nil {
 				return tErr
 			}
 
-			for i := range tasks {
-				if tErr := tdb.Exec("UPDATE product SET number = number - ? WHERE uid = ?", tasks[i].Number, tasks[i].ProductUID).Error; tErr != nil {
+			if !contract.IsEntryCustomer {
+				if tErr := tdb.Exec("UPDATE customer SET status = 1 WHERE uid = ?", contract.CustomerUID).Error; tErr != nil {
+					return tErr
+				}
+			}
+
+			for i := range contract.Tasks {
+				if tErr := tdb.Exec("UPDATE product SET number = number - ? WHERE uid = ?", contract.Tasks[i].Number, contract.Tasks[i].ProductUID).Error; tErr != nil {
 					return tErr
 				}
 			}

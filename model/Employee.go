@@ -50,7 +50,7 @@ func CheckEmployee(phone string) (code int) {
 }
 
 func CheckLogin(phone string, password string) (employee Employee, code int) {
-	db.Where("phone = ?", phone).First(&employee)
+	db.Where("phone = ? AND is_delete = ?", phone, false).First(&employee)
 	if employee.ID == 0 {
 		return employee, msg.ERROR_EMPLOYEE_LOGIN_FAIL
 	}
@@ -78,7 +78,8 @@ func InsertEmployee(employee *Employee) (code int) {
 }
 
 func DeleteEmployee(uid string) (code int) {
-	err = db.Where("uid = ?", uid).Delete(&Employee{}).Error
+	// err = db.Where("uid = ?", uid).Delete(&Employee{}).Error
+	err = db.Model(&Employee{}).Where("uid = ?", uid).Update("is_delete", true).Error
 	if err != nil {
 		return msg.ERROR_CUSTOMER_DELETE
 	}
@@ -103,6 +104,7 @@ func UpdateEmployee(employee *Employee) (code int) {
 
 func SelectEmployee(uid string) (employee Employee, code int) {
 	err = db.Preload("Office").Preload("Department").Preload("Roles").
+		Where("is_delete = ?", false).
 		First(&employee, "uid = ?", uid).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -116,6 +118,7 @@ func SelectEmployee(uid string) (employee Employee, code int) {
 
 func SelectEmployees(pageSize int, pageNo int, employeeQuery *EmployeeQuery) (employees []Employee, code int, total int64) {
 	var maps = make(map[string]interface{})
+	maps["is_delete"] = false
 	if employeeQuery.OfficeUID != "" {
 		maps["office_uid"] = employeeQuery.OfficeUID
 	}

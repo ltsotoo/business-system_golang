@@ -69,7 +69,6 @@ func InitRouter() {
 		auth.PUT("task/contract/finalApprove", v1.FinalApproveContract)
 		auth.POST("calculatePushMoney", v1.CalculatePushMoney)
 		//任务模块接口
-		auth.DELETE("task/:uid", v1.DelTask)
 		auth.POST("tasks", v1.QueryTasks)
 		auth.GET("taskRemarks", v1.QueryTaskRemarks)
 		auth.POST("mytasks", v1.QueryMyTasks)
@@ -78,7 +77,6 @@ func InitRouter() {
 		auth.PUT("task/flow/next", v1.NextTask)
 		//回款模块接口
 		auth.POST("payment", v1.AddPayment)
-		auth.DELETE("payment", v1.DelPayment)
 		auth.PUT("payment", v1.EditPayment)
 		auth.GET("payments/:contractUID", v1.QueryPaymentsForContract)
 		auth.POST("finishPayments", v1.FinishPayments)

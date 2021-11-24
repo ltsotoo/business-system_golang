@@ -10,9 +10,10 @@ import (
 //Office办事处 Area地区 Department部门 Role角色 Permission权限
 type Office struct {
 	BaseModel
-	UID   string  `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	Name  string  `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
-	Money float64 `gorm:"type:decimal(20,6);comment:办事处总报销额度(元)" json:"money"`
+	UID      string  `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
+	Name     string  `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
+	Money    float64 `gorm:"type:decimal(20,6);comment:办事处总报销额度(元)" json:"money"`
+	IsDelete bool    `gorm:"type:boolean;comment:是否删除" json:"isDelete"`
 
 	Areas []Area `gorm:"foreignKey:OfficeUID;references:UID" json:"areas"`
 }
@@ -23,6 +24,7 @@ type Area struct {
 	OfficeUID string `gorm:"type:varchar(32);comment:办事处UID;default:(-)" json:"officeUID"`
 	Name      string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
 	Number    string `gorm:"type:varchar(20);comment:编号;unique" json:"number"`
+	IsDelete  bool   `gorm:"type:boolean;comment:是否删除" json:"isDelete"`
 
 	Office Office `gorm:"foreignKey:OfficeUID;references:UID" json:"office"`
 }
@@ -38,7 +40,8 @@ type Department struct {
 	UID       string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
 	OfficeUID string `gorm:"type:varchar(32);comment:办事处ID;not null" json:"officeUID"`
 	Name      string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
-	RoleUID   string `gorm:"type:varchar(32);comment:部门员工默认拥有职位" json:"roleUID"`
+	RoleUID   string `gorm:"type:varchar(32);comment:部门员工默认拥有职位;default:(-)" json:"roleUID"`
+	IsDelete  bool   `gorm:"type:boolean;comment:是否删除" json:"isDelete"`
 
 	Office Office `gorm:"foreignKey:OfficeUID;references:UID" json:"office"`
 	Role   Role   `gorm:"foreignKey:RoleUID;references:UID" json:"role"`
@@ -46,8 +49,9 @@ type Department struct {
 
 type Role struct {
 	BaseModel
-	UID         string       `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	Name        string       `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
+	UID  string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
+	Name string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
+
 	Permissions []Permission `gorm:"many2many:role_permission;foreignKey:UID;References:UID" json:"permissions"`
 }
 

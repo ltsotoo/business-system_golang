@@ -17,6 +17,7 @@ type Expense struct {
 	Amount      float64 `gorm:"type:decimal(20,6);comment:金额(元)" json:"amount"`
 	Status      int     `gorm:"type:int;comment:状态(-1:拒绝,1:待办事处审批,2:待财务审批,3:通过)" json:"status"`
 	ApproverUID string  `gorm:"type:varchar(32);comment:审批财务员工UID;default:(-)" json:"approverUID"`
+	IsDelete    bool    `gorm:"type:boolean;comment:是否删除" json:"isDelete"`
 
 	Employee Employee `gorm:"foreignKey:EmployeeUID;references:UID" json:"employee"`
 	Approver Employee `gorm:"foreignKey:ApproverUID;references:UID" json:"approver"`

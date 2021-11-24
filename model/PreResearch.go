@@ -15,6 +15,7 @@ type PreResearch struct {
 	AuditorUID  string `gorm:"type:varchar(32);comment:审核员ID;default:(-)" json:"auditorUID"`
 	Remarks     string `gorm:"type:varchar(600);comment:设计需求" json:"remarks"`
 	Status      int    `gorm:"type:int;comment:状态(-1:驳回 1:未审批 2:未完成 3:已完成);not null" json:"status"`
+	IsDelete    bool   `gorm:"type:boolean;comment:是否删除" json:"isDelete"`
 
 	PreResearchTasks []PreResearchTask `gorm:"-" json:"preResearchTasks"`
 	Employee         Employee          `gorm:"foreignKey:EmployeeUID;references:UID" json:"employee"`
@@ -60,7 +61,8 @@ func InsertPreResearch(preResearch *PreResearch) (code int) {
 }
 
 func DeletePreResearch(uid string) (code int) {
-	err = db.Delete(&PreResearch{}, "uid = ?", uid).Error
+	// err = db.Delete(&PreResearch{}, "uid = ?", uid).Error
+	err = db.Model(&PreResearch{}).Where("uid = ?", uid).Update("is_delete", true).Error
 	if err != nil {
 		return msg.ERROR
 	}
@@ -78,7 +80,7 @@ func UpdatePreResearch(preResearch *PreResearch) (code int) {
 }
 
 func SelectPreReasearch(uid string) (preResearch PreResearch, code int) {
-	err = db.Preload("Employee.Office").Preload("Auditor").First(&preResearch, "uid = ?", uid).Error
+	err = db.Preload("Employee.Office").Preload("Auditor").Where("is_delete = ?", false).First(&preResearch, "uid = ?", uid).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return preResearch, msg.ERROR
 	}
@@ -92,8 +94,9 @@ func SelectPreReasearch(uid string) (preResearch PreResearch, code int) {
 
 func SelectPreReasearchs(pageSize int, pageNo int, preResearchQuery *PreResearchQuery) (preResearchs []PreResearch, code int, total int64) {
 	var maps = make(map[string]interface{})
+	maps["pre_research.is_delete"] = false
 	if preResearchQuery.Status != 0 {
-		maps["status"] = preResearchQuery.Status
+		maps["pre_research.status"] = preResearchQuery.Status
 	}
 	err = db.Joins("Employee").Where(maps).
 		Where("Employee.name Like ?", "%"+preResearchQuery.EmployeeName+"%").

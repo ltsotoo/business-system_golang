@@ -7,12 +7,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func DelPayment(c *gin.Context) {
-	uid := c.Param("uid")
-	code = model.DeletePayment(uid)
-	msg.Message(c, code, nil)
-}
-
 func AddPayment(c *gin.Context) {
 	var payment model.Payment
 	_ = c.ShouldBindJSON(&payment)

@@ -18,6 +18,7 @@ type Customer struct {
 	WechatID      string `gorm:"type:varchar(20);comment:微信号" json:"wechatID"`
 	Email         string `gorm:"type:varchar(50);comment:邮箱" json:"email"`
 	Status        int    `gorm:"type:int;comment:状态(0:未审核,1:通过审核)" json:"status"`
+	IsDelete      bool   `gorm:"type:boolean;comment:是否删除" json:"isDelete"`
 
 	Company CustomerCompany `gorm:"foreignKey:CompanyUID;references:UID" json:"company"`
 }
@@ -33,16 +34,18 @@ type CustomerQuery struct {
 // 客户公司 Model
 type CustomerCompany struct {
 	BaseModel
-	UID     string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	AreaUID string `gorm:"type:varchar(32);comment:区域UID;not null" json:"areaUID"`
-	Name    string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
-	Address string `gorm:"type:varchar(20);comment:地址" json:"address"`
+	UID      string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
+	AreaUID  string `gorm:"type:varchar(32);comment:区域UID;not null" json:"areaUID"`
+	Name     string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
+	Address  string `gorm:"type:varchar(20);comment:地址" json:"address"`
+	IsDelete bool   `gorm:"type:boolean;comment:是否删除" json:"isDelete"`
 
 	Area Area `gorm:"foreignKey:AreaUID;references:UID" json:"area"`
 }
 
 func InsertCustomer(customer *Customer) (code int) {
 	customer.UID = uid.Generate()
+	customer.Status = 1
 	err = db.Create(&customer).Error
 	if err != nil {
 		return msg.ERROR_CUSTOMER_INSERT
@@ -51,7 +54,8 @@ func InsertCustomer(customer *Customer) (code int) {
 }
 
 func DeleteCustomer(uid string) (code int) {
-	err = db.Where("uid = ?", uid).Delete(&Customer{}).Error
+	// err = db.Where("uid = ?", uid).Delete(&Customer{}).Error
+	err = db.Model(&Customer{}).Where("uid = ?", uid).Update("is_delete", true).Error
 	if err != nil {
 		return msg.ERROR_CUSTOMER_DELETE
 	}
@@ -72,7 +76,7 @@ func UpdateCustomer(customer *Customer) (code int) {
 }
 
 func SelectCustomer(uid string) (customer Customer, code int) {
-	err = db.Preload("Company").First(&customer, "uid = ?", uid).Error
+	err = db.Preload("Company").Where("is_delete = ? AND status = ?", false, 1).First(&customer, "uid = ?", uid).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return customer, msg.ERROR_CUSTOMER_NOT_EXIST
@@ -84,7 +88,7 @@ func SelectCustomer(uid string) (customer Customer, code int) {
 }
 
 func SelectCustomers(pageSize int, pageNo int, customerQuery *CustomerQuery) (customers []Customer, code int, total int64) {
-	tDb := db.Joins("Company")
+	tDb := db.Joins("Company").Where("customer.is_delete = ? AND status = ?", false, 1)
 	if customerQuery.AreaUID != "" {
 		tDb = tDb.Where("Company.area_uid = ?", customerQuery.AreaUID)
 	}
@@ -121,7 +125,8 @@ func InsertCustomerCompany(customerCompany *CustomerCompany) (code int) {
 }
 
 func DeleteCustomerCompany(uid string) (code int) {
-	err = db.Where("uid = ?", uid).Delete(&CustomerCompany{}).Error
+	// err = db.Where("uid = ?", uid).Delete(&CustomerCompany{}).Error
+	err = db.Model(&CustomerCompany{}).Where("uid = ?", uid).Update("is_delete", true).Error
 	if err != nil {
 		return msg.ERROR
 	}
@@ -132,6 +137,7 @@ func SelectCustomerCompanys(customerCompany *CustomerCompany) (CustomerCompanys 
 	var maps = make(map[string]interface{})
 	if customerCompany.AreaUID != "" {
 		maps["area_uid"] = customerCompany.AreaUID
+		maps["is_delete"] = false
 	}
 	err = db.Preload("Area").Where(maps).Where("name LIKE ?", "%"+customerCompany.Name+"%").Find(&CustomerCompanys).Error
 	if err != nil && err != gorm.ErrRecordNotFound {

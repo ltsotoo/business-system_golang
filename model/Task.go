@@ -17,6 +17,8 @@ type Task struct {
 	ProductUID       string  `gorm:"type:varchar(32);comment:产品ID" json:"productUID"`
 	Number           int     `gorm:"type:int;comment:数量" json:"number"`
 	Unit             string  `gorm:"type:varchar(9);comment:单位" json:"unit"`
+	StandardPrice    float64 `gorm:"type:decimal(20,6);comment:标准价格(元)" json:"standardPrice"`
+	StandardPriceUSD float64 `gorm:"type:decimal(20,6);comment:标准价格(美元)" json:"standardPriceUSD"`
 	Price            float64 `gorm:"type:decimal(20,6);comment:单价(元)" json:"price"`
 	TotalPrice       float64 `gorm:"type:decimal(20,6);comment:总价(元)" json:"totalPrice"`
 	Status           int     `gorm:"type:int;comment:状态" json:"status"`
@@ -74,14 +76,6 @@ type TaskFlowQuery struct {
 
 	TechnicianDays int `json:"technicianDays"`
 	PurchaseDays   int `json:"purchaseDays"`
-}
-
-func DeleteTask(uid string) (code int) {
-	err = db.Delete(&Task{}, "uid = ?", uid).Error
-	if err != nil {
-		return msg.ERROR_TASK_DELETE
-	}
-	return msg.SUCCESS
 }
 
 func SelectTask(uid string) (task Task, code int) {

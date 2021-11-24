@@ -67,7 +67,7 @@ func base(totalMoney float64) (basePushMoney float64) {
 func task(tasks *[]model.Task) (taskTotalMoney float64) {
 
 	for i, _ := range *tasks {
-		temp := ((*tasks)[i].Price - (*tasks)[i].Product.StandardPrice) / (*tasks)[i].Product.StandardPrice
+		temp := ((*tasks)[i].Price - (*tasks)[i].StandardPrice) / (*tasks)[i].StandardPrice
 		if temp > 0 {
 			println(temp)
 			temp = (*tasks)[i].Product.Type.PushMoneyPercentages + temp*100*(*tasks)[i].Product.Type.PushMoneyPercentagesUp
