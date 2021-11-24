@@ -30,6 +30,7 @@ type Area struct {
 type AreaQuery struct {
 	Name       string `json:"name"`
 	OfficeName string `json:"officeName"`
+	OfficeUID  string `json:"officeUID"`
 }
 
 type Department struct {
@@ -155,6 +156,9 @@ func SelectAreas(areaQuery *AreaQuery) (areas []Area, code int) {
 	if areaQuery.OfficeName != "" {
 		tDb = tDb.Where("Office.name LIKE ?", "%"+areaQuery.OfficeName+"%")
 	}
+	if areaQuery.OfficeUID != "" {
+		tDb = tDb.Where("area.office_uid = ?", areaQuery.OfficeUID)
+	}
 	err = tDb.Find(&areas).Error
 	if err != nil {
 		return areas, msg.ERROR_AREA_SELECT
@@ -259,7 +263,7 @@ func SelectUrls(uids []string) (urls []Url) {
 	// 	"ON url.uid = permission.url_uid WHERE permission.uid IN (?) or url.id = 1 order by url.no", uids).
 	// 	Scan(&urls)
 	db.Raw("SELECT distinct url.* FROM url LEFT JOIN permission "+
-		"ON url.uid = permission.url_uid WHERE permission.uid IN (?) order by url.no", uids).
+		"ON url.uid = permission.url_uid WHERE permission.uid IN (?) order by url.id", uids).
 		Scan(&urls)
 	return
 }

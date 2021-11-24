@@ -35,6 +35,9 @@ func InitRouter() {
 		auth.PUT("employee", v1.EditEmployee)
 		auth.GET("employee/:uid", v1.QueryEmployee)
 		auth.POST("employees", v1.QueryEmployees)
+		auth.GET("my", v1.QueryMy)
+		auth.GET("resetPwd/:uid", v1.ResetEmployeePwd)
+		auth.POST("editMyPwd", v1.EditMyPwd)
 		//员工模块接口PLUS
 		auth.POST("office", v1.EntryOffice)
 		auth.DELETE("office/:uid", v1.DelOffice)

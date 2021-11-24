@@ -33,6 +33,10 @@ type EmployeeQuery struct {
 	Phone         string `json:"phone"`
 	OfficeUID     string `json:"officeUID"`
 	DepartmentUID string `json:"departmentUID"`
+
+	UID    string `json:"uid"`
+	OldPWd string `json:"oldPwd"`
+	NewPwd string `json:"newPwd"`
 }
 
 //查询员工(手机号)是否录入
@@ -59,10 +63,7 @@ func CheckLogin(phone string, password string) (employee Employee, code int) {
 
 func SelectAllPermission(employeeUID string, departmentUID string) (permissions []string) {
 	//查出所有的权限(去重)
-	db.Raw("SELECT distinct permission_uid FROM role_permission WHERE role_uid IN "+
-		"(SELECT role_uid AS uid FROM employee_role WHERE employee_uid = ? UNION "+
-		"SELECT uid FROM role WHERE department_uid IN "+
-		"(SELECT type_uid FROM department WHERE	uid = ?))", employeeUID, departmentUID).Scan(&permissions)
+	db.Raw("SELECT distinct permission_uid FROM role_permission WHERE role_uid IN (SELECT role_uid AS uid FROM employee_role WHERE employee_uid = ? UNION SELECT role_uid AS uid FROM department WHERE uid = ?)", employeeUID, departmentUID).Scan(&permissions)
 	return
 }
 
@@ -133,4 +134,33 @@ func SelectEmployees(pageSize int, pageNo int, employeeQuery *EmployeeQuery) (em
 		return employees, msg.ERROR_CUSTOMER_SELECT, total
 	}
 	return employees, msg.SUCCESS, total
+}
+
+func UpdatePwd(employeeQuery *EmployeeQuery) (code int) {
+	employeeQuery.OldPWd, err = pwd.ScryptPwd(employeeQuery.OldPWd)
+	if err == nil {
+		var employee Employee
+		db.Where("uid = ? AND password = ?", employeeQuery.UID, employeeQuery.OldPWd).First(&employee)
+		employeeQuery.NewPwd, err = pwd.ScryptPwd(employeeQuery.NewPwd)
+		if employee.ID > 0 {
+			err = db.Model(&Employee{}).Where("uid = ?", employee.UID).Update("password", employeeQuery.NewPwd).Error
+			if err == nil {
+				return msg.SUCCESS
+			}
+		}
+	}
+	return msg.ERROR_EMPLOYEE_PASSWORD_FAIL
+}
+
+func ResetPwd(uid string) (code int) {
+	var employee Employee
+	var tempPwd string
+	err = db.First(&employee, "uid = ?", uid).Error
+	tempPwd = employee.Number + employee.Phone
+	tempPwd, err = pwd.ScryptPwd(tempPwd)
+	err = db.Model(&Employee{}).Where("uid = ?", uid).Update("password", tempPwd).Error
+	if err != nil {
+		return msg.ERROR
+	}
+	return msg.SUCCESS
 }

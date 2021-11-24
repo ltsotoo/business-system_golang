@@ -8,6 +8,21 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func EditMyPwd(c *gin.Context) {
+	var employeeQuery model.EmployeeQuery
+	_ = c.ShouldBindJSON(&employeeQuery)
+
+	code = model.UpdatePwd(&employeeQuery)
+	msg.Message(c, code, nil)
+}
+
+func QueryMy(c *gin.Context) {
+	var employee model.Employee
+	uid := c.MustGet("employeeUID").(string)
+	employee, code = model.SelectEmployee(uid)
+	msg.Message(c, code, employee)
+}
+
 //查询我的任务
 func QueryMyTasks(c *gin.Context) {
 	var tasks []model.Task

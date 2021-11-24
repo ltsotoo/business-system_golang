@@ -16,8 +16,8 @@ func EntryEmployee(c *gin.Context) {
 	_ = c.ShouldBindJSON(&employee)
 	code = model.CheckEmployee(employee.Phone)
 	if code == msg.ERROR_EMPLOYEE_NOT_EXIST {
-		//默认密码等于手机号+编号
-		employee.Password = employee.Phone + employee.Number
+		//默认密码等于编号+手机号
+		employee.Password = employee.Number + employee.Phone
 		code = model.InsertEmployee(&employee)
 	}
 	msg.Message(c, code, employee)
@@ -42,9 +42,6 @@ func EditEmployee(c *gin.Context) {
 func QueryEmployee(c *gin.Context) {
 	var employee model.Employee
 	uid := c.Param("uid")
-	if uid == "my" {
-		uid = c.MustGet("employeeUID").(string)
-	}
 	employee, code = model.SelectEmployee(uid)
 	msg.Message(c, code, employee)
 }
@@ -68,4 +65,10 @@ func QueryEmployees(c *gin.Context) {
 	employees, code, total = model.SelectEmployees(pageSize, pageNo, &employeeQuery)
 
 	msg.MessageForList(c, code, employees, pageSize, pageNo, total)
+}
+
+func ResetEmployeePwd(c *gin.Context) {
+	uid := c.Param("uid")
+	code = model.ResetPwd(uid)
+	msg.Message(c, code, nil)
 }
