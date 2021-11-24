@@ -69,6 +69,8 @@ func UpdateProduct(product *Product) (code int) {
 	var maps = make(map[string]interface{})
 	maps["Number"] = product.Number
 	maps["NumberCount"] = product.NumberCount
+	maps["StandardPrice"] = product.StandardPrice
+	maps["StandardPriceUSD"] = product.StandardPriceUSD
 	err = db.Model(&Product{}).Where("uid = ?", product.UID).Updates(maps).Error
 	if err != nil {
 		return msg.ERROR_PRODUCT_UPDATE

@@ -4,6 +4,7 @@ import (
 	"business-system_golang/utils/msg"
 	"business-system_golang/utils/pwd"
 	"business-system_golang/utils/uid"
+	"fmt"
 
 	"gorm.io/gorm"
 )
@@ -166,4 +167,11 @@ func ResetPwd(uid string) (code int) {
 		return msg.ERROR
 	}
 	return msg.SUCCESS
+}
+
+func UpdateAllAddMoney() {
+	err = db.Exec("UPDATE employee SET money = money + credit WHERE is_delete = ?", false).Error
+	if err != nil {
+		fmt.Println(err)
+	}
 }
