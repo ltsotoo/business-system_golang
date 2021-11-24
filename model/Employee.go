@@ -13,14 +13,14 @@ import (
 type Employee struct {
 	BaseModel
 	UID           string  `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	Phone         string  `gorm:"type:varchar(20);comment:手机号/登录凭证;not null" json:"phone"`
-	Name          string  `gorm:"type:varchar(20);comment:姓名;not null" json:"name"`
-	Password      string  `gorm:"type:varchar(20);comment:密码;not null" json:"password"`
-	WechatID      string  `gorm:"type:varchar(20);comment:微信号" json:"wechatID"`
+	Phone         string  `gorm:"type:varchar(50);comment:手机号/登录凭证;not null" json:"phone"`
+	Name          string  `gorm:"type:varchar(50);comment:姓名;not null" json:"name"`
+	Password      string  `gorm:"type:varchar(50);comment:密码;not null" json:"password"`
+	WechatID      string  `gorm:"type:varchar(50);comment:微信号" json:"wechatID"`
 	Email         string  `gorm:"type:varchar(50);comment:邮箱" json:"email"`
 	OfficeUID     string  `gorm:"type:varchar(32);comment:办事处UID;default:(-)" json:"officeUID"`
 	DepartmentUID string  `gorm:"type:varchar(32);comment:部门UID;default:(-)" json:"departmentUID"`
-	Number        string  `gorm:"type:varchar(20);comment:编号;unique" json:"number"`
+	Number        string  `gorm:"type:varchar(50);comment:编号;unique" json:"number"`
 	Money         float64 `gorm:"type:decimal(20,6);comment:总报销额度(元)" json:"money"`
 	Credit        float64 `gorm:"type:decimal(20,6);comment:每月报销额度(元)" json:"credit"`
 

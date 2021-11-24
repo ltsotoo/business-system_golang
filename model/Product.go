@@ -11,17 +11,17 @@ import (
 type Product struct {
 	BaseModel
 	UID              string  `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	Name             string  `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
-	Brand            string  `gorm:"type:varchar(20);comment:品牌" json:"brand"`
+	Name             string  `gorm:"type:varchar(50);comment:名称;not null" json:"name"`
+	Brand            string  `gorm:"type:varchar(50);comment:品牌" json:"brand"`
 	Specification    string  `gorm:"type:varchar(50);comment:规格" json:"specification"`
 	SupplierUID      string  `gorm:"type:varchar(32);comment:供应商ID;default:(-)" json:"supplierUID"`
 	Number           int     `gorm:"type:int;comment:可售数量(库存数量-订单锁定但未出库的数量)" json:"number"`
 	NumberCount      int     `gorm:"type:int;comment:库存数量" json:"numberCount"`
-	Unit             string  `gorm:"type:varchar(20);comment:单位" json:"unit"`
+	Unit             string  `gorm:"type:varchar(50);comment:单位" json:"unit"`
 	PurchasedPrice   float64 `gorm:"type:decimal(20,6);comment:采购价格(元)" json:"purchasedPrice"`
 	StandardPrice    float64 `gorm:"type:decimal(20,6);comment:标准价格(元)" json:"standardPrice"`
 	StandardPriceUSD float64 `gorm:"type:decimal(20,6);comment:标准价格(美元)" json:"standardPriceUSD"`
-	DeliveryCycle    string  `gorm:"type:varchar(20);comment:供货周期" json:"deliveryCycle"`
+	DeliveryCycle    string  `gorm:"type:varchar(50);comment:供货周期" json:"deliveryCycle"`
 	Remarks          string  `gorm:"type:varchar(600);comment:备注" json:"remarks"`
 	TypeUID          string  `gorm:"type:varchar(32);comment:类型" json:"typeUID"`
 	IsDelete         bool    `gorm:"type:boolean;comment:是否删除" json:"isDelete"`

@@ -12,10 +12,10 @@ type Customer struct {
 	BaseModel
 	UID           string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
 	CompanyUID    string `gorm:"type:varchar(32);comment:公司UID;not null" json:"companyUID"`
-	Name          string `gorm:"type:varchar(20);comment:姓名;not null" json:"name"`
-	ResearchGroup string `gorm:"type:varchar(20);comment:课题组" json:"researchGroup"`
-	Phone         string `gorm:"type:varchar(20);comment:电话" json:"phone"`
-	WechatID      string `gorm:"type:varchar(20);comment:微信号" json:"wechatID"`
+	Name          string `gorm:"type:varchar(50);comment:姓名;not null" json:"name"`
+	ResearchGroup string `gorm:"type:varchar(50);comment:课题组" json:"researchGroup"`
+	Phone         string `gorm:"type:varchar(50);comment:电话" json:"phone"`
+	WechatID      string `gorm:"type:varchar(50);comment:微信号" json:"wechatID"`
 	Email         string `gorm:"type:varchar(50);comment:邮箱" json:"email"`
 	Status        int    `gorm:"type:int;comment:状态(0:未审核,1:通过审核)" json:"status"`
 	IsDelete      bool   `gorm:"type:boolean;comment:是否删除" json:"isDelete"`
@@ -36,8 +36,8 @@ type CustomerCompany struct {
 	BaseModel
 	UID      string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
 	AreaUID  string `gorm:"type:varchar(32);comment:区域UID;not null" json:"areaUID"`
-	Name     string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
-	Address  string `gorm:"type:varchar(20);comment:地址" json:"address"`
+	Name     string `gorm:"type:varchar(50);comment:名称;not null" json:"name"`
+	Address  string `gorm:"type:varchar(50);comment:地址" json:"address"`
 	IsDelete bool   `gorm:"type:boolean;comment:是否删除" json:"isDelete"`
 
 	Area Area `gorm:"foreignKey:AreaUID;references:UID" json:"area"`

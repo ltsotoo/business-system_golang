@@ -11,12 +11,12 @@ import (
 type Supplier struct {
 	BaseModel
 	UID      string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	Name     string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
+	Name     string `gorm:"type:varchar(50);comment:名称;not null" json:"name"`
 	Address  string `gorm:"type:varchar(50);comment:地址;not null" json:"address"`
 	Web      string `gorm:"type:varchar(50);comment:网站;not null" json:"web"`
-	Linkman  string `gorm:"type:varchar(20);comment:联系人;not null" json:"linkman"`
-	Phone    string `gorm:"type:varchar(20);comment:联系电话;not null" json:"phone"`
-	WechatID string `gorm:"type:varchar(20);comment:微信号" json:"wechatID"`
+	Linkman  string `gorm:"type:varchar(50);comment:联系人;not null" json:"linkman"`
+	Phone    string `gorm:"type:varchar(50);comment:联系电话;not null" json:"phone"`
+	WechatID string `gorm:"type:varchar(50);comment:微信号" json:"wechatID"`
 	Email    string `gorm:"type:varchar(50);comment:邮箱" json:"email"`
 	IsDelete bool   `gorm:"type:boolean;comment:是否删除" json:"isDelete"`
 }

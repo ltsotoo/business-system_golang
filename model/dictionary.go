@@ -11,8 +11,8 @@ import (
 type DictionaryType struct {
 	BaseModel
 	UID  string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	Name string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
-	Text string `gorm:"type:varchar(20);comment:文本;not null" json:"text"`
+	Name string `gorm:"type:varchar(50);comment:名称;not null" json:"name"`
+	Text string `gorm:"type:varchar(50);comment:文本;not null" json:"text"`
 
 	Dictionaries []Dictionary `gorm:"foreignKey:DictionaryTypeUID;references:UID" json:"dictionaries"`
 }
@@ -22,7 +22,7 @@ type Dictionary struct {
 	BaseModel
 	UID               string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
 	DictionaryTypeUID string `gorm:"type:varchar(32);comment:类型ID;default:(-)" json:"dictionaryTypeUID"`
-	Text              string `gorm:"type:varchar(20);comment:文本" json:"text"`
+	Text              string `gorm:"type:varchar(50);comment:文本" json:"text"`
 	IsDelete          bool   `gorm:"type:boolean;comment:是否删除" json:"isDelete"`
 
 	DictionaryType DictionaryType `gorm:"foreignKey:DictionaryTypeUID;references:UID" json:"dictionaryType"`
