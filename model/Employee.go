@@ -23,6 +23,7 @@ type Employee struct {
 	Number        string  `gorm:"type:varchar(50);comment:编号;unique" json:"number"`
 	Money         float64 `gorm:"type:decimal(20,6);comment:总报销额度(元)" json:"money"`
 	Credit        float64 `gorm:"type:decimal(20,6);comment:每月报销额度(元)" json:"credit"`
+	IsDelete      bool    `gorm:"type:boolean;comment:是否删除" json:"isDelete"`
 
 	Roles      []Role     `gorm:"many2many:employee_role;foreignKey:UID;references:UID" json:"roles"`
 	Office     Office     `gorm:"foreignKey:OfficeUID;references:UID" json:"office"`

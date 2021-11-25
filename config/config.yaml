@@ -8,7 +8,7 @@ server:
 #   type : 'mysql'
 #   username : 'zyhk'
 #   password : 'zyhk'
-#   host : '192.168.61.128'
+#   host : '101.201.51.200'
 #   port : '3306'
 #   name : 'zyhk'
 

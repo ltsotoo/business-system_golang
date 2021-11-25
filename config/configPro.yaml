@@ -1,0 +1,21 @@
+server:
+  #debug开发模式 release生产模式
+  mode : 'release'
+  port : ':8080'
+  jwtKey : 'zyhk'
+
+# db:
+#   type : 'mysql'
+#   username : 'zyhk'
+#   password : 'zyhk'
+#   host : '192.168.61.128'
+#   port : '3306'
+#   name : 'zyhk'
+
+db:
+  type : 'mysql'
+  username : 'zyhk'
+  password : 'zyhk'
+  host : '101.201.51.200'
+  port : '3306'
+  name : 'zyhk'

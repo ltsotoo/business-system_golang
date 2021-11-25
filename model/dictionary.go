@@ -71,6 +71,14 @@ func DeleteDictionary(uid string) (code int) {
 	return msg.SUCCESS
 }
 
+func UpdateDictionary(dictionary *Dictionary) (code int) {
+	err = db.Model(&Dictionary{}).Where("uid = ?", dictionary.UID).Update("text", dictionary.Text).Error
+	if err != nil {
+		return msg.ERROR
+	}
+	return msg.SUCCESS
+}
+
 func SelectDictionaries(name string, text string) (dictionaries []Dictionary, code int) {
 	err = db.Joins("DictionaryType").Where("DictionaryType.name = ? AND is_delete = ? AND dictionary.text LIKE ?", name, false, "%"+text+"%").Find(&dictionaries).Error
 	if err != nil {

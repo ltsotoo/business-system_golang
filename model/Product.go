@@ -11,9 +11,9 @@ import (
 type Product struct {
 	BaseModel
 	UID              string  `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	Name             string  `gorm:"type:varchar(50);comment:名称;not null" json:"name"`
-	Brand            string  `gorm:"type:varchar(50);comment:品牌" json:"brand"`
-	Specification    string  `gorm:"type:varchar(50);comment:规格" json:"specification"`
+	Name             string  `gorm:"type:varchar(100);comment:名称;not null" json:"name"`
+	Brand            string  `gorm:"type:varchar(100);comment:品牌" json:"brand"`
+	Specification    string  `gorm:"type:varchar(200);comment:规格" json:"specification"`
 	SupplierUID      string  `gorm:"type:varchar(32);comment:供应商ID;default:(-)" json:"supplierUID"`
 	Number           int     `gorm:"type:int;comment:可售数量(库存数量-订单锁定但未出库的数量)" json:"number"`
 	NumberCount      int     `gorm:"type:int;comment:库存数量" json:"numberCount"`
@@ -23,7 +23,7 @@ type Product struct {
 	StandardPriceUSD float64 `gorm:"type:decimal(20,6);comment:标准价格(美元)" json:"standardPriceUSD"`
 	DeliveryCycle    string  `gorm:"type:varchar(50);comment:供货周期" json:"deliveryCycle"`
 	Remarks          string  `gorm:"type:varchar(600);comment:备注" json:"remarks"`
-	TypeUID          string  `gorm:"type:varchar(32);comment:类型" json:"typeUID"`
+	TypeUID          string  `gorm:"type:varchar(32);comment:类型;default:(-)" json:"typeUID"`
 	IsDelete         bool    `gorm:"type:boolean;comment:是否删除" json:"isDelete"`
 
 	Type     ProductType `gorm:"foreignKey:TypeUID;references:UID" json:"type"`
@@ -119,6 +119,19 @@ func InsertProductType(productType *ProductType) (code int) {
 func DeleteProductType(uid string) (code int) {
 	// err = db.Where("uid = ?", uid).Delete(&ProductType{}).Error
 	err = db.Model(&ProductType{}).Where("uid = ?", uid).Update("is_delete", true).Error
+	if err != nil {
+		return msg.ERROR
+	}
+	return msg.SUCCESS
+}
+
+func UpdateProductType(productType *ProductType) (code int) {
+	var maps = make(map[string]interface{})
+	maps["Name"] = productType.Name
+	maps["PushMoneyPercentages"] = productType.PushMoneyPercentages
+	maps["PushMoneyPercentagesUp"] = productType.PushMoneyPercentagesUp
+	maps["PushMoneyPercentagesDown"] = productType.PushMoneyPercentagesDown
+	err = db.Model(&ProductType{}).Where("uid = ?", productType.UID).Updates(maps).Error
 	if err != nil {
 		return msg.ERROR
 	}

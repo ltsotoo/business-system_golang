@@ -11,7 +11,7 @@ import (
 type Office struct {
 	BaseModel
 	UID      string  `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	Name     string  `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
+	Name     string  `gorm:"type:varchar(50);comment:名称;not null" json:"name"`
 	Money    float64 `gorm:"type:decimal(20,6);comment:办事处总报销额度(元)" json:"money"`
 	IsDelete bool    `gorm:"type:boolean;comment:是否删除" json:"isDelete"`
 
@@ -22,8 +22,8 @@ type Area struct {
 	BaseModel
 	UID       string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
 	OfficeUID string `gorm:"type:varchar(32);comment:办事处UID;default:(-)" json:"officeUID"`
-	Name      string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
-	Number    string `gorm:"type:varchar(20);comment:编号;unique" json:"number"`
+	Name      string `gorm:"type:varchar(50);comment:名称;not null" json:"name"`
+	Number    string `gorm:"type:varchar(50);comment:编号" json:"number"`
 	IsDelete  bool   `gorm:"type:boolean;comment:是否删除" json:"isDelete"`
 
 	Office Office `gorm:"foreignKey:OfficeUID;references:UID" json:"office"`
@@ -32,14 +32,13 @@ type Area struct {
 type AreaQuery struct {
 	Name       string `json:"name"`
 	OfficeName string `json:"officeName"`
-	OfficeUID  string `json:"officeUID"`
 }
 
 type Department struct {
 	BaseModel
 	UID       string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
 	OfficeUID string `gorm:"type:varchar(32);comment:办事处ID;not null" json:"officeUID"`
-	Name      string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
+	Name      string `gorm:"type:varchar(50);comment:名称;not null" json:"name"`
 	RoleUID   string `gorm:"type:varchar(32);comment:部门员工默认拥有职位;default:(-)" json:"roleUID"`
 	IsDelete  bool   `gorm:"type:boolean;comment:是否删除" json:"isDelete"`
 
@@ -50,7 +49,7 @@ type Department struct {
 type Role struct {
 	BaseModel
 	UID  string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	Name string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
+	Name string `gorm:"type:varchar(50);comment:名称;not null" json:"name"`
 
 	Permissions []Permission `gorm:"many2many:role_permission;foreignKey:UID;References:UID" json:"permissions"`
 }
@@ -58,19 +57,19 @@ type Role struct {
 type Permission struct {
 	BaseModel
 	UID    string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	Module string `gorm:"type:varchar(20);comment:模块;not null" json:"module"`
+	Module string `gorm:"type:varchar(20);comment:模块" json:"module"`
 	Name   string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
-	Text   string `gorm:"type:varchar(20);comment:描述;not null" json:"text"`
-	No     string `gorm:"type:varchar(3);comment:序号;default:(-)" json:"no"`
-	UrlUID string `gorm:"type:varchar(32);comment:Url_UID;default:(-)" json:"urlUID"`
+	Text   string `gorm:"type:varchar(20);comment:描述" json:"text"`
+	No     string `gorm:"type:varchar(3);comment:序号" json:"no"`
+	UrlUID string `gorm:"type:varchar(32);comment:Url_UID" json:"urlUID"`
 }
 
 type Url struct {
 	BaseModel
 	UID   string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
 	Title string `gorm:"type:varchar(20);comment:标题;not null" json:"title"`
-	Icon  string `gorm:"type:varchar(20);comment:图标;not null" json:"icon"`
-	Url   string `gorm:"type:varchar(20);comment:url;not null" json:"url"`
+	Icon  string `gorm:"type:varchar(20);comment:图标" json:"icon"`
+	Url   string `gorm:"type:varchar(20);comment:url" json:"url"`
 	No    int    `gorm:"type:int;comment:序号" json:"no"`
 }
 
@@ -92,7 +91,10 @@ func DeleteOffice(uid string) (code int) {
 }
 
 func UpdateOffice(office *Office) (code int) {
-	err = db.Model(&Office{}).Where("uid = ?", office.UID).Updates(Office{Name: office.Name, Money: office.Money}).Error
+	var maps = make(map[string]interface{})
+	maps["Name"] = office.Name
+	maps["Money"] = office.Money
+	err = db.Model(&Office{}).Where("uid = ?", office.UID).Updates(maps).Error
 	if err != nil {
 		return msg.ERROR_OFFICE_UPDATE
 	}
@@ -137,7 +139,15 @@ func DeleteArea(uid string) (code int) {
 }
 
 func UpdateArea(area *Area) (code int) {
-	err = db.Model(&Area{}).Where("uid = ?", area.UID).Updates(Area{Name: area.Name, OfficeUID: area.OfficeUID, Number: area.Number}).Error
+	var maps = make(map[string]interface{})
+	maps["Name"] = area.Name
+	if area.OfficeUID != "" {
+		maps["OfficeUID"] = area.OfficeUID
+	} else {
+		maps["OfficeUID"] = nil
+	}
+	maps["Number"] = area.Number
+	err = db.Model(&Area{}).Where("uid = ?", area.UID).Updates(maps).Error
 	if err != nil {
 		return msg.ERROR_AREA_UPDATE
 	}
@@ -153,19 +163,31 @@ func SelectArea(uid string) (area Area, code int) {
 }
 
 func SelectAreas(areaQuery *AreaQuery) (areas []Area, code int) {
-	tDb := db.Preload("Office").Joins("Office")
+	tDb := db.Joins("Office")
+
 	if areaQuery.Name != "" {
 		tDb = tDb.Where("area.name LIKE ?", "%"+areaQuery.Name+"%")
 	}
 	if areaQuery.OfficeName != "" {
 		tDb = tDb.Where("Office.name LIKE ?", "%"+areaQuery.OfficeName+"%")
 	}
-	if areaQuery.OfficeUID != "" {
-		tDb = tDb.Where("area.office_uid = ?", areaQuery.OfficeUID)
-	}
 	err = tDb.Find(&areas).Error
 	if err != nil {
 		return areas, msg.ERROR_AREA_SELECT
+	}
+	return areas, msg.SUCCESS
+}
+
+func SelectMyAreas(emplyeeUID string) (areas []Area, code int) {
+	var employee Employee
+	db.First(&employee, "uid = ?", emplyeeUID)
+	if employee.UID != "" {
+		err = db.Where("office_uid = ?", employee.OfficeUID).Find(&areas).Error
+		if err != nil && err != gorm.ErrRecordNotFound {
+			return areas, msg.ERROR_AREA_SELECT
+		}
+	} else {
+		return areas, msg.ERROR
 	}
 	return areas, msg.SUCCESS
 }
@@ -188,7 +210,14 @@ func DeleteDepartment(uid string) (code int) {
 }
 
 func UpdateDepartment(department *Department) (code int) {
-	err = db.Model(&Department{}).Where("uid = ?", department.UID).Updates(Department{Name: department.Name}).Error
+	var maps = make(map[string]interface{})
+	maps["Name"] = department.Name
+	if department.RoleUID != "" {
+		maps["RoleUID"] = department.RoleUID
+	} else {
+		maps["RoleUID"] = nil
+	}
+	err = db.Model(&Department{}).Where("uid = ?", department.UID).Updates(maps).Error
 	if err != nil {
 		return msg.ERROR_DEPARTMENT_UPDATE
 	}
@@ -230,7 +259,7 @@ func SelectRole(uid string) (role Role, code int) {
 }
 
 func SelectRoles() (roles []Role, code int) {
-	err = db.Raw("SELECT * From role Where department_uid is NULL").Scan(&roles).Error
+	err = db.Raw("SELECT * From role").Scan(&roles).Error
 	if err != nil {
 		return roles, msg.ERROR_ROLE_SELECT
 	}
@@ -263,9 +292,6 @@ func SelectPermissions() (permissions []Permission, code int) {
 }
 
 func SelectUrls(uids []string) (urls []Url) {
-	// db.Raw("SELECT distinct url.* FROM url LEFT JOIN permission "+
-	// 	"ON url.uid = permission.url_uid WHERE permission.uid IN (?) or url.id = 1 order by url.no", uids).
-	// 	Scan(&urls)
 	db.Raw("SELECT distinct url.* FROM url LEFT JOIN permission "+
 		"ON url.uid = permission.url_uid WHERE permission.uid IN (?) order by url.id", uids).
 		Scan(&urls)

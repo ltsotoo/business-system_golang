@@ -27,6 +27,13 @@ func DelDictionary(c *gin.Context) {
 	msg.Message(c, code, nil)
 }
 
+func EditDictionary(c *gin.Context) {
+	var dictionary model.Dictionary
+	_ = c.ShouldBindJSON(&dictionary)
+	code = model.UpdateDictionary(&dictionary)
+	msg.Message(c, code, dictionary)
+}
+
 //字典表查询
 func QueryDictionaries(c *gin.Context) {
 	var dictionaries []model.Dictionary

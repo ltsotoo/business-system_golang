@@ -13,8 +13,8 @@ type Customer struct {
 	UID           string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
 	CompanyUID    string `gorm:"type:varchar(32);comment:公司UID;not null" json:"companyUID"`
 	Name          string `gorm:"type:varchar(50);comment:姓名;not null" json:"name"`
-	ResearchGroup string `gorm:"type:varchar(50);comment:课题组" json:"researchGroup"`
-	Phone         string `gorm:"type:varchar(50);comment:电话" json:"phone"`
+	ResearchGroup string `gorm:"type:varchar(100);comment:课题组" json:"researchGroup"`
+	Phone         string `gorm:"type:varchar(100);comment:电话" json:"phone"`
 	WechatID      string `gorm:"type:varchar(50);comment:微信号" json:"wechatID"`
 	Email         string `gorm:"type:varchar(50);comment:邮箱" json:"email"`
 	Status        int    `gorm:"type:int;comment:状态(0:未审核,1:通过审核)" json:"status"`
@@ -35,9 +35,9 @@ type CustomerQuery struct {
 type CustomerCompany struct {
 	BaseModel
 	UID      string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	AreaUID  string `gorm:"type:varchar(32);comment:区域UID;not null" json:"areaUID"`
-	Name     string `gorm:"type:varchar(50);comment:名称;not null" json:"name"`
-	Address  string `gorm:"type:varchar(50);comment:地址" json:"address"`
+	AreaUID  string `gorm:"type:varchar(32);comment:区域UID" json:"areaUID"`
+	Name     string `gorm:"type:varchar(100);comment:名称;not null" json:"name"`
+	Address  string `gorm:"type:varchar(200);comment:地址" json:"address"`
 	IsDelete bool   `gorm:"type:boolean;comment:是否删除" json:"isDelete"`
 
 	Area Area `gorm:"foreignKey:AreaUID;references:UID" json:"area"`
@@ -127,6 +127,20 @@ func InsertCustomerCompany(customerCompany *CustomerCompany) (code int) {
 func DeleteCustomerCompany(uid string) (code int) {
 	// err = db.Where("uid = ?", uid).Delete(&CustomerCompany{}).Error
 	err = db.Model(&CustomerCompany{}).Where("uid = ?", uid).Update("is_delete", true).Error
+	if err != nil {
+		return msg.ERROR
+	}
+	return msg.SUCCESS
+}
+
+func UpdateCustomerCompany(customerCompany *CustomerCompany) (code int) {
+	var maps = make(map[string]interface{})
+	maps["Name"] = customerCompany.Name
+	maps["Address"] = customerCompany.Address
+	maps["AreaUID"] = customerCompany.AreaUID
+
+	err = db.Model(&CustomerCompany{}).Where("uid = ?", customerCompany.UID).Updates(maps).Error
+
 	if err != nil {
 		return msg.ERROR
 	}

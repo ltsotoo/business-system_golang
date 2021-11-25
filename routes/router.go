@@ -27,6 +27,7 @@ func InitRouter() {
 		//字典表接口
 		auth.POST("dictionary", v1.AddDictionary)
 		auth.DELETE("dictionary/:uid", v1.DelDictionary)
+		auth.PUT("dictionary", v1.EditDictionary)
 		auth.GET("dictionaries", v1.QueryDictionaries)
 		auth.GET("dictionarieTypes", v1.QueryDictionarieTypes)
 		//员工模块接口
@@ -47,6 +48,7 @@ func InitRouter() {
 		auth.DELETE("area/:uid", v1.DelArea)
 		auth.PUT("area", v1.EditArea)
 		auth.POST("areas", v1.QueryAreas)
+		auth.GET("myAreas", v1.QueryMyAreas)
 		auth.POST("department", v1.EntryDepartment)
 		auth.DELETE("department/:uid", v1.DelDepartment)
 		auth.PUT("department", v1.EditDepartment)
@@ -90,6 +92,7 @@ func InitRouter() {
 		//客户模块接口PLUS
 		auth.POST("company", v1.AddCustomerCompany)
 		auth.DELETE("company/:uid", v1.DelCustomerCompany)
+		auth.PUT("company", v1.EditCustomerCompany)
 		auth.POST("companys", v1.QueryCustomerCompanys)
 		//产品模块接口
 		auth.POST("product", v1.EntryProduct)
@@ -100,6 +103,7 @@ func InitRouter() {
 		//
 		auth.POST("productType", v1.AddProductType)
 		auth.DELETE("productType/:uid", v1.DelProductType)
+		auth.PUT("productType", v1.EditProductType)
 		auth.POST("productTypes", v1.QueryProductTypes)
 		//供应商模块接口
 		auth.POST("supplier", v1.EntrySupplier)

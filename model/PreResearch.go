@@ -124,7 +124,7 @@ func SelectPreReasearchTasks(pageSize int, pageNo int, preResearchTask *PreResea
 	}
 	err = db.Joins("Employee").Where(maps).
 		Where("Employee.name Like ?", "%"+preResearchTask.EmployeeUID+"%").
-		Preload("Employee").Preload("Auditor").Find(&preResearchTasks).Count(&total).
+		Preload("Auditor").Find(&preResearchTasks).Count(&total).
 		Limit(pageSize).Offset((pageNo - 1) * pageSize).Error
 
 	if err != nil && err != gorm.ErrRecordNotFound {

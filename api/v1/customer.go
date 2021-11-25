@@ -73,6 +73,13 @@ func DelCustomerCompany(c *gin.Context) {
 	msg.Message(c, code, nil)
 }
 
+func EditCustomerCompany(c *gin.Context) {
+	var customerCompany model.CustomerCompany
+	_ = c.ShouldBindJSON(&customerCompany)
+	code = model.UpdateCustomerCompany(&customerCompany)
+	msg.Message(c, code, customerCompany)
+}
+
 //查询客户公司列表
 func QueryCustomerCompanys(c *gin.Context) {
 	var company model.CustomerCompany

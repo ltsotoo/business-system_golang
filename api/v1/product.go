@@ -74,6 +74,13 @@ func DelProductType(c *gin.Context) {
 	msg.Message(c, code, nil)
 }
 
+func EditProductType(c *gin.Context) {
+	var productType model.ProductType
+	_ = c.ShouldBindJSON(&productType)
+	code = model.UpdateProductType(&productType)
+	msg.Message(c, code, productType)
+}
+
 func QueryProductTypes(c *gin.Context) {
 	var productTypes []model.ProductType
 	var productType model.ProductType
