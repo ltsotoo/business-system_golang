@@ -12,10 +12,10 @@ type Supplier struct {
 	BaseModel
 	UID      string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
 	Name     string `gorm:"type:varchar(100);comment:名称;not null" json:"name"`
-	Address  string `gorm:"type:varchar(200);comment:地址;not null" json:"address"`
-	Web      string `gorm:"type:varchar(100);comment:网站;not null" json:"web"`
-	Linkman  string `gorm:"type:varchar(50);comment:联系人;not null" json:"linkman"`
-	Phone    string `gorm:"type:varchar(100);comment:联系电话;not null" json:"phone"`
+	Address  string `gorm:"type:varchar(200);comment:地址" json:"address"`
+	Web      string `gorm:"type:varchar(100);comment:网站" json:"web"`
+	Linkman  string `gorm:"type:varchar(50);comment:联系人" json:"linkman"`
+	Phone    string `gorm:"type:varchar(100);comment:联系电话" json:"phone"`
 	WechatID string `gorm:"type:varchar(50);comment:微信号" json:"wechatID"`
 	Email    string `gorm:"type:varchar(50);comment:邮箱" json:"email"`
 	IsDelete bool   `gorm:"type:boolean;comment:是否删除" json:"isDelete"`
@@ -46,14 +46,14 @@ func DeleteSupplier(uid string) (code int) {
 }
 
 func UpdateSupplier(supplier *Supplier) (code int) {
-	var maps = make(map[string]interface{})
-	maps["Linkman"] = supplier.Linkman
-	maps["Phone"] = supplier.Phone
-	maps["WechatID"] = supplier.WechatID
-	maps["Email"] = supplier.Email
-	maps["Web"] = supplier.Web
+	// var maps = make(map[string]interface{})
+	// maps["Linkman"] = supplier.Linkman
+	// maps["Phone"] = supplier.Phone
+	// maps["WechatID"] = supplier.WechatID
+	// maps["Email"] = supplier.Email
+	// maps["Web"] = supplier.Web
 
-	err = db.Model(&Supplier{}).Where("uid = ?", supplier.UID).Updates(maps).Error
+	err = db.Model(&Supplier{}).Where("uid = ?", supplier.UID).Updates(supplier).Error
 
 	if err != nil {
 		return msg.ERROR_SUPPLIER_UPDATE

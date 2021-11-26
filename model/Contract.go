@@ -95,9 +95,9 @@ func InsertContract(contract *Contract) (code int) {
 		if tErr := tdb.Create(&contract).Error; tErr != nil {
 			return tErr
 		}
-		if tErr := tdb.Model(&Contract{}).Where("uid = ?", contract.UID).Update("no", CreateNo(contract)).Error; tErr != nil {
-			return tErr
-		}
+		// if tErr := tdb.Model(&Contract{}).Where("uid = ?", contract.UID).Update("no", CreateNo(contract)).Error; tErr != nil {
+		// 	return tErr
+		// }
 		return nil
 	})
 	if err != nil {

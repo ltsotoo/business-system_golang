@@ -1,7 +1,6 @@
 package main
 
 import (
-	"business-system_golang/middleware"
 	"business-system_golang/model"
 	"business-system_golang/routes"
 )
@@ -12,7 +11,8 @@ func main() {
 	model.InitDb()
 
 	//定时任务启动
-	middleware.UpdateAllEmployeesMoney()
+	// middleware.UpdateAllEmployeesMoney()
+	model.InitCronTabs()
 
 	//路由初始化
 	routes.InitRouter()

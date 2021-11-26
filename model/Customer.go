@@ -11,7 +11,7 @@ import (
 type Customer struct {
 	BaseModel
 	UID           string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	CompanyUID    string `gorm:"type:varchar(32);comment:公司UID;not null" json:"companyUID"`
+	CompanyUID    string `gorm:"type:varchar(32);comment:公司UID;default:(-)" json:"companyUID"`
 	Name          string `gorm:"type:varchar(50);comment:姓名;not null" json:"name"`
 	ResearchGroup string `gorm:"type:varchar(100);comment:课题组" json:"researchGroup"`
 	Phone         string `gorm:"type:varchar(100);comment:电话" json:"phone"`
@@ -35,7 +35,7 @@ type CustomerQuery struct {
 type CustomerCompany struct {
 	BaseModel
 	UID      string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	AreaUID  string `gorm:"type:varchar(32);comment:区域UID" json:"areaUID"`
+	AreaUID  string `gorm:"type:varchar(32);comment:区域UID;default:(-)" json:"areaUID"`
 	Name     string `gorm:"type:varchar(100);comment:名称;not null" json:"name"`
 	Address  string `gorm:"type:varchar(200);comment:地址" json:"address"`
 	IsDelete bool   `gorm:"type:boolean;comment:是否删除" json:"isDelete"`
@@ -64,6 +64,7 @@ func DeleteCustomer(uid string) (code int) {
 
 func UpdateCustomer(customer *Customer) (code int) {
 	var maps = make(map[string]interface{})
+	maps["Name"] = customer.Name
 	maps["ResearchGroup"] = customer.ResearchGroup
 	maps["Phone"] = customer.Phone
 	maps["WechatID"] = customer.WechatID
@@ -137,7 +138,11 @@ func UpdateCustomerCompany(customerCompany *CustomerCompany) (code int) {
 	var maps = make(map[string]interface{})
 	maps["Name"] = customerCompany.Name
 	maps["Address"] = customerCompany.Address
-	maps["AreaUID"] = customerCompany.AreaUID
+	if customerCompany.AreaUID != "" {
+		maps["AreaUID"] = customerCompany.AreaUID
+	} else {
+		maps["AreaUID"] = nil
+	}
 
 	err = db.Model(&CustomerCompany{}).Where("uid = ?", customerCompany.UID).Updates(maps).Error
 

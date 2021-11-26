@@ -24,11 +24,25 @@ func DelProduct(c *gin.Context) {
 }
 
 //编辑产品
-func EditProduct(c *gin.Context) {
+func EditProductBase(c *gin.Context) {
 	var product model.Product
 	_ = c.ShouldBindJSON(&product)
-	code = model.UpdateProduct(&product)
+	code = model.UpdateProductBase(&product)
 	msg.Message(c, code, product)
+}
+
+func EditProductNumber(c *gin.Context) {
+	var product model.Product
+	_ = c.ShouldBindJSON(&product)
+	code = model.UpdateProductNumber(&product)
+	msg.Message(c, code, nil)
+}
+
+func EditProductPrice(c *gin.Context) {
+	var product model.Product
+	_ = c.ShouldBindJSON(&product)
+	code = model.UpdateProductPrice(&product)
+	msg.Message(c, code, nil)
 }
 
 //查询产品

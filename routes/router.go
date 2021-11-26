@@ -10,7 +10,10 @@ import (
 
 func InitRouter() {
 	gin.SetMode(config.SystemConfig.Server.Mode)
-	r := gin.Default()
+	// r := gin.Default()
+	r := gin.New()
+	r.Use(middleware.Logger())
+	r.Use(gin.Recovery())
 
 	r.Use(middleware.Cors())
 
@@ -19,6 +22,7 @@ func InitRouter() {
 		//SYSTEM接口
 		router.POST("login", v1.Login)
 		router.POST("regist", v1.Regist)
+		router.POST("employee", v1.EntryEmployee)
 	}
 
 	auth := r.Group("api/v1")
@@ -31,7 +35,7 @@ func InitRouter() {
 		auth.GET("dictionaries", v1.QueryDictionaries)
 		auth.GET("dictionarieTypes", v1.QueryDictionarieTypes)
 		//员工模块接口
-		auth.POST("employee", v1.EntryEmployee)
+		// auth.POST("employee", v1.EntryEmployee)
 		auth.DELETE("employee/:uid", v1.DelEmployee)
 		auth.PUT("employee", v1.EditEmployee)
 		auth.GET("employee/:uid", v1.QueryEmployee)
@@ -97,7 +101,9 @@ func InitRouter() {
 		//产品模块接口
 		auth.POST("product", v1.EntryProduct)
 		auth.DELETE("product/:uid", v1.DelProduct)
-		auth.PUT("product", v1.EditProduct)
+		auth.PUT("productBase", v1.EditProductBase)
+		auth.PUT("productPrice", v1.EditProductPrice)
+		auth.PUT("productNumber", v1.EditProductNumber)
 		auth.GET("product/:uid", v1.QueryProduct)
 		auth.POST("products", v1.QueryProducts)
 		//

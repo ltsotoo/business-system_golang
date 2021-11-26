@@ -53,8 +53,8 @@ func InitDb() {
 		&Office{},
 		&Area{},
 		&Department{},
-		&Role{},
 		&Permission{},
+		&Role{},
 		&Url{},
 	)
 

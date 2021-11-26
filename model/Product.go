@@ -65,10 +65,40 @@ func DeleteProduct(uid string) (code int) {
 	return msg.SUCCESS
 }
 
-func UpdateProduct(product *Product) (code int) {
+func UpdateProductBase(product *Product) (code int) {
 	var maps = make(map[string]interface{})
-	maps["Number"] = product.Number
-	maps["NumberCount"] = product.NumberCount
+	if product.TypeUID != "" {
+		maps["TypeUID"] = product.TypeUID
+	} else {
+		maps["TypeUID"] = nil
+	}
+	if product.SupplierUID != "" {
+		maps["SupplierUID"] = product.SupplierUID
+	} else {
+		maps["SupplierUID"] = nil
+	}
+	maps["Name"] = product.Name
+	maps["Brand"] = product.Brand
+	maps["Specification"] = product.Specification
+	maps["Remarks"] = product.Remarks
+	err = db.Model(&Product{}).Where("uid = ?", product.UID).Updates(maps).Error
+	if err != nil {
+		return msg.ERROR_PRODUCT_UPDATE
+	}
+	return msg.SUCCESS
+}
+
+func UpdateProductNumber(product *Product) (code int) {
+	err = db.Exec("update product set number = number + ? , number_count = number_count + ? where uid = ?", product.Number, product.Number, product.UID).Error
+	if err != nil {
+		return msg.ERROR_PRODUCT_UPDATE
+	}
+	return msg.SUCCESS
+}
+
+func UpdateProductPrice(product *Product) (code int) {
+	var maps = make(map[string]interface{})
+	maps["PurchasedPrice"] = product.PurchasedPrice
 	maps["StandardPrice"] = product.StandardPrice
 	maps["StandardPriceUSD"] = product.StandardPriceUSD
 	err = db.Model(&Product{}).Where("uid = ?", product.UID).Updates(maps).Error
