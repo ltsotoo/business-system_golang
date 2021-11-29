@@ -48,11 +48,6 @@ func InitRouter() {
 		auth.DELETE("office/:uid", v1.DelOffice)
 		auth.PUT("office", v1.EditOffice)
 		auth.POST("offices", v1.QueryOffices)
-		auth.POST("area", v1.EntryArea)
-		auth.DELETE("area/:uid", v1.DelArea)
-		auth.PUT("area", v1.EditArea)
-		auth.POST("areas", v1.QueryAreas)
-		auth.GET("myAreas", v1.QueryMyAreas)
 		auth.POST("department", v1.EntryDepartment)
 		auth.DELETE("department/:uid", v1.DelDepartment)
 		auth.PUT("department", v1.EditDepartment)
@@ -66,7 +61,6 @@ func InitRouter() {
 		//合同模块接口
 		auth.POST("contract", v1.EntryContract)
 		auth.DELETE("contract/:uid", v1.DelContract)
-		auth.PUT("contract", v1.EditContract)
 		auth.GET("contract/:uid", v1.QueryContract)
 		auth.POST("contracts", v1.QueryContracts)
 		auth.POST("rejectContract", v1.RejectContract)
@@ -133,6 +127,12 @@ func InitRouter() {
 		// auth.PUT("preResearch", v1.EditPreResearch)
 		auth.PUT("preResearch", v1.UpdatePreResearch)
 		auth.PUT("preResearchTask", v1.UpdatePreResearchTask)
+		//投标保证金模块
+		auth.POST("bidBond", v1.AddBidBond)
+		auth.DELETE("bidBond/:uid", v1.DelBidBond)
+		auth.PUT("bidBond", v1.EditBidBond)
+		auth.PUT("bidBond/approve/:uid", v1.ApproveBidBond)
+		auth.POST("bidBonds", v1.QueryBidBonds)
 	}
 
 	_ = r.Run(config.SystemConfig.Server.Port)

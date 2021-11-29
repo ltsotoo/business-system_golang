@@ -71,7 +71,7 @@ func DeletePreResearch(uid string) (code int) {
 
 func UpdatePreResearch(preResearch *PreResearch) (code int) {
 	var maps = make(map[string]interface{})
-	maps["Remarks"] = preResearch.Remarks
+	maps["remarks"] = preResearch.Remarks
 	err = db.Model(&PreResearch{}).Where("uid = ?", preResearch.UID).Updates(maps).Error
 	if err != nil {
 		return msg.ERROR
@@ -135,8 +135,8 @@ func SelectPreReasearchTasks(pageSize int, pageNo int, preResearchTask *PreResea
 
 func UpdatePreResearchStatus(preResearchQuery *PreResearchQuery) (code int) {
 	var maps = make(map[string]interface{})
-	maps["Status"] = preResearchQuery.Status
-	maps["AuditorUID"] = preResearchQuery.AuditorUID
+	maps["status"] = preResearchQuery.Status
+	maps["auditor_uid"] = preResearchQuery.AuditorUID
 
 	if preResearchQuery.Status == 2 {
 
@@ -179,12 +179,12 @@ func UpdatePreResearchStatus(preResearchQuery *PreResearchQuery) (code int) {
 
 func UpdatePreResearchTaskStatus(preResearchTask *PreResearchTask) (code int) {
 	var maps = make(map[string]interface{})
-	maps["Status"] = preResearchTask.Status
-	maps["AuditorUID"] = preResearchTask.AuditorUID
+	maps["status"] = preResearchTask.Status
+	maps["auditor_uid"] = preResearchTask.AuditorUID
 	if preResearchTask.Status == 2 {
-		maps["Remarks"] = preResearchTask.Remarks
+		maps["remarks"] = preResearchTask.Remarks
 		t := time.Now().Format("2006-01-02 15:04:05")
-		maps["RealEndDate"] = t
+		maps["real_end_date"] = t
 
 		err = db.Model(&PreResearchTask{}).Where("uid = ?", preResearchTask.UID).Updates(maps).Error
 	} else if preResearchTask.Status == 3 {

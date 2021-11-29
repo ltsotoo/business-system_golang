@@ -68,19 +68,19 @@ func DeleteProduct(uid string) (code int) {
 func UpdateProductBase(product *Product) (code int) {
 	var maps = make(map[string]interface{})
 	if product.TypeUID != "" {
-		maps["TypeUID"] = product.TypeUID
+		maps["type_uid"] = product.TypeUID
 	} else {
-		maps["TypeUID"] = nil
+		maps["type_uid"] = nil
 	}
 	if product.SupplierUID != "" {
-		maps["SupplierUID"] = product.SupplierUID
+		maps["supplier_uid"] = product.SupplierUID
 	} else {
-		maps["SupplierUID"] = nil
+		maps["supplier_uid"] = nil
 	}
-	maps["Name"] = product.Name
-	maps["Brand"] = product.Brand
-	maps["Specification"] = product.Specification
-	maps["Remarks"] = product.Remarks
+	maps["name"] = product.Name
+	maps["brand"] = product.Brand
+	maps["specification"] = product.Specification
+	maps["remarks"] = product.Remarks
 	err = db.Model(&Product{}).Where("uid = ?", product.UID).Updates(maps).Error
 	if err != nil {
 		return msg.ERROR_PRODUCT_UPDATE
@@ -98,9 +98,9 @@ func UpdateProductNumber(product *Product) (code int) {
 
 func UpdateProductPrice(product *Product) (code int) {
 	var maps = make(map[string]interface{})
-	maps["PurchasedPrice"] = product.PurchasedPrice
-	maps["StandardPrice"] = product.StandardPrice
-	maps["StandardPriceUSD"] = product.StandardPriceUSD
+	maps["purchased_price"] = product.PurchasedPrice
+	maps["standard_price"] = product.StandardPrice
+	maps["standard_price_usd"] = product.StandardPriceUSD
 	err = db.Model(&Product{}).Where("uid = ?", product.UID).Updates(maps).Error
 	if err != nil {
 		return msg.ERROR_PRODUCT_UPDATE
@@ -157,10 +157,10 @@ func DeleteProductType(uid string) (code int) {
 
 func UpdateProductType(productType *ProductType) (code int) {
 	var maps = make(map[string]interface{})
-	maps["Name"] = productType.Name
-	maps["PushMoneyPercentages"] = productType.PushMoneyPercentages
-	maps["PushMoneyPercentagesUp"] = productType.PushMoneyPercentagesUp
-	maps["PushMoneyPercentagesDown"] = productType.PushMoneyPercentagesDown
+	maps["name"] = productType.Name
+	maps["push_money_percentages"] = productType.PushMoneyPercentages
+	maps["push_money_percentages_up"] = productType.PushMoneyPercentagesUp
+	maps["push_money_percentages_down"] = productType.PushMoneyPercentagesDown
 	err = db.Model(&ProductType{}).Where("uid = ?", productType.UID).Updates(maps).Error
 	if err != nil {
 		return msg.ERROR

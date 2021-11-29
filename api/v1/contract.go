@@ -19,6 +19,10 @@ func EntryContract(c *gin.Context) {
 		contract.Tasks[i].UID = uid.Generate()
 		contract.TotalAmount += contract.Tasks[i].TotalPrice
 	}
+	employee, _ := model.SelectEmployee(c.MustGet("employeeUID").(string))
+	contract.EmployeeUID = employee.UID
+	contract.OfficeUID = employee.OfficeUID
+
 	code = model.InsertContract(&contract)
 	msg.Message(c, code, contract)
 }
@@ -28,14 +32,6 @@ func DelContract(c *gin.Context) {
 	uid := c.Param("uid")
 	code = model.DeleteContract(uid)
 	msg.Message(c, code, nil)
-}
-
-//编辑合同
-func EditContract(c *gin.Context) {
-	var contract model.Contract
-	_ = c.ShouldBindJSON(&contract)
-	code = model.UpdateContract(&contract)
-	msg.Message(c, code, contract)
 }
 
 //查询合同

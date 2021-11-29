@@ -35,34 +35,6 @@ func QueryOffices(c *gin.Context) {
 	msg.Message(c, code, offices)
 }
 
-func EntryArea(c *gin.Context) {
-	var area model.Area
-	_ = c.ShouldBindJSON(&area)
-	code = model.InsertArea(&area)
-	msg.Message(c, code, area)
-}
-
-func DelArea(c *gin.Context) {
-	uid := c.Param("uid")
-	code = model.DeleteArea(uid)
-	msg.Message(c, code, nil)
-}
-
-func QueryAreas(c *gin.Context) {
-	var areas []model.Area
-	var areaQuery model.AreaQuery
-	_ = c.ShouldBindJSON(&areaQuery)
-	areas, code = model.SelectAreas(&areaQuery)
-	msg.Message(c, code, areas)
-}
-
-func EditArea(c *gin.Context) {
-	var area model.Area
-	_ = c.ShouldBindJSON(&area)
-	code = model.UpdateArea(&area)
-	msg.Message(c, code, area)
-}
-
 func EntryDepartment(c *gin.Context) {
 	var department model.Department
 	_ = c.ShouldBindJSON(&department)
@@ -92,11 +64,7 @@ func QueryDepartments(c *gin.Context) {
 	var departments []model.Department
 	var department model.Department
 	_ = c.ShouldBindJSON(&department)
-	if department.OfficeUID != "" {
-		departments, code = model.SelectDepartments(&department)
-	} else {
-		code = msg.ERROR
-	}
+	departments, code = model.SelectDepartments(&department)
 	msg.Message(c, code, departments)
 }
 

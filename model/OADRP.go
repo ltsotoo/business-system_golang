@@ -7,31 +7,14 @@ import (
 	"gorm.io/gorm"
 )
 
-//Office办事处 Area地区 Department部门 Role角色 Permission权限
+//Office办事处 Department部门 Role角色 Permission权限
 type Office struct {
 	BaseModel
 	UID      string  `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
 	Name     string  `gorm:"type:varchar(50);comment:名称;not null" json:"name"`
+	Number   string  `gorm:"type:varchar(50);comment:编号" json:"number"`
 	Money    float64 `gorm:"type:decimal(20,6);comment:办事处总报销额度(元)" json:"money"`
 	IsDelete bool    `gorm:"type:boolean;comment:是否删除" json:"isDelete"`
-
-	Areas []Area `gorm:"foreignKey:OfficeUID;references:UID" json:"areas"`
-}
-
-type Area struct {
-	BaseModel
-	UID       string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	OfficeUID string `gorm:"type:varchar(32);comment:办事处UID;default:(-)" json:"officeUID"`
-	Name      string `gorm:"type:varchar(50);comment:名称;not null" json:"name"`
-	Number    string `gorm:"type:varchar(50);comment:编号" json:"number"`
-	IsDelete  bool   `gorm:"type:boolean;comment:是否删除" json:"isDelete"`
-
-	Office Office `gorm:"foreignKey:OfficeUID;references:UID" json:"office"`
-}
-
-type AreaQuery struct {
-	Name       string `json:"name"`
-	OfficeName string `json:"officeName"`
 }
 
 type Department struct {
@@ -57,9 +40,7 @@ type Role struct {
 type Permission struct {
 	BaseModel
 	UID    string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	Module string `gorm:"type:varchar(20);comment:模块" json:"module"`
-	Name   string `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
-	Text   string `gorm:"type:varchar(20);comment:描述" json:"text"`
+	Text   string `gorm:"type:varchar(20);comment:文本;not null" json:"text"`
 	No     string `gorm:"type:varchar(3);comment:序号" json:"no"`
 	UrlUID string `gorm:"type:varchar(32);comment:Url_UID" json:"urlUID"`
 }
@@ -92,8 +73,8 @@ func DeleteOffice(uid string) (code int) {
 
 func UpdateOffice(office *Office) (code int) {
 	var maps = make(map[string]interface{})
-	maps["Name"] = office.Name
-	maps["Money"] = office.Money
+	maps["name"] = office.Name
+	maps["money"] = office.Money
 	err = db.Model(&Office{}).Where("uid = ?", office.UID).Updates(maps).Error
 	if err != nil {
 		return msg.ERROR_OFFICE_UPDATE
@@ -114,82 +95,17 @@ func SelectOffice(uid string) (office Office, code int) {
 }
 
 func SelectOffices(office *Office) (offices []Office, code int) {
-	err = db.Where("name LIKE ?", "%"+office.Name+"%").Find(&offices).Error
+
+	if office.Name != "" {
+		err = db.Where("name LIKE ?", "%"+office.Name+"%").Find(&offices).Error
+	} else {
+		err = db.Find(&offices).Error
+	}
+
 	if err != nil {
 		return offices, msg.ERROR_OFFICE_SELECT
 	}
 	return offices, msg.SUCCESS
-}
-
-func InsertArea(area *Area) (code int) {
-	area.UID = uid.Generate()
-	err = db.Create(&area).Error
-	if err != nil {
-		return msg.ERROR
-	}
-	return msg.SUCCESS
-}
-
-func DeleteArea(uid string) (code int) {
-	err = db.Where("uid = ?", uid).Delete(&Area{}).Error
-	if err != nil {
-		return msg.ERROR
-	}
-	return msg.SUCCESS
-}
-
-func UpdateArea(area *Area) (code int) {
-	var maps = make(map[string]interface{})
-	maps["Name"] = area.Name
-	if area.OfficeUID != "" {
-		maps["OfficeUID"] = area.OfficeUID
-	} else {
-		maps["OfficeUID"] = nil
-	}
-	maps["Number"] = area.Number
-	err = db.Model(&Area{}).Where("uid = ?", area.UID).Updates(maps).Error
-	if err != nil {
-		return msg.ERROR_AREA_UPDATE
-	}
-	return msg.SUCCESS
-}
-
-func SelectArea(uid string) (area Area, code int) {
-	err = db.Where("uid = ?", uid).First(&area).Error
-	if err != nil {
-		return area, msg.ERROR_AREA_SELECT
-	}
-	return area, msg.SUCCESS
-}
-
-func SelectAreas(areaQuery *AreaQuery) (areas []Area, code int) {
-	tDb := db.Joins("Office")
-
-	if areaQuery.Name != "" {
-		tDb = tDb.Where("area.name LIKE ?", "%"+areaQuery.Name+"%")
-	}
-	if areaQuery.OfficeName != "" {
-		tDb = tDb.Where("Office.name LIKE ?", "%"+areaQuery.OfficeName+"%")
-	}
-	err = tDb.Find(&areas).Error
-	if err != nil {
-		return areas, msg.ERROR_AREA_SELECT
-	}
-	return areas, msg.SUCCESS
-}
-
-func SelectMyAreas(emplyeeUID string) (areas []Area, code int) {
-	var employee Employee
-	db.First(&employee, "uid = ?", emplyeeUID)
-	if employee.UID != "" {
-		err = db.Where("office_uid = ?", employee.OfficeUID).Find(&areas).Error
-		if err != nil && err != gorm.ErrRecordNotFound {
-			return areas, msg.ERROR_AREA_SELECT
-		}
-	} else {
-		return areas, msg.ERROR
-	}
-	return areas, msg.SUCCESS
 }
 
 func InsertDepartment(department *Department) (code int) {
@@ -211,11 +127,11 @@ func DeleteDepartment(uid string) (code int) {
 
 func UpdateDepartment(department *Department) (code int) {
 	var maps = make(map[string]interface{})
-	maps["Name"] = department.Name
+	maps["name"] = department.Name
 	if department.RoleUID != "" {
-		maps["RoleUID"] = department.RoleUID
+		maps["role_uid"] = department.RoleUID
 	} else {
-		maps["RoleUID"] = nil
+		maps["role_uid"] = nil
 	}
 	err = db.Model(&Department{}).Where("uid = ?", department.UID).Updates(maps).Error
 	if err != nil {
@@ -225,8 +141,19 @@ func UpdateDepartment(department *Department) (code int) {
 }
 
 func SelectDepartments(department *Department) (departments []Department, code int) {
-	err = db.Preload("Role").Where("office_uid = ? AND name LIKE ?", department.OfficeUID, "%"+department.Name+"%").
-		Find(&departments).Error
+
+	var maps = make(map[string]interface{})
+	if department.OfficeUID != "" {
+		maps["office_uid"] = department.OfficeUID
+	}
+
+	tdb := db.Preload("Role").Where(maps)
+
+	if department.Name != "" {
+		tdb = tdb.Where("name LIKE ?", "%"+department.Name+"%")
+	}
+
+	err = tdb.Find(&departments).Error
 	if err != nil {
 		return departments, msg.ERROR_DEPARTMENT_SELECT
 	}
@@ -267,20 +194,16 @@ func SelectRoles() (roles []Role, code int) {
 }
 
 func SelectAllRoles(name string) (roles []Role, code int) {
-	err = db.Where("name LIKE ?", "%"+name+"%").Find(&roles).Error
+	if name != "" {
+		err = db.Where("name LIKE ?", "%"+name+"%").Find(&roles).Error
+	} else {
+		err = db.Find(&roles).Error
+	}
 
 	if err != nil {
 		return roles, msg.ERROR_ROLE_SELECT
 	}
 	return roles, msg.SUCCESS
-}
-
-func SelectPermission(module string, name string) (permission Permission, code int) {
-	err = db.Where("module = ? AND name = ?", module, name).First(&permission).Error
-	if err != nil {
-		return permission, msg.ERROR_PERMISSION_SELECT
-	}
-	return permission, msg.SUCCESS
 }
 
 func SelectPermissions() (permissions []Permission, code int) {

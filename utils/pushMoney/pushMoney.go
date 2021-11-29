@@ -12,15 +12,9 @@ func Calculate(contract *model.Contract) (contractPushMoney model.ContractPushMo
 		contractPushMoney.ContractUID = contract.UID
 		contractPushMoney.TaskTotalMoney = task(&contract.Tasks)
 		contractPushMoney.Tasks = contract.Tasks
-		d1s := contract.EndDeliveryDate.Format("2006-01-02")
-		d2s := contract.EndPaymentDate
-		d1, err1 := time.Parse("2006-01-02", d1s)
-		d2, err2 := time.Parse("2006-01-02", d2s)
-		if err1 == nil && err2 == nil {
-			contractPushMoney.PaymentDays = payment(d1, d2)
-		} else {
-			contractPushMoney.PaymentDays = 0
-		}
+		d1 := contract.EndDeliveryDate.Time
+		d2 := contract.EndPaymentDate.Time
+		contractPushMoney.PaymentDays = payment(d1, d2)
 		if contractPushMoney.PaymentDays > 60 {
 			temp := (float64(contractPushMoney.PaymentDays - 60)) * 3 / 1000
 			if temp > 0.5 {
@@ -31,15 +25,9 @@ func Calculate(contract *model.Contract) (contractPushMoney model.ContractPushMo
 		}
 		contractPushMoney.TotalMoney = contractPushMoney.TaskTotalMoney - contractPushMoney.PaymentMoneys
 	} else {
-		d1s := contract.EndDeliveryDate.Format("2006-01-02")
-		d2s := contract.EndPaymentDate
-		d1, err1 := time.Parse("2006-01-02", d1s)
-		d2, err2 := time.Parse("2006-01-02", d2s)
-		if err1 == nil && err2 == nil {
-			contractPushMoney.PaymentDays = payment(d1, d2)
-		} else {
-			contractPushMoney.PaymentDays = 0
-		}
+		d1 := contract.EndDeliveryDate.Time
+		d2 := contract.EndPaymentDate.Time
+		contractPushMoney.PaymentDays = payment(d1, d2)
 		if contractPushMoney.PaymentDays > 60 {
 			temp := (float64(contractPushMoney.PaymentDays - 60)) * 3 / 1000
 			if temp > 0.5 {
@@ -91,14 +79,14 @@ func task(tasks *[]model.Task) (taskTotalMoney float64) {
 
 func payment(EndDeliveryDateString time.Time, EndPaymentDate time.Time) (paymentDays int) {
 
-	t1s := EndDeliveryDateString.Unix()
-	t2s := EndPaymentDate.Unix()
-	if t1s >= t2s {
+	t1x := EndDeliveryDateString.Unix()
+	t2x := EndPaymentDate.Unix()
+	if t1x >= t2x {
 		return 0
 	}
 
-	days := (t2s - t1s) / 86400
-	daysX := (t2s - t1s) % 86400
+	days := (t2x - t1x) / 86400
+	daysX := (t2x - t1x) % 86400
 	if daysX > 0 {
 		paymentDays = int(days) + 1
 	} else {

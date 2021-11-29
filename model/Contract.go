@@ -6,7 +6,6 @@ import (
 	"business-system_golang/utils/uid"
 	"fmt"
 	"strconv"
-	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -15,20 +14,23 @@ import (
 // 合同 Model
 type Contract struct {
 	BaseModel
-	No                    string  `gorm:"type:varchar(32);comment:合同编号" json:"no"`
+	No                    string  `gorm:"type:varchar(100);comment:合同编号" json:"no"`
 	UID                   string  `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	AreaUID               string  `gorm:"type:varchar(32);comment:所属区域UID;default:(-)" json:"areaUID"`
+	RegionUID             string  `gorm:"type:varchar(32);comment:省份UID;default:(-)" json:"regionUID"`
+	OfficeUID             string  `gorm:"type:varchar(32);comment:办事处UID;default:(-)" json:"officeUID"`
 	EmployeeUID           string  `gorm:"type:varchar(32);comment:业务员UID;default:(-)" json:"employeeUID"`
 	IsEntryCustomer       bool    `gorm:"type:boolean;comment:客户是否录入" json:"isEntryCustomer"`
 	CustomerUID           string  `gorm:"type:varchar(32);comment:客户ID;default:(-)" json:"customerUID"`
-	ContractDate          string  `gorm:"type:varchar(20);comment:签订日期" json:"contractDate"`
+	ContractDate          XDate   `gorm:"type:date;comment:签订日期" json:"contractDate"`
 	ContractUnitUID       string  `gorm:"type:varchar(32);comment:签订单位;default:(-)" json:"contractUnitUID"`
-	EstimatedDeliveryDate string  `gorm:"type:varchar(20);comment:合同交货日期" json:"estimatedDeliveryDate"`
+	EstimatedDeliveryDate XDate   `gorm:"type:date;comment:合同交货日期" json:"estimatedDeliveryDate"`
 	EndDeliveryDate       XTime   `gorm:"type:datetime;comment:实际交货日期;default:(-)" json:"endDeliveryDate"`
-	EndPaymentDate        string  `gorm:"type:varchar(20);comment:最终回款日期;default:(-)" json:"endPaymentDate"`
+	EndPaymentDate        XDate   `gorm:"type:date;comment:最终回款日期;default:(-)" json:"endPaymentDate"`
 	InvoiceType           int     `gorm:"type:int;comment:开票类型" json:"invoiceType"`
 	InvoiceContent        string  `gorm:"type:varchar(600);comment:开票内容" json:"invoiceContent"`
-	IsSpecial             bool    `gorm:"type:boolean;comment:特殊合同?" json:"isSpecial"`
+	IsSpecial             bool    `gorm:"type:boolean;comment:是否是特殊合同" json:"isSpecial"`
+	IsPreDeposit          bool    `gorm:"type:boolean;comment:是否是预存款合同" json:"isPreDeposit"`
+	PreDeposit            float64 `gorm:"type:decimal(20,6);comment:预存款金额" json:"preDeposit"`
 	PayType               int     `gorm:"type:int;comment:付款类型(1:人民币 2:美元)" json:"payType"`
 	TotalAmount           float64 `gorm:"type:decimal(20,6);comment:总金额" json:"totalAmount"`
 	PaymentTotalAmount    float64 `gorm:"type:decimal(20,6);comment:回款总金额(人民币)" json:"paymentTotalAmount"`
@@ -40,7 +42,8 @@ type Contract struct {
 	FinalAuditorUID       string  `gorm:"type:varchar(32);comment:最终审核员ID;default:(-)" json:"finalAuditorUID"`
 	IsDelete              bool    `gorm:"type:boolean;comment:是否删除" json:"isDelete"`
 
-	Area         Area              `gorm:"foreignKey:AreaUID;references:UID" json:"area"`
+	Region       Dictionary        `gorm:"foreignKey:RegionUID;references:UID" json:"region"`
+	Office       Office            `gorm:"foreignKey:OfficeUID;references:UID" json:"office"`
 	Employee     Employee          `gorm:"foreignKey:EmployeeUID;references:UID" json:"employee"`
 	Customer     Customer          `gorm:"foreignKey:CustomerUID;references:UID" json:"customer"`
 	ContractUnit Dictionary        `gorm:"foreignKey:ContractUnitUID;references:UID" json:"contractUnit"`
@@ -64,7 +67,6 @@ type ContractPushMoney struct {
 }
 
 type ContractQuery struct {
-	AreaUID          string `json:"areaUID"`
 	No               string `json:"no"`
 	CompanyName      string `json:"companyName"`
 	CustomerName     string `json:"customerName"`
@@ -91,15 +93,7 @@ func InsertContract(contract *Contract) (code int) {
 		contract.Customer.UID = uid.Generate()
 		contract.Customer.Status = 0
 	}
-	err = db.Transaction(func(tdb *gorm.DB) error {
-		if tErr := tdb.Create(&contract).Error; tErr != nil {
-			return tErr
-		}
-		// if tErr := tdb.Model(&Contract{}).Where("uid = ?", contract.UID).Update("no", CreateNo(contract)).Error; tErr != nil {
-		// 	return tErr
-		// }
-		return nil
-	})
+	err = db.Create(&contract).Error
 	if err != nil {
 		return msg.ERROR_CONTRACT_INSERT
 	}
@@ -107,10 +101,11 @@ func InsertContract(contract *Contract) (code int) {
 }
 
 func CreateNo(contract *Contract) (no string) {
-	area, _ := SelectArea(contract.AreaUID)
+	// tString := strings.ReplaceAll(contract.ContractDate, "-", "")
+	var tString string
+	office, _ := SelectOffice(contract.OfficeUID)
 	employee, _ := SelectEmployee(contract.EmployeeUID)
-	tString := strings.ReplaceAll(contract.ContractDate, "-", "")
-	no = "bjscistar-" + tString + "-" + area.Number + employee.Number + "0" + strconv.Itoa(int(contract.ID))
+	no = "bjscistar-" + tString + "-" + office.Number + employee.Number + "-" + strconv.Itoa(employee.ContractCount)
 	return
 }
 
@@ -123,19 +118,10 @@ func DeleteContract(uid string) (code int) {
 	return msg.SUCCESS
 }
 
-func UpdateContract(contract *Contract) (code int) {
-	var maps = make(map[string]interface{})
-	maps["Remarks"] = contract.Remarks
-	err = db.Model(&Contract{}).Where("uid = ?", contract.UID).Updates(maps).Error
-	if err != nil {
-		return msg.ERROR_CONTRACT_UPDATE
-	}
-	return msg.SUCCESS
-}
-
 func SelectContract(uid string) (contract Contract, code int) {
-	err = db.Preload("Area.Office").Preload("ContractUnit").Preload("Employee").
-		Preload("Customer.Company").Preload("Tasks.Product.Type").
+	err = db.Preload("Region").Preload("Office").Preload("Employee").
+		Preload("Customer.Company").Preload("ContractUnit").
+		Preload("Tasks.Product.Type").
 		Preload("Tasks.TechnicianMan").Preload("Tasks.PurchaseMan").
 		Preload("Tasks.InventoryMan").Preload("Tasks.ShipmentMan").
 		Preload("Payments").Preload("PushMoney").Where("is_delete = ?", false).
@@ -155,9 +141,6 @@ func SelectContracts(pageSize int, pageNo int, contractQuery *ContractQuery) (co
 	if contractQuery.EmployeeUID != "" {
 		maps["employee_uid"] = contractQuery.EmployeeUID
 	}
-	if contractQuery.AreaUID != "" {
-		maps["area_uid"] = contractQuery.AreaUID
-	}
 	if contractQuery.IsSpecial == 1 {
 		maps["is_special"] = true
 	} else if contractQuery.IsSpecial == 2 {
@@ -172,7 +155,8 @@ func SelectContracts(pageSize int, pageNo int, contractQuery *ContractQuery) (co
 	if contractQuery.CollectionStatus != 0 {
 		maps["collection_status"] = contractQuery.CollectionStatus
 	}
-	tDb := db.Where("contract.is_delete = ?", false)
+
+	tDb := db.Where(maps).Where("contract.is_delete = ?", false)
 
 	if contractQuery.CompanyName != "" {
 		tDb = tDb.Joins("Customer").
@@ -180,19 +164,16 @@ func SelectContracts(pageSize int, pageNo int, contractQuery *ContractQuery) (co
 			Where("Customer.name LIKE ? AND customer_company.name LIKE ?", "%"+contractQuery.CustomerName+"%", "%"+contractQuery.CompanyName+"%")
 	} else {
 		if contractQuery.CustomerName != "" {
-			tDb = tDb.Joins("Customer").
-				Where("Customer.name LIKE ?", "%"+contractQuery.CustomerName+"%")
+			tDb = tDb.Joins("Customer").Where("Customer.name LIKE ?", "%"+contractQuery.CustomerName+"%")
 		}
 	}
 
 	if contractQuery.No != "" {
 		tDb = tDb.Where("contract.no LIKE ?", "%"+contractQuery.No+"%")
 	}
-	if len(maps) > 0 {
-		tDb = tDb.Where(maps)
-	}
-	err = tDb.Find(&contracts).Count(&total).
-		Preload("Customer").Preload("Customer.Company").Preload("Area.Office").Preload("Employee").
+
+	err = tDb.Find(&contracts).Count(&total).Preload("Region").Preload("Office").
+		Preload("Customer.Company").Preload("Employee").
 		Limit(pageSize).Offset((pageNo - 1) * pageSize).
 		Find(&contracts).Error
 
@@ -206,32 +187,29 @@ func SelectContracts(pageSize int, pageNo int, contractQuery *ContractQuery) (co
 func ApproveContract(uid string, status int, employeeUID string) (code int) {
 	var maps = make(map[string]interface{})
 
-	if status == 2 {
-		maps["Status"] = status
-		maps["AuditorUID"] = employeeUID
-		maps["CollectionStatus"] = 1
-		maps["ProductionStatus"] = 1
-	} else if status == -1 {
-		maps["Status"] = status
-		maps["AuditorUID"] = employeeUID
-	}
+	if status == magic.CONTRACT_STATUS_UNFINISHED {
+		//通过
+		maps["status"] = status
+		maps["auditor_uid"] = employeeUID
+		maps["production_status"] = magic.CONTATCT_PRODUCTION_STATUS_ING
+		maps["collection_status"] = magic.CONTATCT_COLLECTION_STATUS_ING
 
-	if status == 2 {
 		err = db.Transaction(func(tdb *gorm.DB) error {
-
-			if tErr := tdb.Model(&Contract{}).Where("uid = ?", uid).Updates(maps).Error; tErr != nil {
-				return tErr
-			}
 
 			var contract Contract
 			if tErr := tdb.Preload("Tasks").First(&contract, "uid = ?", uid).Error; tErr != nil {
 				return tErr
 			}
 
-			if !contract.IsEntryCustomer {
-				if tErr := tdb.Exec("UPDATE customer SET status = 1 WHERE uid = ?", contract.CustomerUID).Error; tErr != nil {
-					return tErr
-				}
+			//业务员累计合同数目+1
+			if tErr := tdb.Exec("UPDATE employee SET contract_count = contract_count + 1 WHERE uid = ?", contract.EmployeeUID).Error; tErr != nil {
+				return tErr
+			}
+
+			maps["No"] = CreateNo(&contract)
+
+			if tErr := tdb.Model(&Contract{}).Where("uid = ?", uid).Updates(maps).Error; tErr != nil {
+				return tErr
 			}
 
 			for i := range contract.Tasks {
@@ -240,6 +218,12 @@ func ApproveContract(uid string, status int, employeeUID string) (code int) {
 				}
 			}
 
+			//审批录入时的新客户
+			if !contract.IsEntryCustomer {
+				if tErr := tdb.Exec("UPDATE customer SET status = 1 WHERE uid = ?", contract.CustomerUID).Error; tErr != nil {
+					return tErr
+				}
+			}
 			t := time.Now().Format("2006-01-02 15:04:05")
 
 			if tErr := tdb.Model(&Task{}).Where("contract_uid = ? AND type = ?", uid, 1).Update("inventory_start_date", t).Error; tErr != nil {
@@ -253,7 +237,11 @@ func ApproveContract(uid string, status int, employeeUID string) (code int) {
 			}
 			return nil
 		})
-	} else if status == -1 {
+
+	} else if status == magic.CONTRACT_STATUS_REJECT {
+		//驳回
+		maps["status"] = status
+		maps["auditor_uid"] = employeeUID
 		err = db.Model(&Contract{}).Where("uid = ?", uid).Updates(maps).Error
 	}
 
@@ -268,10 +256,10 @@ func ApproveContract(uid string, status int, employeeUID string) (code int) {
 func FinalApproveContract(contractPushMoney *ContractPushMoney, contract *Contract) (code int) {
 	var maps = make(map[string]interface{})
 
-	maps["Status"] = 3
-	maps["FinalAuditorUID"] = contractPushMoney.EmployeeUID
-	maps["CollectionStatus"] = 2
-	maps["ProductionStatus"] = 2
+	maps["status"] = magic.CONTARCT_STATUS_FINISH
+	maps["final_auditor_uid"] = contractPushMoney.EmployeeUID
+	maps["collection_status"] = magic.CONTATCT_COLLECTION_STATUS_FINISH
+	maps["production_status"] = magic.CONTATCT_PRODUCTION_STATUS_FINISH
 
 	err = db.Transaction(func(tdb *gorm.DB) error {
 		contractPushMoney.UID = uid.Generate()
@@ -282,7 +270,7 @@ func FinalApproveContract(contractPushMoney *ContractPushMoney, contract *Contra
 			return tErr
 		}
 
-		if contractPushMoney.Type == 1 {
+		if contractPushMoney.Type == magic.CONTATCT_PUSHMONEY_AUTO {
 
 			for i := range contractPushMoney.Tasks {
 				if tErr := tdb.Model(&Task{}).Where("uid = ?", contractPushMoney.Tasks[i].UID).Update("push_money", contractPushMoney.Tasks[i].PushMoney).Error; tErr != nil {
@@ -292,7 +280,7 @@ func FinalApproveContract(contractPushMoney *ContractPushMoney, contract *Contra
 
 		}
 
-		if tErr := tdb.Exec("UPDATE office SET money = money + ? WHERE uid = ?", contractPushMoney.TotalMoney, contract.Area.OfficeUID).Error; tErr != nil {
+		if tErr := tdb.Exec("UPDATE office SET money = money + ? WHERE uid = ?", contractPushMoney.TotalMoney, contract.OfficeUID).Error; tErr != nil {
 			return tErr
 		}
 		return nil
@@ -350,6 +338,7 @@ func UpdateContractCollectionStatusToNotFinish(contract *Contract) (code int) {
 	return
 }
 
+//合同执行中途驳回
 func Reject(uid string) (code int) {
 	err = db.Transaction(func(tdb *gorm.DB) error {
 		if tErr := tdb.Model(&Contract{}).Where("uid = ?", uid).Update("status", -1).Error; tErr != nil {

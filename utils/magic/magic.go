@@ -20,6 +20,11 @@ const (
 	//回款完成
 	CONTATCT_COLLECTION_STATUS_FINISH = 2
 
+	//合同提成系统结算
+	CONTATCT_PUSHMONEY_AUTO = 1
+	//合同提成手动结算
+	CONTATCT_PUSHMONEY_MANUAL = 2
+
 	//待设计
 	TASK_STATUS_NOT_DESIGN = 1
 	//待采购

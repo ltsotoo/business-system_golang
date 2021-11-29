@@ -76,7 +76,7 @@ func SelectPaymentsByContractUID(contractUID string) (payments []Payment, code i
 }
 
 func SelectContractAndPayments(uid string) (contract Contract, code int) {
-	err = db.Preload("Area").Preload("ContractUnit").
+	err = db.Preload("ContractUnit").
 		Preload("Employee").Preload("Employee.Office").
 		Preload("Customer").Preload("Customer.Company").
 		Preload("Payments").

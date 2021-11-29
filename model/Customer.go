@@ -24,7 +24,7 @@ type Customer struct {
 }
 
 type CustomerQuery struct {
-	AreaUID       string `json:"areaUID"`
+	RegionUID     string `json:"regionUID"`
 	CompanyUID    string `json:"companyUID"`
 	CompanyName   string `json:"companyName"`
 	ResearchGroup string `json:"researchGroup"`
@@ -34,13 +34,13 @@ type CustomerQuery struct {
 // 客户公司 Model
 type CustomerCompany struct {
 	BaseModel
-	UID      string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	AreaUID  string `gorm:"type:varchar(32);comment:区域UID;default:(-)" json:"areaUID"`
-	Name     string `gorm:"type:varchar(100);comment:名称;not null" json:"name"`
-	Address  string `gorm:"type:varchar(200);comment:地址" json:"address"`
-	IsDelete bool   `gorm:"type:boolean;comment:是否删除" json:"isDelete"`
+	UID       string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
+	RegionUID string `gorm:"type:varchar(32);comment:省份UID;default:(-)" json:"regionUID"`
+	Name      string `gorm:"type:varchar(100);comment:名称;not null" json:"name"`
+	Address   string `gorm:"type:varchar(200);comment:地址" json:"address"`
+	IsDelete  bool   `gorm:"type:boolean;comment:是否删除" json:"isDelete"`
 
-	Area Area `gorm:"foreignKey:AreaUID;references:UID" json:"area"`
+	Region Dictionary `gorm:"foreignKey:RegionUID;references:UID" json:"region"`
 }
 
 func InsertCustomer(customer *Customer) (code int) {
@@ -64,11 +64,11 @@ func DeleteCustomer(uid string) (code int) {
 
 func UpdateCustomer(customer *Customer) (code int) {
 	var maps = make(map[string]interface{})
-	maps["Name"] = customer.Name
-	maps["ResearchGroup"] = customer.ResearchGroup
-	maps["Phone"] = customer.Phone
-	maps["WechatID"] = customer.WechatID
-	maps["Email"] = customer.Email
+	maps["name"] = customer.Name
+	maps["research_group"] = customer.ResearchGroup
+	maps["phone"] = customer.Phone
+	maps["wechat_id"] = customer.WechatID
+	maps["email"] = customer.Email
 	err = db.Model(&Customer{}).Where("uid = ?", customer.UID).Updates(maps).Error
 	if err != nil {
 		return msg.ERROR_CUSTOMER_UPDATE
@@ -90,11 +90,11 @@ func SelectCustomer(uid string) (customer Customer, code int) {
 
 func SelectCustomers(pageSize int, pageNo int, customerQuery *CustomerQuery) (customers []Customer, code int, total int64) {
 	tDb := db.Joins("Company").Where("customer.is_delete = ? AND status = ?", false, 1)
-	if customerQuery.AreaUID != "" {
-		tDb = tDb.Where("Company.area_uid = ?", customerQuery.AreaUID)
+	if customerQuery.RegionUID != "" {
+		tDb = tDb.Where("Company.region_uid = ?", customerQuery.RegionUID)
 	}
-	if customerQuery.CompanyUID != "" {
-		tDb = tDb.Where("customer.company_uid = ?", customerQuery.CompanyUID)
+	if customerQuery.Name != "" {
+		tDb = tDb.Where("customer.name LIKE ?", "%"+customerQuery.Name+"%")
 	}
 	if customerQuery.CompanyName != "" {
 		tDb = tDb.Where("Company.name LIKE ?", "%"+customerQuery.CompanyName+"%")
@@ -102,12 +102,11 @@ func SelectCustomers(pageSize int, pageNo int, customerQuery *CustomerQuery) (cu
 	if customerQuery.ResearchGroup != "" {
 		tDb = tDb.Where("customer.research_group LIKE ?", "%"+customerQuery.ResearchGroup+"%")
 	}
-	if customerQuery.Name != "" {
-		tDb = tDb.Where("customer.name LIKE ?", "%"+customerQuery.Name+"%")
+	if customerQuery.CompanyUID != "" {
+		tDb = tDb.Where("customer.company_uid = ?", customerQuery.CompanyUID)
 	}
 
 	err = tDb.Find(&customers).Count(&total).
-		Preload("Company").Preload("Company.Area").
 		Limit(pageSize).Offset((pageNo - 1) * pageSize).
 		Find(&customers).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
@@ -136,13 +135,9 @@ func DeleteCustomerCompany(uid string) (code int) {
 
 func UpdateCustomerCompany(customerCompany *CustomerCompany) (code int) {
 	var maps = make(map[string]interface{})
-	maps["Name"] = customerCompany.Name
-	maps["Address"] = customerCompany.Address
-	if customerCompany.AreaUID != "" {
-		maps["AreaUID"] = customerCompany.AreaUID
-	} else {
-		maps["AreaUID"] = nil
-	}
+	maps["region_uid"] = customerCompany.RegionUID
+	maps["name"] = customerCompany.Name
+	maps["address"] = customerCompany.Address
 
 	err = db.Model(&CustomerCompany{}).Where("uid = ?", customerCompany.UID).Updates(maps).Error
 
@@ -154,11 +149,18 @@ func UpdateCustomerCompany(customerCompany *CustomerCompany) (code int) {
 
 func SelectCustomerCompanys(customerCompany *CustomerCompany) (CustomerCompanys []CustomerCompany, code int) {
 	var maps = make(map[string]interface{})
-	if customerCompany.AreaUID != "" {
-		maps["area_uid"] = customerCompany.AreaUID
-		maps["is_delete"] = false
+	if customerCompany.RegionUID != "" {
+		maps["region_uid"] = customerCompany.RegionUID
 	}
-	err = db.Preload("Area").Where(maps).Where("name LIKE ?", "%"+customerCompany.Name+"%").Find(&CustomerCompanys).Error
+	maps["is_delete"] = false
+
+	tdb := db.Preload("Region").Where(maps)
+
+	if customerCompany.Name != "" {
+		tdb = tdb.Where("name LIKE ?", "%"+customerCompany.Name+"%")
+	}
+
+	err = tdb.Find(&CustomerCompanys).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return CustomerCompanys, msg.ERROR
 	}

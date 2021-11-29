@@ -21,6 +21,7 @@ type Employee struct {
 	OfficeUID     string  `gorm:"type:varchar(32);comment:办事处UID;default:(-)" json:"officeUID"`
 	DepartmentUID string  `gorm:"type:varchar(32);comment:部门UID;default:(-)" json:"departmentUID"`
 	Number        string  `gorm:"type:varchar(50);comment:编号" json:"number"`
+	ContractCount int     `gorm:"type:int;comment:被审批合同总数" json:"contractCount"`
 	Money         float64 `gorm:"type:decimal(20,6);comment:总报销额度(元)" json:"money"`
 	Credit        float64 `gorm:"type:decimal(20,6);comment:每月报销额度(元)" json:"credit"`
 	IsDelete      bool    `gorm:"type:boolean;comment:是否删除" json:"isDelete"`

@@ -51,11 +51,12 @@ func InitDb() {
 		&PreResearchTask{},
 
 		&Office{},
-		&Area{},
 		&Department{},
 		&Permission{},
 		&Role{},
 		&Url{},
+
+		&BidBond{},
 	)
 
 	sqlDB, _ := db.DB()

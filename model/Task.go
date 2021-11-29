@@ -42,8 +42,6 @@ type Task struct {
 	ShipmentStartDate     XTime `gorm:"type:datetime;comment:物流接到工作日期;default:(-)" json:"shipmentStartDate"`
 	ShipmentRealEndDate   XTime `gorm:"type:datetime;comment:物流实际提交工作日期;default:(-)" json:"shipmentRealEndDate"`
 
-	CurrentRemarksText string `gorm:"-" json:"currentRemarksText"`
-
 	Contract      Contract `gorm:"foreignKey:ContractUID;references:UID" json:"contract"`
 	Product       Product  `gorm:"foreignKey:ProductUID;references:UID" json:"product"`
 	TechnicianMan Employee `gorm:"foreignKey:TechnicianManUID;references:UID" json:"technicianMan"`
@@ -53,7 +51,6 @@ type Task struct {
 }
 
 type TaskRemarks struct {
-	BaseModel
 	UID     string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
 	TaskUID string `gorm:"type:varchar(32);comment:合同ID" json:"taskUID"`
 	Status  int    `gorm:"type:int;comment:合同状态" json:"status"`
@@ -63,16 +60,17 @@ type TaskRemarks struct {
 }
 
 type TaskFlowQuery struct {
-	UID              string `json:"UID"`
-	ContractUID      string `json:"contractUID"`
-	Status           int    `json:"status"`
-	Type             int    `json:"type"`
-	TechnicianManUID string `json:"technicianManUID"`
-	PurchaseManUID   string `json:"purchaseManUID"`
-	InventoryManUID  string `json:"inventoryManUID"`
-	ShipmentManUID   string `json:"shipmentManUID"`
-	IsReset          bool   `json:"isReset"`
-	ARemarks         string `json:"aRemarks"`
+	UID                string `json:"UID"`
+	ContractUID        string `json:"contractUID"`
+	Status             int    `json:"status"`
+	Type               int    `json:"type"`
+	TechnicianManUID   string `json:"technicianManUID"`
+	PurchaseManUID     string `json:"purchaseManUID"`
+	InventoryManUID    string `json:"inventoryManUID"`
+	ShipmentManUID     string `json:"shipmentManUID"`
+	IsReset            bool   `json:"isReset"`
+	ARemarks           string `json:"aRemarks"`
+	CurrentRemarksText string ` json:"currentRemarksText"`
 
 	TechnicianDays int `json:"technicianDays"`
 	PurchaseDays   int `json:"purchaseDays"`
@@ -132,70 +130,70 @@ func SelectTasksByContractUID(contractUID string) (tasks []Task, code int) {
 func ApproveTask(taskFlowQuery *TaskFlowQuery) (code int) {
 	var maps = make(map[string]interface{})
 	maps["type"] = taskFlowQuery.Type
-	maps["ARemarks"] = taskFlowQuery.ARemarks
+	maps["a_remarks"] = taskFlowQuery.ARemarks
 	switch taskFlowQuery.Type {
 	case magic.TASK_TYPE_1:
-		maps["Status"] = magic.TASK_STATUS_NOT_STORAGE
+		maps["status"] = magic.TASK_STATUS_NOT_STORAGE
 
-		maps["TechnicianManUID"] = nil
-		maps["PurchaseManUID"] = nil
-		maps["TechnicianDays"] = nil
-		maps["PurchaseDays"] = nil
+		maps["technician_man_uid"] = nil
+		maps["purchase_man_uid"] = nil
+		maps["technician_days"] = nil
+		maps["purchase_days"] = nil
 
 		if taskFlowQuery.IsReset {
 			t := time.Now().Format("2006-01-02 15:04:05")
-			maps["InventoryStartDate"] = t
+			maps["inventory_start_date"] = t
 		} else {
-			maps["InventoryStartDate"] = nil
+			maps["inventory_start_date"] = nil
 		}
 
-		maps["TechnicianStartDate"] = nil
-		maps["PurchaseStartDate"] = nil
+		maps["technician_start_date"] = nil
+		maps["purchase_start_date"] = nil
 
 	case magic.TASK_TYPE_2:
-		maps["Status"] = magic.TASK_STATUS_NOT_PURCHASE
+		maps["status"] = magic.TASK_STATUS_NOT_PURCHASE
 
-		maps["TechnicianManUID"] = nil
-		maps["PurchaseManUID"] = taskFlowQuery.PurchaseManUID
-		maps["TechnicianDays"] = nil
-		maps["PurchaseDays"] = taskFlowQuery.PurchaseDays
+		maps["technician_man_uid"] = nil
+		maps["purchase_man_uid"] = taskFlowQuery.PurchaseManUID
+		maps["technician_days"] = nil
+		maps["purchase_days"] = taskFlowQuery.PurchaseDays
 
 		if taskFlowQuery.IsReset {
 			t := time.Now().Format("2006-01-02 15:04:05")
-			maps["PurchaseStartDate"] = t
+			maps["purchase_start_date"] = t
 		} else {
-			maps["PurchaseStartDate"] = nil
+			maps["purchase_start_date"] = nil
 		}
 
-		maps["TechnicianStartDate"] = nil
-		maps["InventoryStartDate"] = nil
+		maps["technician_start_date"] = nil
+		maps["inventory_start_date"] = nil
 
 	case magic.TASK_TYPE_3:
-		maps["Status"] = magic.TASK_STATUS_NOT_DESIGN
+		maps["status"] = magic.TASK_STATUS_NOT_DESIGN
 
-		maps["TechnicianManUID"] = taskFlowQuery.TechnicianManUID
-		maps["PurchaseManUID"] = taskFlowQuery.PurchaseManUID
-		maps["TechnicianDays"] = taskFlowQuery.TechnicianDays
-		maps["PurchaseDays"] = taskFlowQuery.PurchaseDays
+		maps["technician_man_uid"] = taskFlowQuery.TechnicianManUID
+		maps["purchase_man_uid"] = taskFlowQuery.PurchaseManUID
+		maps["technician_days"] = taskFlowQuery.TechnicianDays
+		maps["purchase_days"] = taskFlowQuery.PurchaseDays
 
 		if taskFlowQuery.IsReset {
 			t := time.Now().Format("2006-01-02 15:04:05")
-			maps["TechnicianStartDate"] = t
+			maps["technician_start_date"] = t
 		} else {
-			maps["TechnicianStartDate"] = nil
+			maps["technician_start_date"] = nil
 		}
 
-		maps["PurchaseStartDate"] = nil
-		maps["InventoryStartDate"] = nil
+		maps["purchase_start_date"] = nil
+		maps["inventory_start_date"] = nil
 
 	}
-	maps["ShipmentStartDate"] = nil
-	maps["TechnicianRealEndDate"] = nil
-	maps["PurchaseRealEndDate"] = nil
-	maps["InventoryRealEndDate"] = nil
-	maps["ShipmentRealEndDate"] = nil
-	maps["InventoryManUID"] = taskFlowQuery.InventoryManUID
-	maps["ShipmentManUID"] = taskFlowQuery.ShipmentManUID
+	maps["shipment_start_date"] = nil
+	maps["technician_real_end_date"] = nil
+	maps["purchase_real_end_date"] = nil
+	maps["inventory_real_end_date"] = nil
+	maps["shipment_real_end_date"] = nil
+	maps["inventory_man_uid"] = taskFlowQuery.InventoryManUID
+	maps["shipment_man_uid"] = taskFlowQuery.ShipmentManUID
 
 	if taskFlowQuery.IsReset {
 		var contractMaps = make(map[string]interface{})
@@ -228,15 +226,25 @@ func ApproveTask(taskFlowQuery *TaskFlowQuery) (code int) {
 func NextTaskStatus(uid string, lastStatus int, from string, to string, maps map[string]interface{}, currentRemarksText string) (code int) {
 	err = db.Transaction(func(tdb *gorm.DB) error {
 		if currentRemarksText != "" {
-			remarksUID := uidUtils.Generate()
-			if tErr := tdb.Model(&TaskRemarks{}).Create(map[string]interface{}{
-				"CreatedAt": time.Now().Format("2006-01-02 15:04:05"),
-				"UID":       remarksUID,
-				"TaskUID":   uid,
-				"Status":    lastStatus,
-				"From":      from,
-				"To":        to,
-				"Text":      currentRemarksText,
+			// remarksUID := uidUtils.Generate()
+			// if tErr := tdb.Model(&TaskRemarks{}).Create(map[string]interface{}{
+			// 	"UID":       remarksUID,
+			// 	"TaskUID":   uid,
+			// 	"Status":    lastStatus,
+			// 	"From":      from,
+			// 	"To":        to,
+			// 	"Text":      currentRemarksText,
+			// }).Error; tErr != nil {
+			// 	return tErr
+			// }
+
+			if tErr := tdb.Create(&TaskRemarks{
+				UID:     uidUtils.Generate(),
+				TaskUID: uid,
+				Status:  lastStatus,
+				From:    from,
+				To:      to,
+				Text:    currentRemarksText,
 			}).Error; tErr != nil {
 				return tErr
 			}

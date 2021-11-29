@@ -21,62 +21,57 @@ func ApproveTask(c *gin.Context) {
 	var taskFlowQuery model.TaskFlowQuery
 	_ = c.ShouldBindJSON(&taskFlowQuery)
 	task, _ := model.SelectTask(taskFlowQuery.UID)
-	if task.UID != "" {
-		taskFlowQuery.ContractUID = task.ContractUID
-		code = model.ApproveTask(&taskFlowQuery)
-	} else {
-		code = msg.ERROR
-	}
+	taskFlowQuery.ContractUID = task.ContractUID
+	code = model.ApproveTask(&taskFlowQuery)
 	msg.Message(c, code, nil)
 }
 
 func NextTask(c *gin.Context) {
-	var task, dbTask model.Task
-	_ = c.ShouldBindJSON(&task)
-	dbTask, code = model.SelectTask(task.UID)
+	var taskFlowQuery model.TaskFlowQuery
+	var dbTask model.Task
+	_ = c.ShouldBindJSON(&taskFlowQuery)
+	dbTask, code = model.SelectTask(taskFlowQuery.UID)
 
-	if code == msg.SUCCESS && task.Status == dbTask.Status {
+	if code == msg.SUCCESS && taskFlowQuery.Status == dbTask.Status {
 		var maps = make(map[string]interface{})
 		t := time.Now().Format("2006-01-02 15:04:05")
-		lastStatus := task.Status
 		from, to := "", ""
-		switch task.Status {
+		switch dbTask.Status {
 		case magic.TASK_STATUS_NOT_DESIGN:
-			task.Status = magic.TASK_STATUS_NOT_PURCHASE
+			maps["status"] = magic.TASK_STATUS_NOT_PURCHASE
 			from = dbTask.TechnicianManUID
 			to = dbTask.PurchaseManUID
 			maps["technician_real_end_date"] = t
 			maps["purchase_start_date"] = t
 		case magic.TASK_STATUS_NOT_PURCHASE:
-			task.Status = magic.TASK_STATUS_NOT_STORAGE
+			maps["status"] = magic.TASK_STATUS_NOT_STORAGE
 			from = dbTask.PurchaseManUID
 			to = dbTask.InventoryManUID
 			maps["purchase_real_end_date"] = t
 			maps["inventory_start_date"] = t
 		case magic.TASK_STATUS_NOT_STORAGE:
 			from = dbTask.InventoryManUID
-			if task.Type == magic.TASK_TYPE_3 {
-				task.Status = magic.TASK_STATUS_NOT_ASSEMBLY
+			if dbTask.Type == magic.TASK_TYPE_3 {
+				maps["status"] = magic.TASK_STATUS_NOT_ASSEMBLY
 				to = dbTask.TechnicianManUID
 			} else {
+				maps["status"] = magic.TASK_STATUS_NOT_SHIPMENT
 				maps["shipment_start_date"] = t
-				task.Status = magic.TASK_STATUS_NOT_SHIPMENT
 				to = dbTask.ShipmentManUID
 			}
 		case magic.TASK_STATUS_NOT_ASSEMBLY:
-			task.Status = magic.TASK_STATUS_NOT_SHIPMENT
+			maps["status"] = magic.TASK_STATUS_NOT_SHIPMENT
 			maps["shipment_start_date"] = t
 			from = dbTask.TechnicianManUID
 			to = dbTask.ShipmentManUID
 		case magic.TASK_STATUS_NOT_SHIPMENT:
-			task.Status = magic.TASK_STATUS_SHIPMENT
+			maps["status"] = magic.TASK_STATUS_SHIPMENT
 			from = dbTask.ShipmentManUID
 			to = dbTask.ShipmentManUID
 		}
-		maps["status"] = task.Status
-		code = model.NextTaskStatus(task.UID, lastStatus, from, to, maps, task.CurrentRemarksText)
+		code = model.NextTaskStatus(dbTask.UID, dbTask.Status, from, to, maps, taskFlowQuery.CurrentRemarksText)
 		if code == msg.SUCCESS {
-			code = checkTasksUpdateContract(task.ContractUID)
+			code = checkTasksUpdateContract(dbTask.ContractUID)
 		}
 		msg.Message(c, code, nil)
 	} else {

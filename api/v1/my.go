@@ -65,9 +65,3 @@ func QueryMyExpenses(c *gin.Context) {
 	expenses, code, total = model.SelectMyExpenses(pageSize, pageNo, &expense)
 	msg.MessageForList(c, code, expenses, pageSize, pageNo, total)
 }
-
-func QueryMyAreas(c *gin.Context) {
-	var areas []model.Area
-	areas, code = model.SelectMyAreas(c.MustGet("employeeUID").(string))
-	msg.Message(c, code, areas)
-}
