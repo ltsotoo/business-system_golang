@@ -3,36 +3,68 @@ package model
 import (
 	"business-system_golang/utils/msg"
 	"business-system_golang/utils/uid"
-	"time"
 
 	"gorm.io/gorm"
 )
 
 type Payment struct {
 	BaseModel
-	UID         string  `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	ContractUID string  `gorm:"type:varchar(32);comment:合同ID" json:"contractUID"`
-	EmployeeUID string  `gorm:"type:varchar(32);comment:技术负责人ID" json:"employeeUID"`
-	Money       float64 `gorm:"type:decimal(20,6);comment:回款金额(元)" json:"money"`
-	Remarks     string  `gorm:"type:varchar(600);comment:备注" json:"remarks"`
-}
-
-type PaymentQuery struct {
-	UID                string    `json:"UID"`
-	EndPaymentDate     time.Time `json:"endPaymentDate"`
-	PaymentTotalAmount float64   `json:"paymentTotalAmount"`
+	UID                  string  `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
+	ContractUID          string  `gorm:"type:varchar(32);comment:合同UID" json:"contractUID"`
+	BidBondUID           string  `gorm:"type:varchar(32);comment:发票UID" json:"bidBondUID"`
+	TaskUID              string  `gorm:"type:varchar(32);comment:任务UID" json:"taskUID"`
+	PaymentDate          XDate   `gorm:"type:date;comment:回款日期" json:"paymentDate"`
+	EmployeeUID          string  `gorm:"type:varchar(32);comment:录入人员ID" json:"employeeUID"`
+	Money                float64 `gorm:"type:decimal(20,6);comment:回款金额(元)" json:"money"`
+	TheoreticalPushMoney float64 `gorm:"type:decimal(20,6);comment:理论提成(元)" json:"theoreticalPushMoney"`
+	Fine                 float64 `gorm:"type:decimal(20,6);comment:回款延迟扣除(元)" json:"fine"`
+	PushMoney            float64 `gorm:"type:decimal(20,6);comment:实际提成(元)" json:"pushMoney"`
 }
 
 func InsertPayment(payment *Payment) (code int) {
+
+	var contract Contract
+
+	db.First(&contract, "uid = ?", payment.ContractUID)
+
+	if contract.UID == "" {
+		return msg.ERROR
+	}
+
+	if contract.IsSpecial {
+		db.Find(&contract.Tasks, "contract_uid = ?", contract.UID)
+	} else {
+		db.Preload("Product.Type").Find(&contract.Tasks, "contract_uid = ?", contract.UID)
+	}
+
 	payment.UID = uid.Generate()
-	// err = db.Create(&payment).Error
 	err = db.Transaction(func(tdb *gorm.DB) error {
+
+		//计算提成并创建提成记录
+		payment.TheoreticalPushMoney, payment.Fine, payment.PushMoney = calculate(&contract, payment)
 		if tErr := tdb.Create(&payment).Error; tErr != nil {
 			return tErr
 		}
+
+		//合同回款金额更新
 		if tErr := tdb.Exec("UPDATE contract SET payment_total_amount = payment_total_amount + ? WHERE uid = ?", payment.Money, payment.ContractUID).Error; tErr != nil {
 			return tErr
 		}
+
+		//任务回款金额更新
+		if payment.TaskUID != "" {
+			if tErr := tdb.Exec("UPDATE task SET payment_total_price = payment_total_price + ? WHERE uid = ?", payment.Money, payment.TaskUID).Error; tErr != nil {
+				return tErr
+			}
+		}
+
+		//任务总量提升总额（非预存款合同）
+		if !contract.IsPreDeposit {
+			if tErr := tdb.Exec("UPDATE office SET target_load = target_load + ? WHERE uid = ?", payment.Money, contract.OfficeUID).Error; tErr != nil {
+				return tErr
+			}
+		}
+
 		return nil
 	})
 	if err != nil {
@@ -42,28 +74,7 @@ func InsertPayment(payment *Payment) (code int) {
 }
 
 func UpdatePayment(payment *Payment) (code int) {
-	var maps = make(map[string]interface{})
-	maps["money"] = payment.Money
-	maps["remarks"] = payment.Remarks
-
-	err = db.Transaction(func(tdb *gorm.DB) error {
-		var temp Payment
-		if tErr := tdb.First(&temp, "uid = ?", payment.UID).Error; tErr != nil {
-			return tErr
-		}
-		if tErr := tdb.Model(&Payment{}).Where("uid = ?", payment.UID).Updates(maps).Error; tErr != nil {
-			return tErr
-		}
-		tempMoney := payment.Money - temp.Money
-		if tErr := tdb.Exec("UPDATE contract SET payment_total_amount = payment_total_amount + ? WHERE uid = ?", tempMoney, temp.ContractUID).Error; tErr != nil {
-			return tErr
-		}
-		return nil
-	})
-
-	if err != nil {
-		return msg.ERROR
-	}
+	//TODO
 	return msg.SUCCESS
 }
 

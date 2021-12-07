@@ -37,12 +37,3 @@ func FinishPayments(c *gin.Context) {
 
 	msg.Message(c, code, nil)
 }
-
-func RejectPayments(c *gin.Context) {
-	var contract model.Contract
-	_ = c.ShouldBindJSON(&contract)
-
-	code = model.UpdateContractCollectionStatusToNotFinish(&contract)
-
-	msg.Message(c, code, nil)
-}

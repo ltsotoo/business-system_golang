@@ -12,24 +12,26 @@ import (
 // 合同任务 Model
 type Task struct {
 	BaseModel
-	UID              string  `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	ContractUID      string  `gorm:"type:varchar(32);comment:合同ID" json:"contractUID"`
-	ProductUID       string  `gorm:"type:varchar(32);comment:产品ID" json:"productUID"`
-	Number           int     `gorm:"type:int;comment:数量" json:"number"`
-	Unit             string  `gorm:"type:varchar(50);comment:单位" json:"unit"`
-	StandardPrice    float64 `gorm:"type:decimal(20,6);comment:下单时标准价格(元)" json:"standardPrice"`
-	StandardPriceUSD float64 `gorm:"type:decimal(20,6);comment:下单时标准价格(美元)" json:"standardPriceUSD"`
-	Price            float64 `gorm:"type:decimal(20,6);comment:单价(元)" json:"price"`
-	TotalPrice       float64 `gorm:"type:decimal(20,6);comment:总价(元)" json:"totalPrice"`
-	Status           int     `gorm:"type:int;comment:状态(1:待设计 2:待采购 3:待入/出库 4:待装配 5:待发货 6:已发货)" json:"status"`
-	Type             int     `gorm:"type:int;comment:类型(1:标准/第三方有库存 2:标准/第三方无库存 3:非标准定制)" json:"type"`
-	TechnicianManUID string  `gorm:"type:varchar(32);comment:技术负责人ID;default:(-)" json:"technicianManUID"`
-	PurchaseManUID   string  `gorm:"type:varchar(32);comment:采购负责人ID;default:(-)" json:"purchaseManUID"`
-	InventoryManUID  string  `gorm:"type:varchar(32);comment:仓库负责人ID;default:(-)" json:"inventoryManUID"`
-	ShipmentManUID   string  `gorm:"type:varchar(32);comment:物流人员ID;default:(-)" json:"shipmentManUID"`
-	Remarks          string  `gorm:"type:varchar(600);comment:业务备注" json:"remarks"`
-	ARemarks         string  `gorm:"type:varchar(600);comment:审批备注" json:"aRemarks"`
-	PushMoney        float64 `gorm:"type:decimal(20,6);comment:提成(元)" json:"pushMoney"`
+	UID                  string  `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
+	ContractUID          string  `gorm:"type:varchar(32);comment:合同ID" json:"contractUID"`
+	ProductUID           string  `gorm:"type:varchar(32);comment:产品ID" json:"productUID"`
+	Number               int     `gorm:"type:int;comment:数量" json:"number"`
+	Unit                 string  `gorm:"type:varchar(50);comment:单位" json:"unit"`
+	StandardPrice        float64 `gorm:"type:decimal(20,6);comment:下单时标准价格" json:"standardPrice"`
+	StandardPriceUSD     float64 `gorm:"type:decimal(20,6);comment:下单时标准价格(美元)" json:"standardPriceUSD"`
+	Price                float64 `gorm:"type:decimal(20,6);comment:单价(元)" json:"price"`
+	TotalPrice           float64 `gorm:"type:decimal(20,6);comment:总价(元)" json:"totalPrice"`
+	PaymentTotalPrice    float64 `gorm:"type:decimal(20,6);comment:回款总金额(元)" json:"paymentTotalPrice"`
+	Status               int     `gorm:"type:int;comment:状态(1:待设计 2:待采购 3:待入/出库 4:待装配 5:待发货 6:已发货)" json:"status"`
+	Type                 int     `gorm:"type:int;comment:类型(1:标准/第三方有库存 2:标准/第三方无库存 3:非标准定制)" json:"type"`
+	TechnicianManUID     string  `gorm:"type:varchar(32);comment:技术负责人ID;default:(-)" json:"technicianManUID"`
+	PurchaseManUID       string  `gorm:"type:varchar(32);comment:采购负责人ID;default:(-)" json:"purchaseManUID"`
+	InventoryManUID      string  `gorm:"type:varchar(32);comment:仓库负责人ID;default:(-)" json:"inventoryManUID"`
+	ShipmentManUID       string  `gorm:"type:varchar(32);comment:物流人员ID;default:(-)" json:"shipmentManUID"`
+	Remarks              string  `gorm:"type:varchar(600);comment:业务备注" json:"remarks"`
+	ARemarks             string  `gorm:"type:varchar(600);comment:审批备注" json:"aRemarks"`
+	PushMoney            float64 `gorm:"type:decimal(20,6);comment:提成(元)" json:"pushMoney"`
+	PushMoneyPercentages float64 `gorm:"type:decimal(20,6);comment:特殊合同提成百分比" json:"pushMoneyPercentages"`
 
 	TechnicianDays        int   `gorm:"type:int;comment:技术预计工作天数;default:(-)" json:"technicianDays"`
 	PurchaseDays          int   `gorm:"type:int;comment:采购预计工作天数;default:(-)" json:"purchaseDays"`

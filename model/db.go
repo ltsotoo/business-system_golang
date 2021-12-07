@@ -34,7 +34,6 @@ func InitDb() {
 
 	db.AutoMigrate(
 		&Contract{},
-		&ContractPushMoney{},
 		&Customer{},
 		&CustomerCompany{},
 		&Employee{},
@@ -57,6 +56,7 @@ func InitDb() {
 		&Url{},
 
 		&BidBond{},
+		&Invoice{},
 	)
 
 	sqlDB, _ := db.DB()

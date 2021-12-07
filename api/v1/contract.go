@@ -3,7 +3,6 @@ package v1
 import (
 	"business-system_golang/model"
 	"business-system_golang/utils/msg"
-	"business-system_golang/utils/pushMoney"
 	"business-system_golang/utils/uid"
 	"strconv"
 
@@ -70,35 +69,9 @@ func ApproveContract(c *gin.Context) {
 	msg.Message(c, code, nil)
 }
 
-func FinalApproveContract(c *gin.Context) {
-	var contractPushMoney model.ContractPushMoney
-	var contract model.Contract
-	_ = c.ShouldBindJSON(&contractPushMoney)
-	contractPushMoney.EmployeeUID = c.MustGet("employeeUID").(string)
-	if contractPushMoney.Type == 2 {
-		contractPushMoney.TotalMoney = contractPushMoney.TaskTotalMoney - contractPushMoney.PaymentMoneys
-	}
-	contract, code = model.SelectContract(contractPushMoney.ContractUID)
-	if contract.UID != "" {
-		code = model.FinalApproveContract(&contractPushMoney, &contract)
-	}
-	msg.Message(c, code, nil)
-}
-
 func RejectContract(c *gin.Context) {
 	var contract model.Contract
 	_ = c.ShouldBindJSON(&contract)
 	code = model.Reject(contract.UID)
 	msg.Message(c, code, nil)
-}
-
-func CalculatePushMoney(c *gin.Context) {
-	var contract model.Contract
-	var contractPushMoney model.ContractPushMoney
-	_ = c.ShouldBindJSON(&contract)
-	contract, code = model.SelectContract(contract.UID)
-	if contract.UID != "" {
-		contractPushMoney = pushMoney.Calculate(&contract)
-	}
-	msg.Message(c, msg.SUCCESS, contractPushMoney)
 }

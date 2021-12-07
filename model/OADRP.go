@@ -10,11 +10,14 @@ import (
 //Office办事处 Department部门 Role角色 Permission权限
 type Office struct {
 	BaseModel
-	UID      string  `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	Name     string  `gorm:"type:varchar(50);comment:名称;not null" json:"name"`
-	Number   string  `gorm:"type:varchar(50);comment:编号" json:"number"`
-	Money    float64 `gorm:"type:decimal(20,6);comment:办事处总报销额度(元)" json:"money"`
-	IsDelete bool    `gorm:"type:boolean;comment:是否删除" json:"isDelete"`
+	UID        string  `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
+	Name       string  `gorm:"type:varchar(50);comment:名称;not null" json:"name"`
+	Number     string  `gorm:"type:varchar(50);comment:编号" json:"number"`
+	Money      float64 `gorm:"type:decimal(20,6);comment:办事处目前可报销额度(元)" json:"money"`
+	MoneyCold  float64 `gorm:"type:decimal(20,6);comment:办事处今年冻结报销额度(元)" json:"moneyCold"`
+	TaskLoad   float64 `gorm:"type:decimal(20,6);comment:今年目标量(元)" json:"taskLoad"`
+	TargetLoad float64 `gorm:"type:decimal(20,6);comment:今年完成量(元)" json:"targetLoad"`
+	IsDelete   bool    `gorm:"type:boolean;comment:是否删除" json:"isDelete"`
 }
 
 type Department struct {

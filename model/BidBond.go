@@ -8,9 +8,9 @@ import (
 type BidBond struct {
 	BaseModel
 	UID              string  `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	EmployeeUID      string  `gorm:"type:varchar(32);comment:添加记录财务UID" json:"employee"`
-	SalesmanUID      string  `gorm:"type:varchar(32);comment:业务员UID" json:"salesmanUID"`
-	FinalEmployeeUID string  `gorm:"type:varchar(32);comment:完成回款财务UID" json:"finalEmployeeUID"`
+	EmployeeUID      string  `gorm:"type:varchar(32);comment:添加员工UID;default:(-)" json:"employeeUID"`
+	SalesmanUID      string  `gorm:"type:varchar(32);comment:业务员UID;default:(-)" json:"salesmanUID"`
+	FinalEmployeeUID string  `gorm:"type:varchar(32);comment:完成回款财务UID;default:(-)" json:"finalEmployeeUID"`
 	Money            float64 `gorm:"type:decimal(20,6);comment:保证金金额(元)" json:"money"`
 	Remarks          string  `gorm:"type:varchar(600);comment:备注" json:"remarks"`
 	Status           int     `gorm:"type:int;comment:状态(1:待退还 2:完成)" json:"status"`
@@ -42,7 +42,7 @@ func UpdateBidBond(bidBond *BidBond) (code int) {
 	var maps = make(map[string]interface{})
 	maps["remarks"] = bidBond.Remarks
 	maps["money"] = bidBond.Money
-	maps["salesman_uid"] = bidBond.SalesmanUID
+	// maps["salesman_uid"] = bidBond.SalesmanUID
 
 	err = db.Model(&BidBond{}).Where("uid = ?", bidBond.UID).Updates(maps).Error
 
@@ -75,5 +75,4 @@ func SelectBidBonds(pageSize int, pageNo int, bidBond *BidBond) (bidBonds []BidB
 		return bidBonds, msg.ERROR, total
 	}
 	return bidBonds, msg.SUCCESS, total
-
 }

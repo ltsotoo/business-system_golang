@@ -22,7 +22,6 @@ func InitRouter() {
 		//SYSTEM接口
 		router.POST("login", v1.Login)
 		router.POST("regist", v1.Regist)
-		router.POST("employee", v1.EntryEmployee)
 	}
 
 	auth := r.Group("api/v1")
@@ -35,7 +34,7 @@ func InitRouter() {
 		auth.GET("dictionaries", v1.QueryDictionaries)
 		auth.GET("dictionarieTypes", v1.QueryDictionarieTypes)
 		//员工模块接口
-		// auth.POST("employee", v1.EntryEmployee)
+		auth.POST("employee", v1.EntryEmployee)
 		auth.DELETE("employee/:uid", v1.DelEmployee)
 		auth.PUT("employee", v1.EditEmployee)
 		auth.GET("employee/:uid", v1.QueryEmployee)
@@ -66,8 +65,6 @@ func InitRouter() {
 		auth.POST("rejectContract", v1.RejectContract)
 		//合同流程模块接口
 		auth.PUT("task/contract/approve", v1.ApproveContract)
-		auth.PUT("task/contract/finalApprove", v1.FinalApproveContract)
-		auth.POST("calculatePushMoney", v1.CalculatePushMoney)
 		//任务模块接口
 		auth.POST("tasks", v1.QueryTasks)
 		auth.GET("taskRemarks", v1.QueryTaskRemarks)
@@ -80,7 +77,6 @@ func InitRouter() {
 		auth.PUT("payment", v1.EditPayment)
 		auth.GET("payments/:contractUID", v1.QueryPaymentsForContract)
 		auth.POST("finishPayments", v1.FinishPayments)
-		auth.POST("rejectPayments", v1.RejectPayments)
 		//客户模块接口
 		auth.POST("customer", v1.EntryCustomer)
 		auth.DELETE("customer/:uid", v1.DelCustomer)
@@ -133,6 +129,12 @@ func InitRouter() {
 		auth.PUT("bidBond", v1.EditBidBond)
 		auth.PUT("bidBond/approve/:uid", v1.ApproveBidBond)
 		auth.POST("bidBonds", v1.QueryBidBonds)
+		//合同开票
+		auth.POST("invoice", v1.AddInvoice)
+		auth.DELETE("invoice/:uid", v1.DelInvoice)
+		auth.PUT("invoice", v1.EditInvoice)
+		auth.PUT("invoice/approve/:uid", v1.ApproveInvoice)
+		auth.POST("invoices", v1.QueryInvoices)
 	}
 
 	_ = r.Run(config.SystemConfig.Server.Port)
