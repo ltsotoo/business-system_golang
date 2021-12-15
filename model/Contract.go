@@ -47,7 +47,7 @@ type Contract struct {
 	Customer     Customer   `gorm:"foreignKey:CustomerUID;references:UID" json:"customer"`
 	ContractUnit Dictionary `gorm:"foreignKey:ContractUnitUID;references:UID" json:"contractUnit"`
 	Tasks        []Task     `gorm:"foreignKey:ContractUID;references:UID" json:"tasks"`
-	BidBonds     []BidBond  `gorm:"foreignKey:ContractUID;references:UID" json:"bidBonds"`
+	Invoices     []Invoice  `gorm:"foreignKey:ContractUID;references:UID" json:"invoices"`
 }
 
 type ContractQuery struct {
@@ -107,7 +107,7 @@ func SelectContract(uid string) (contract Contract, code int) {
 		Preload("Tasks.Product.Type").
 		Preload("Tasks.TechnicianMan").Preload("Tasks.PurchaseMan").
 		Preload("Tasks.InventoryMan").Preload("Tasks.ShipmentMan").
-		Preload("BidBonds").Where("is_delete = ?", false).
+		Preload("Invoices").Where("is_delete = ?", false).
 		First(&contract, "uid = ?", uid).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {

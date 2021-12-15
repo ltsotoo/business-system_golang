@@ -12,7 +12,9 @@ import (
 func QueryTasks(c *gin.Context) {
 	var tasks []model.Task
 	var task model.Task
+
 	_ = c.ShouldBindJSON(&task)
+
 	tasks, code = model.SelectTasks(&task)
 	msg.Message(c, code, tasks)
 }

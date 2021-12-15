@@ -10,15 +10,17 @@ import (
 type Payment struct {
 	BaseModel
 	UID                  string  `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	ContractUID          string  `gorm:"type:varchar(32);comment:合同UID" json:"contractUID"`
-	BidBondUID           string  `gorm:"type:varchar(32);comment:发票UID" json:"bidBondUID"`
-	TaskUID              string  `gorm:"type:varchar(32);comment:任务UID" json:"taskUID"`
+	ContractUID          string  `gorm:"type:varchar(32);comment:合同UID;default:(-)" json:"contractUID"`
+	InvoiceUID           string  `gorm:"type:varchar(32);comment:发票UID;default:(-)" json:"invoiceUID"`
+	TaskUID              string  `gorm:"type:varchar(32);comment:任务UID;default:(-)" json:"taskUID"`
 	PaymentDate          XDate   `gorm:"type:date;comment:回款日期" json:"paymentDate"`
-	EmployeeUID          string  `gorm:"type:varchar(32);comment:录入人员ID" json:"employeeUID"`
+	EmployeeUID          string  `gorm:"type:varchar(32);comment:录入人员ID;default:(-)" json:"employeeUID"`
 	Money                float64 `gorm:"type:decimal(20,6);comment:回款金额(元)" json:"money"`
 	TheoreticalPushMoney float64 `gorm:"type:decimal(20,6);comment:理论提成(元)" json:"theoreticalPushMoney"`
 	Fine                 float64 `gorm:"type:decimal(20,6);comment:回款延迟扣除(元)" json:"fine"`
 	PushMoney            float64 `gorm:"type:decimal(20,6);comment:实际提成(元)" json:"pushMoney"`
+	BusinessMoney        float64 `gorm:"type:decimal(20,6);comment:业务费用(元)" json:"businessMoney"`
+	Parities             float64 `gorm:"type:decimal(20,6);comment:汇率" json:"parities"`
 }
 
 func InsertPayment(payment *Payment) (code int) {
@@ -41,7 +43,7 @@ func InsertPayment(payment *Payment) (code int) {
 	err = db.Transaction(func(tdb *gorm.DB) error {
 
 		//计算提成并创建提成记录
-		payment.TheoreticalPushMoney, payment.Fine, payment.PushMoney = calculate(&contract, payment)
+		payment.TheoreticalPushMoney, payment.Fine, payment.PushMoney, payment.BusinessMoney = calculate(&contract, payment)
 		if tErr := tdb.Create(&payment).Error; tErr != nil {
 			return tErr
 		}
@@ -58,13 +60,18 @@ func InsertPayment(payment *Payment) (code int) {
 			}
 		}
 
-		//任务总量提升总额（非预存款合同）
+		tempPushMoney := payment.PushMoney * 0.5
 		if !contract.IsPreDeposit {
-			if tErr := tdb.Exec("UPDATE office SET target_load = target_load + ? WHERE uid = ?", payment.Money, contract.OfficeUID).Error; tErr != nil {
+			//办事处业务费，提成，提升（预存款合同）
+			if tErr := tdb.Exec("UPDATE office SET money = money + ?, money_cold = money_cold + ?, business_money = business_money + ? WHERE uid = ?", tempPushMoney, tempPushMoney, payment.BusinessMoney, contract.OfficeUID).Error; tErr != nil {
+				return tErr
+			}
+		} else {
+			//办事处业务费，提成，任务量提升
+			if tErr := tdb.Exec("UPDATE office SET target_load = target_load + ?, money = money + ?, money_cold = money_cold + ?, business_money = business_money + ? WHERE uid = ?", payment.Money, tempPushMoney, tempPushMoney, payment.BusinessMoney, contract.OfficeUID).Error; tErr != nil {
 				return tErr
 			}
 		}
-
 		return nil
 	})
 	if err != nil {

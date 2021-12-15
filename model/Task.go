@@ -87,15 +87,22 @@ func SelectTask(uid string) (task Task, code int) {
 }
 
 func SelectTasks(task *Task) (tasks []Task, code int) {
-	err = db.Preload("Contract").Preload("Product", func(db *gorm.DB) *gorm.DB {
-		return db.Unscoped()
-	}).
-		Preload("TechnicianMan").Preload("PurchaseMan").Preload("InventoryMan").Preload("ShipmentMan").
-		Where(&task).Find(&tasks).Error
-	if err != nil {
-		return tasks, msg.ERROR
+	var maps = make(map[string]interface{})
+
+	if task.ContractUID != "" {
+		maps["contract_uid"] = task.ContractUID
 	}
-	return tasks, msg.SUCCESS
+
+	err = db.Preload("Contract").Preload("Product").
+		Preload("TechnicianMan").Preload("PurchaseMan").
+		Preload("InventoryMan").Preload("ShipmentMan").
+		Where(maps).Find(&tasks).Error
+	if err != nil {
+		code = msg.ERROR
+	} else {
+		code = msg.SUCCESS
+	}
+	return
 }
 
 func SelectMyTasks(pageSize int, pageNo int, task *Task, uid string) (tasks []Task, code int, total int64) {

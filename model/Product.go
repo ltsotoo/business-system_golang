@@ -32,11 +32,13 @@ type Product struct {
 
 type ProductType struct {
 	BaseModel
-	UID                      string  `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	Name                     string  `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
-	PushMoneyPercentages     float64 `gorm:"type:decimal(20,6);comment:标准提成百分比" json:"pushMoneyPercentages"`
-	PushMoneyPercentagesUp   float64 `gorm:"type:decimal(20,6);comment:提成上涨百分比" json:"pushMoneyPercentagesUp"`
-	PushMoneyPercentagesDown float64 `gorm:"type:decimal(20,6);comment:提成下降百分比" json:"pushMoneyPercentagesDown"`
+	UID                        string  `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
+	Name                       string  `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
+	PushMoneyPercentages       float64 `gorm:"type:decimal(20,6);comment:标准提成百分比" json:"pushMoneyPercentages"`
+	PushMoneyPercentagesUp     float64 `gorm:"type:decimal(20,6);comment:提成上涨百分比" json:"pushMoneyPercentagesUp"`
+	PushMoneyPercentagesDown   float64 `gorm:"type:decimal(20,6);comment:提成下降百分比" json:"pushMoneyPercentagesDown"`
+	BusinessMoneyPercentages   float64 `gorm:"type:decimal(20,6);comment:标准业务费用" json:"businessMoneyPercentages"`
+	BusinessMoneyPercentagesUp float64 `gorm:"type:decimal(20,6);comment:业务费用上涨百分比" json:"businessMoneyPercentagesUp"`
 
 	IsDelete bool `gorm:"type:boolean;comment:是否删除" json:"isDelete"`
 }
