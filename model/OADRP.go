@@ -9,11 +9,11 @@ import (
 
 //Office办事处 Department部门 Role角色 Permission权限
 type Office struct {
-	BaseModel
+	ID            uint    `gorm:"primary_key" json:"ID"`
 	UID           string  `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
 	Name          string  `gorm:"type:varchar(50);comment:名称;not null" json:"name"`
 	Number        string  `gorm:"type:varchar(50);comment:编号" json:"number"`
-	BusinessMoney float64 `gorm:"type:decimal(20,6);comment:业务费用" json:"businessMoney"`
+	BusinessMoney float64 `gorm:"type:decimal(20,6);comment:业务费用(元)" json:"businessMoney"`
 	Money         float64 `gorm:"type:decimal(20,6);comment:办事处目前可报销额度(元)" json:"money"`
 	MoneyCold     float64 `gorm:"type:decimal(20,6);comment:办事处今年冻结报销额度(元)" json:"moneyCold"`
 	TaskLoad      float64 `gorm:"type:decimal(20,6);comment:今年目标量(元)" json:"taskLoad"`
@@ -22,7 +22,7 @@ type Office struct {
 }
 
 type Department struct {
-	BaseModel
+	ID        uint   `gorm:"primary_key" json:"ID"`
 	UID       string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
 	OfficeUID string `gorm:"type:varchar(32);comment:办事处ID;not null" json:"officeUID"`
 	Name      string `gorm:"type:varchar(50);comment:名称;not null" json:"name"`
@@ -34,7 +34,7 @@ type Department struct {
 }
 
 type Role struct {
-	BaseModel
+	ID   uint   `gorm:"primary_key" json:"ID"`
 	UID  string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
 	Name string `gorm:"type:varchar(50);comment:名称;not null" json:"name"`
 
@@ -42,7 +42,7 @@ type Role struct {
 }
 
 type Permission struct {
-	BaseModel
+	ID     uint   `gorm:"primary_key" json:"ID"`
 	UID    string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
 	Text   string `gorm:"type:varchar(20);comment:文本;not null" json:"text"`
 	No     string `gorm:"type:varchar(3);comment:序号" json:"no"`
@@ -50,7 +50,7 @@ type Permission struct {
 }
 
 type Url struct {
-	BaseModel
+	ID    uint   `gorm:"primary_key" json:"ID"`
 	UID   string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
 	Title string `gorm:"type:varchar(20);comment:标题;not null" json:"title"`
 	Icon  string `gorm:"type:varchar(20);comment:图标" json:"icon"`
@@ -77,8 +77,8 @@ func DeleteOffice(uid string) (code int) {
 
 func UpdateOffice(office *Office) (code int) {
 	var maps = make(map[string]interface{})
+	maps["number"] = office.Number
 	maps["name"] = office.Name
-	maps["money"] = office.Money
 	err = db.Model(&Office{}).Where("uid = ?", office.UID).Updates(maps).Error
 	if err != nil {
 		return msg.ERROR_OFFICE_UPDATE
@@ -151,7 +151,7 @@ func SelectDepartments(department *Department) (departments []Department, code i
 		maps["office_uid"] = department.OfficeUID
 	}
 
-	tdb := db.Preload("Role").Where(maps)
+	tdb := db.Preload("Office").Preload("Role").Where(maps)
 
 	if department.Name != "" {
 		tdb = tdb.Where("name LIKE ?", "%"+department.Name+"%")
@@ -174,7 +174,17 @@ func InsertRole(role *Role) (code int) {
 }
 
 func UpdateRole(role *Role) (code int) {
-	err = db.Model(&role).Association("Permissions").Replace(role.Permissions)
+
+	err = db.Transaction(func(tdb *gorm.DB) error {
+		if tErr := tdb.Model(&Role{}).Where("uid = ?", role.UID).Update("name", role.Name).Error; tErr != nil {
+			return tErr
+		}
+		if tErr := tdb.Model(&role).Association("Permissions").Replace(role.Permissions); tErr != nil {
+			return tErr
+		}
+		return nil
+	})
+
 	if err != nil {
 		return msg.ERROR_ROLE_UPDATE
 	}

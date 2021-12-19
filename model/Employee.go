@@ -22,13 +22,16 @@ type Employee struct {
 	DepartmentUID string  `gorm:"type:varchar(32);comment:部门UID;default:(-)" json:"departmentUID"`
 	Number        string  `gorm:"type:varchar(50);comment:编号" json:"number"`
 	ContractCount int     `gorm:"type:int;comment:被审批合同总数" json:"contractCount"`
-	Money         float64 `gorm:"type:decimal(20,6);comment:总报销额度(元)" json:"money"`
-	Credit        float64 `gorm:"type:decimal(20,6);comment:每月报销额度(元)" json:"credit"`
+	Money         float64 `gorm:"type:decimal(20,6);comment:补助额度(元)" json:"money"`
+	Credit        float64 `gorm:"type:decimal(20,6);comment:每月总部补助额度(元)" json:"credit"`
+	OfficeCredit  float64 `gorm:"type:decimal(20,6);comment:每月办事处补助额度(元)" json:"officeCredit"`
 	IsDelete      bool    `gorm:"type:boolean;comment:是否删除" json:"isDelete"`
 
 	Roles      []Role     `gorm:"many2many:employee_role;foreignKey:UID;references:UID" json:"roles"`
 	Office     Office     `gorm:"foreignKey:OfficeUID;references:UID" json:"office"`
 	Department Department `gorm:"foreignKey:DepartmentUID;references:UID" json:"department"`
+
+	EditType int `gorm:"-" json:"editType"`
 }
 
 type EmployeeQuery struct {
@@ -90,15 +93,36 @@ func DeleteEmployee(uid string) (code int) {
 }
 
 func UpdateEmployee(employee *Employee) (code int) {
-	err = db.Transaction(func(tdb *gorm.DB) error {
-		if tErr := tdb.Model(&Employee{}).Where("uid = ?", employee.UID).Updates(employee).Error; tErr != nil {
-			return tErr
-		}
-		if tErr := tdb.Model(&employee).Association("Roles").Replace(employee.Roles); tErr != nil {
-			return tErr
-		}
-		return nil
-	})
+	var maps = make(map[string]interface{})
+	if employee.EditType == 1 {
+		maps["name"] = employee.Name
+		maps["phone"] = employee.Phone
+		maps["wechat_id"] = employee.WechatID
+		maps["email"] = employee.Email
+	} else if employee.EditType == 2 {
+		maps["money"] = employee.Money
+		maps["credit"] = employee.Credit
+		maps["office_credit"] = employee.OfficeCredit
+	} else if employee.EditType == 3 {
+		maps["office_uid"] = employee.OfficeUID
+		maps["department_uid"] = employee.DepartmentUID
+		maps["number"] = employee.Number
+	}
+
+	if employee.EditType != 3 {
+		err = db.Model(&Employee{}).Where("uid = ?", employee.UID).Updates(maps).Error
+	} else {
+		err = db.Transaction(func(tdb *gorm.DB) error {
+			if tErr := tdb.Model(&Employee{}).Where("uid = ?", employee.UID).Updates(maps).Error; tErr != nil {
+				return tErr
+			}
+			if tErr := tdb.Model(&employee).Association("Roles").Replace(employee.Roles); tErr != nil {
+				return tErr
+			}
+			return nil
+		})
+	}
+
 	if err != nil {
 		return msg.ERROR_CUSTOMER_UPDATE
 	}

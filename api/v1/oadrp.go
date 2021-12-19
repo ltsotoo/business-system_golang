@@ -27,6 +27,13 @@ func EditOffice(c *gin.Context) {
 	msg.Message(c, code, office)
 }
 
+func QueryOffice(c *gin.Context) {
+	var office model.Office
+	uid := c.Param("uid")
+	office, code = model.SelectOffice(uid)
+	msg.Message(c, code, office)
+}
+
 func QueryOffices(c *gin.Context) {
 	var office model.Office
 	var offices []model.Office
@@ -71,6 +78,7 @@ func QueryDepartments(c *gin.Context) {
 func AddRole(c *gin.Context) {
 	var role model.Role
 	_ = c.ShouldBindJSON(&role)
+	println(role.Permissions[0].UID)
 	code = model.InsertRole(&role)
 	msg.Message(c, code, role)
 }
