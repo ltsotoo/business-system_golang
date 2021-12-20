@@ -46,12 +46,14 @@ func DeleteSupplier(uid string) (code int) {
 }
 
 func UpdateSupplier(supplier *Supplier) (code int) {
-	// var maps = make(map[string]interface{})
-	// maps["Linkman"] = supplier.Linkman
-	// maps["Phone"] = supplier.Phone
-	// maps["WechatID"] = supplier.WechatID
-	// maps["Email"] = supplier.Email
-	// maps["Web"] = supplier.Web
+	var maps = make(map[string]interface{})
+	maps["name"] = supplier.Name
+	maps["web"] = supplier.Web
+	maps["address"] = supplier.Address
+	maps["linkman"] = supplier.Linkman
+	maps["phone"] = supplier.Phone
+	maps["wechat_id"] = supplier.WechatID
+	maps["email"] = supplier.Email
 
 	err = db.Model(&Supplier{}).Where("uid = ?", supplier.UID).Updates(supplier).Error
 
@@ -74,8 +76,20 @@ func SelectSupplier(uid string) (supplier Supplier, code int) {
 }
 
 func SelectSuppliers(pageSize int, pageNo int, supplierQuery *SupplierQuery) (suppliers []Supplier, code int, total int64) {
-	err = db.Where("is_delete = ?", false).Where("name LIKE ? AND linkman LIKE ? AND phone LIKE ?", "%"+supplierQuery.Name+"%", "%"+supplierQuery.Linkman+"%", "%"+supplierQuery.Phone+"%").
-		Find(&suppliers).Count(&total).
+
+	tDb := db.Where("is_delete = ?", false)
+
+	if supplierQuery.Name != "" {
+		tDb = tDb.Where("name LIKE ?", "%"+supplierQuery.Name+"%")
+	}
+	if supplierQuery.Linkman != "" {
+		tDb = tDb.Where("linkman LIKE ?", "%"+supplierQuery.Linkman+"%")
+	}
+	if supplierQuery.Phone != "" {
+		tDb = tDb.Where("phone LIKE ?", "%"+supplierQuery.Phone+"%")
+	}
+
+	err = tDb.Find(&suppliers).Count(&total).
 		Limit(pageSize).Offset((pageNo - 1) * pageSize).
 		Find(&suppliers).Error
 	if err != nil && err != gorm.ErrRecordNotFound {

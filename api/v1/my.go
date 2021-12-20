@@ -47,11 +47,11 @@ func QueryMyTasks(c *gin.Context) {
 //查询我的报销
 func QueryMyExpenses(c *gin.Context) {
 	var expenses []model.Expense
-	var expense model.Expense
+	var expenseQuery model.ExpenseQuery
 	var total int64
 
-	_ = c.ShouldBindJSON(&expense)
-	expense.EmployeeUID = c.MustGet("employeeUID").(string)
+	_ = c.ShouldBindJSON(&expenseQuery)
+	expenseQuery.EmployeeUID = c.MustGet("employeeUID").(string)
 
 	pageSize, pageSizeErr := strconv.Atoi(c.Query("pageSize"))
 	pageNo, pageNoErr := strconv.Atoi(c.Query("pageNo"))
@@ -62,6 +62,6 @@ func QueryMyExpenses(c *gin.Context) {
 		pageNo = 1
 	}
 
-	expenses, code, total = model.SelectMyExpenses(pageSize, pageNo, &expense)
+	expenses, code, total = model.SelectExpenses(pageSize, pageNo, &expenseQuery)
 	msg.MessageForList(c, code, expenses, pageSize, pageNo, total)
 }

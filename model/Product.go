@@ -18,7 +18,6 @@ type Product struct {
 	Number           int     `gorm:"type:int;comment:可售数量(库存数量-订单锁定但未出库的数量)" json:"number"`
 	NumberCount      int     `gorm:"type:int;comment:库存数量" json:"numberCount"`
 	Unit             string  `gorm:"type:varchar(50);comment:单位" json:"unit"`
-	PurchasedPrice   float64 `gorm:"type:decimal(20,6);comment:采购价格(元)" json:"purchasedPrice"`
 	StandardPrice    float64 `gorm:"type:decimal(20,6);comment:标准价格(元)" json:"standardPrice"`
 	StandardPriceUSD float64 `gorm:"type:decimal(20,6);comment:标准价格(美元)" json:"standardPriceUSD"`
 	DeliveryCycle    string  `gorm:"type:varchar(50);comment:供货周期" json:"deliveryCycle"`
@@ -37,7 +36,7 @@ type ProductType struct {
 	PushMoneyPercentages       float64 `gorm:"type:decimal(20,6);comment:标准提成百分比" json:"pushMoneyPercentages"`
 	PushMoneyPercentagesUp     float64 `gorm:"type:decimal(20,6);comment:提成上涨百分比" json:"pushMoneyPercentagesUp"`
 	PushMoneyPercentagesDown   float64 `gorm:"type:decimal(20,6);comment:提成下降百分比" json:"pushMoneyPercentagesDown"`
-	BusinessMoneyPercentages   float64 `gorm:"type:decimal(20,6);comment:标准业务费用" json:"businessMoneyPercentages"`
+	BusinessMoneyPercentages   float64 `gorm:"type:decimal(20,6);comment:标准业务费用百分比" json:"businessMoneyPercentages"`
 	BusinessMoneyPercentagesUp float64 `gorm:"type:decimal(20,6);comment:业务费用上涨百分比" json:"businessMoneyPercentagesUp"`
 
 	IsDelete bool `gorm:"type:boolean;comment:是否删除" json:"isDelete"`
@@ -59,7 +58,6 @@ func InsertProduct(product *Product) (code int) {
 }
 
 func DeleteProduct(uid string) (code int) {
-	// err = db.Where("uid = ?", uid).Delete(&Product{}).Error
 	err = db.Model(&Product{}).Where("uid = ?", uid).Update("is_delete", true).Error
 	if err != nil {
 		return msg.ERROR_PRODUCT_DELETE
@@ -82,6 +80,8 @@ func UpdateProductBase(product *Product) (code int) {
 	maps["name"] = product.Name
 	maps["brand"] = product.Brand
 	maps["specification"] = product.Specification
+	maps["unit"] = product.Unit
+	maps["delivery_cycle"] = product.DeliveryCycle
 	maps["remarks"] = product.Remarks
 	err = db.Model(&Product{}).Where("uid = ?", product.UID).Updates(maps).Error
 	if err != nil {
@@ -100,7 +100,6 @@ func UpdateProductNumber(product *Product) (code int) {
 
 func UpdateProductPrice(product *Product) (code int) {
 	var maps = make(map[string]interface{})
-	maps["purchased_price"] = product.PurchasedPrice
 	maps["standard_price"] = product.StandardPrice
 	maps["standard_price_usd"] = product.StandardPriceUSD
 	err = db.Model(&Product{}).Where("uid = ?", product.UID).Updates(maps).Error
@@ -129,9 +128,19 @@ func SelectProducts(pageSize int, pageNo int, productQuery *ProductQuery) (produ
 		maps["type_uid"] = productQuery.TypeUID
 	}
 
-	err = db.Where(maps).Where("name LIKE ? AND specification LIKE ?", "%"+productQuery.Name+"%", "%"+productQuery.Specification+"%").
-		Find(&products).Count(&total).Preload("Supplier").Preload("Type").
-		Limit(pageSize).Offset((pageNo - 1) * pageSize).Find(&products).Error
+	tDb := db.Where(maps)
+
+	if productQuery.Name != "" {
+		tDb = tDb.Where("name LIKE ?", "%"+productQuery.Name+"%")
+	}
+	if productQuery.Specification != "" {
+		tDb = tDb.Where("specification LIKE ?", "%"+productQuery.Specification+"%")
+	}
+
+	err = tDb.Find(&products).Count(&total).
+		Preload("Supplier").Preload("Type").
+		Limit(pageSize).Offset((pageNo - 1) * pageSize).
+		Find(&products).Error
 
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return products, msg.ERROR, 0
@@ -163,6 +172,8 @@ func UpdateProductType(productType *ProductType) (code int) {
 	maps["push_money_percentages"] = productType.PushMoneyPercentages
 	maps["push_money_percentages_up"] = productType.PushMoneyPercentagesUp
 	maps["push_money_percentages_down"] = productType.PushMoneyPercentagesDown
+	maps["business_money_percentages"] = productType.BusinessMoneyPercentages
+	maps["business_money_percentages_up"] = productType.BusinessMoneyPercentagesUp
 	err = db.Model(&ProductType{}).Where("uid = ?", productType.UID).Updates(maps).Error
 	if err != nil {
 		return msg.ERROR

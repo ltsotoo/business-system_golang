@@ -35,16 +35,16 @@ func EditBidBond(c *gin.Context) {
 
 func ApproveBidBond(c *gin.Context) {
 	uid := c.Param("uid")
-	code = model.ApproveBidBond(uid)
+	code = model.ApproveBidBond(uid, c.MustGet("employeeUID").(string))
 	msg.Message(c, code, nil)
 }
 
 func QueryBidBonds(c *gin.Context) {
 	var bidBonds []model.BidBond
-	var bidBond model.BidBond
+	var bidBondQuery model.BidBondQuery
 	var total int64
 
-	_ = c.ShouldBindJSON(&bidBond)
+	_ = c.ShouldBindJSON(&bidBondQuery)
 
 	pageSize, pageSizeErr := strconv.Atoi(c.Query("pageSize"))
 	pageNo, pageNoErr := strconv.Atoi(c.Query("pageNo"))
@@ -55,6 +55,6 @@ func QueryBidBonds(c *gin.Context) {
 		pageNo = 1
 	}
 
-	bidBonds, code, total = model.SelectBidBonds(pageSize, pageNo, &bidBond)
+	bidBonds, code, total = model.SelectBidBonds(pageSize, pageNo, &bidBondQuery)
 	msg.MessageForList(c, code, bidBonds, pageSize, pageNo, total)
 }

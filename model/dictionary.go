@@ -9,7 +9,7 @@ import (
 
 //字典类型表 Model
 type DictionaryType struct {
-	BaseModel
+	ID   uint   `gorm:"primary_key" json:"ID"`
 	UID  string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
 	Name string `gorm:"type:varchar(50);comment:名称;not null" json:"name"`
 	Text string `gorm:"type:varchar(50);comment:文本;not null" json:"text"`
@@ -19,10 +19,11 @@ type DictionaryType struct {
 
 //字典表 Model
 type Dictionary struct {
-	BaseModel
+	ID                uint   `gorm:"primary_key" json:"ID"`
 	UID               string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
 	DictionaryTypeUID string `gorm:"type:varchar(32);comment:类型ID;default:(-)" json:"dictionaryTypeUID"`
 	Text              string `gorm:"type:varchar(50);comment:文本" json:"text"`
+	Value             int    `gorm:"type:int;comment:值;default:(-)" json:"value"`
 	IsDelete          bool   `gorm:"type:boolean;comment:是否删除" json:"isDelete"`
 
 	DictionaryType DictionaryType `gorm:"foreignKey:DictionaryTypeUID;references:UID" json:"dictionaryType"`

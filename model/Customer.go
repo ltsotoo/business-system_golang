@@ -26,7 +26,6 @@ type Customer struct {
 type CustomerQuery struct {
 	RegionUID     string `json:"regionUID"`
 	CompanyUID    string `json:"companyUID"`
-	CompanyName   string `json:"companyName"`
 	ResearchGroup string `json:"researchGroup"`
 	Name          string `json:"name"`
 }
@@ -54,7 +53,6 @@ func InsertCustomer(customer *Customer) (code int) {
 }
 
 func DeleteCustomer(uid string) (code int) {
-	// err = db.Where("uid = ?", uid).Delete(&Customer{}).Error
 	err = db.Model(&Customer{}).Where("uid = ?", uid).Update("is_delete", true).Error
 	if err != nil {
 		return msg.ERROR_CUSTOMER_DELETE
@@ -90,20 +88,19 @@ func SelectCustomer(uid string) (customer Customer, code int) {
 
 func SelectCustomers(pageSize int, pageNo int, customerQuery *CustomerQuery) (customers []Customer, code int, total int64) {
 	tDb := db.Joins("Company").Where("customer.is_delete = ? AND status = ?", false, 1)
+
 	if customerQuery.RegionUID != "" {
 		tDb = tDb.Where("Company.region_uid = ?", customerQuery.RegionUID)
 	}
+	if customerQuery.CompanyUID != "" {
+		tDb = tDb.Where("customer.company_uid = ?", customerQuery.CompanyUID)
+	}
+
 	if customerQuery.Name != "" {
 		tDb = tDb.Where("customer.name LIKE ?", "%"+customerQuery.Name+"%")
 	}
-	if customerQuery.CompanyName != "" {
-		tDb = tDb.Where("Company.name LIKE ?", "%"+customerQuery.CompanyName+"%")
-	}
 	if customerQuery.ResearchGroup != "" {
 		tDb = tDb.Where("customer.research_group LIKE ?", "%"+customerQuery.ResearchGroup+"%")
-	}
-	if customerQuery.CompanyUID != "" {
-		tDb = tDb.Where("customer.company_uid = ?", customerQuery.CompanyUID)
 	}
 
 	err = tDb.Find(&customers).Count(&total).
@@ -125,7 +122,6 @@ func InsertCustomerCompany(customerCompany *CustomerCompany) (code int) {
 }
 
 func DeleteCustomerCompany(uid string) (code int) {
-	// err = db.Where("uid = ?", uid).Delete(&CustomerCompany{}).Error
 	err = db.Model(&CustomerCompany{}).Where("uid = ?", uid).Update("is_delete", true).Error
 	if err != nil {
 		return msg.ERROR
@@ -147,22 +143,25 @@ func UpdateCustomerCompany(customerCompany *CustomerCompany) (code int) {
 	return msg.SUCCESS
 }
 
-func SelectCustomerCompanys(customerCompany *CustomerCompany) (CustomerCompanys []CustomerCompany, code int) {
+func SelectCustomerCompanys(pageSize int, pageNo int, customerCompany *CustomerCompany) (CustomerCompanys []CustomerCompany, code int, total int64) {
 	var maps = make(map[string]interface{})
+	maps["is_delete"] = false
 	if customerCompany.RegionUID != "" {
 		maps["region_uid"] = customerCompany.RegionUID
 	}
-	maps["is_delete"] = false
 
-	tdb := db.Preload("Region").Where(maps)
+	tdb := db.Where(maps)
 
 	if customerCompany.Name != "" {
 		tdb = tdb.Where("name LIKE ?", "%"+customerCompany.Name+"%")
 	}
 
-	err = tdb.Find(&CustomerCompanys).Error
+	err = tdb.Find(&CustomerCompanys).Count(&total).
+		Preload("Region").
+		Limit(pageSize).Offset((pageNo - 1) * pageSize).
+		Find(&CustomerCompanys).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
-		return CustomerCompanys, msg.ERROR
+		return CustomerCompanys, msg.ERROR, total
 	}
-	return CustomerCompanys, msg.SUCCESS
+	return CustomerCompanys, msg.SUCCESS, total
 }

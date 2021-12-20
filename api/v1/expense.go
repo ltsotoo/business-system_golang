@@ -24,13 +24,29 @@ func ApprovalExpense(c *gin.Context) {
 	var expense, expenseDB model.Expense
 	_ = c.ShouldBindJSON(&expense)
 	expenseDB, code = model.SelectExpense(expense.UID)
-	if code == msg.SUCCESS && expenseDB.Status > 0 && expenseDB.Status < 3 &&
-		(expense.Status == magic.EXPENSE_STATUS_FAIL ||
-			expense.Status == magic.EXPENSE_STATUS_NOT_APPROVAL_2 ||
-			expense.Status == magic.EXPENSE_STATUS_PASS) {
-		expense.ApproverUID = c.MustGet("employeeUID").(string)
-		code = model.UpdateMoneyExpense(&expense)
+
+	if code == msg.SUCCESS && expense.Status == expenseDB.Status &&
+		expense.Status > 0 && expense.Status < 4 {
+		var maps = make(map[string]interface{})
+
+		switch expense.Status {
+		case magic.EXPENSE_STATUS_NOT_APPROVAL_1:
+			maps["approver_uid1"] = c.MustGet("employeeUID").(string)
+		case magic.EXPENSE_STATUS_NOT_APPROVAL_2:
+			maps["approver_uid2"] = c.MustGet("employeeUID").(string)
+		case magic.EXPENSE_STATUS_NOT_PAYMENT:
+			maps["approver_uid3"] = c.MustGet("employeeUID").(string)
+		}
+
+		if expense.IsPass {
+			expense.Status = expense.Status + 1
+		} else {
+			expense.Status = -1
+		}
+		maps["status"] = expense.Status
+		code = model.ApprovalExpense(&expense, maps)
 	}
+
 	msg.Message(c, code, expense)
 }
 

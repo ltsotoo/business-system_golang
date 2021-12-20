@@ -57,7 +57,7 @@ func QueryCustomers(c *gin.Context) {
 	}
 
 	customers, code, total = model.SelectCustomers(pageSize, pageNo, &customerQuery)
-	msg.MessageForList(c, msg.SUCCESS, customers, pageSize, pageNo, total)
+	msg.MessageForList(c, code, customers, pageSize, pageNo, total)
 }
 
 func AddCustomerCompany(c *gin.Context) {
@@ -82,11 +82,21 @@ func EditCustomerCompany(c *gin.Context) {
 
 //查询客户公司列表
 func QueryCustomerCompanys(c *gin.Context) {
-	var company model.CustomerCompany
 	var companys []model.CustomerCompany
+	var total int64
+	var company model.CustomerCompany
 
 	_ = c.ShouldBindJSON(&company)
 
-	companys, code = model.SelectCustomerCompanys(&company)
-	msg.Message(c, code, companys)
+	pageSize, pageSizeErr := strconv.Atoi(c.Query("pageSize"))
+	pageNo, pageNoErr := strconv.Atoi(c.Query("pageNo"))
+	if pageSizeErr != nil || pageSize < 0 {
+		pageSize = 10
+	}
+	if pageNoErr != nil || pageNo < 0 {
+		pageNo = 1
+	}
+
+	companys, code, total = model.SelectCustomerCompanys(pageSize, pageNo, &company)
+	msg.MessageForList(c, code, companys, pageSize, pageNo, total)
 }
