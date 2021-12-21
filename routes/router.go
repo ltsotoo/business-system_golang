@@ -121,9 +121,8 @@ func InitRouter() {
 		auth.POST("preResearchs", v1.QueryPreResearchs)
 		auth.GET("preResearchTask/:uid", v1.QueryPreResearchTask)
 		auth.POST("preResearchTasks", v1.QueryPreResearchTasks)
-		// auth.PUT("preResearch", v1.EditPreResearch)
-		auth.PUT("preResearch", v1.UpdatePreResearch)
-		auth.PUT("preResearchTask", v1.UpdatePreResearchTask)
+		auth.PUT("approvePreResearch", v1.ApprovePreResearch)
+		auth.PUT("approvePreResearchTask", v1.ApprovePreResearchTask)
 		//投标保证金模块
 		auth.POST("bidBond", v1.AddBidBond)
 		auth.DELETE("bidBond/:uid", v1.DelBidBond)

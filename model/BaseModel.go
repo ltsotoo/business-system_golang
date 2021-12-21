@@ -14,7 +14,7 @@ type XTime struct {
 }
 
 func (t *XTime) UnmarshalJSON(data []byte) error {
-	if len(data) == 2 {
+	if len(data) == 2 || string(data) == "null" {
 		return nil
 	}
 	var err error
@@ -62,7 +62,7 @@ type XDate struct {
 }
 
 func (t *XDate) UnmarshalJSON(data []byte) error {
-	if string(data) == "null" {
+	if len(data) == 2 || string(data) == "null" {
 		return nil
 	}
 	var err error

@@ -61,18 +61,7 @@ func InsertPreResearch(preResearch *PreResearch) (code int) {
 }
 
 func DeletePreResearch(uid string) (code int) {
-	// err = db.Delete(&PreResearch{}, "uid = ?", uid).Error
-	err = db.Model(&PreResearch{}).Where("uid = ?", uid).Update("is_delete", true).Error
-	if err != nil {
-		return msg.ERROR
-	}
-	return msg.SUCCESS
-}
-
-func UpdatePreResearch(preResearch *PreResearch) (code int) {
-	var maps = make(map[string]interface{})
-	maps["remarks"] = preResearch.Remarks
-	err = db.Model(&PreResearch{}).Where("uid = ?", preResearch.UID).Updates(maps).Error
+	err = db.Model(&PreResearch{}).Where("uid = ? And status = ?", uid, 1).Update("is_delete", true).Error
 	if err != nil {
 		return msg.ERROR
 	}

@@ -23,13 +23,6 @@ func DelPreResearch(c *gin.Context) {
 	msg.Message(c, code, nil)
 }
 
-func EditPreResearch(c *gin.Context) {
-	var preResearch model.PreResearch
-	_ = c.ShouldBindJSON(&preResearch)
-	code = model.UpdatePreResearch(&preResearch)
-	msg.Message(c, code, preResearch)
-}
-
 func QueryPreResearch(c *gin.Context) {
 	var preResearch model.PreResearch
 	uid := c.Param("uid")
@@ -84,7 +77,7 @@ func QueryPreResearchTasks(c *gin.Context) {
 	msg.MessageForList(c, code, preResearchTasks, pageSize, pageNo, total)
 }
 
-func UpdatePreResearch(c *gin.Context) {
+func ApprovePreResearch(c *gin.Context) {
 	var preResearchQuery model.PreResearchQuery
 	_ = c.ShouldBindJSON(&preResearchQuery)
 	preResearchQuery.AuditorUID = c.MustGet("employeeUID").(string)
@@ -92,7 +85,7 @@ func UpdatePreResearch(c *gin.Context) {
 	msg.Message(c, code, nil)
 }
 
-func UpdatePreResearchTask(c *gin.Context) {
+func ApprovePreResearchTask(c *gin.Context) {
 	var preResearchTask model.PreResearchTask
 	_ = c.ShouldBindJSON(&preResearchTask)
 	preResearchTask.AuditorUID = c.MustGet("employeeUID").(string)
