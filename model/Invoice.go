@@ -10,14 +10,15 @@ type Invoice struct {
 	UID          string  `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
 	ContractUID  string  `gorm:"type:varchar(32);comment:合同ID" json:"contractUID"`
 	EmployeeUID  string  `gorm:"type:varchar(32);comment:添加员工UID;default:(-)" json:"employeeUID"`
-	Code         string  `gorm:"type:varchar(100);comment:发票号;not null;unique" json:"code"`
+	Code         string  `gorm:"type:varchar(100);comment:发票号" json:"code"`
 	Money        float64 `gorm:"type:decimal(20,6);comment:总金额" json:"money"`
-	PaymentMoney float64 `gorm:"type:decimal(20,6);comment:回款总金额(人民币)" json:"paymentMoney"`
+	PaymentMoney float64 `gorm:"type:decimal(20,6);comment:回款总金额" json:"paymentMoney"`
 	Status       int     `gorm:"type:int;comment:状态(1:未完成回款 2:完成回款)" json:"status"`
 	IsDelete     bool    `gorm:"type:boolean;comment:是否删除" json:"isDelete"`
 
-	Contract Contract `gorm:"foreignKey:ContractUID;references:UID" json:"contract"`
-	Employee Employee `gorm:"foreignKey:EmployeeUID;references:UID" json:"employee"`
+	Contract Contract  `gorm:"foreignKey:ContractUID;references:UID" json:"contract"`
+	Employee Employee  `gorm:"foreignKey:EmployeeUID;references:UID" json:"employee"`
+	Payments []Payment `gorm:"foreignKey:InvoiceUID;references:UID" json:"payments"`
 }
 
 func InsertInvoice(invoice *Invoice) (code int) {

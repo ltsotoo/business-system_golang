@@ -34,6 +34,7 @@ type Contract struct {
 	PayType               int     `gorm:"type:int;comment:付款类型(1:人民币 2:美元)" json:"payType"`
 	TotalAmount           float64 `gorm:"type:decimal(20,6);comment:总金额" json:"totalAmount"`
 	PaymentTotalAmount    float64 `gorm:"type:decimal(20,6);comment:回款总金额(人民币)" json:"paymentTotalAmount"`
+	PaymentTotalAmountUSD float64 `gorm:"type:decimal(20,6);comment:回款总金额(美元)" json:"paymentTotalAmountUSD"`
 	Remarks               string  `gorm:"type:varchar(600);comment:备注" json:"remarks"`
 	Status                int     `gorm:"type:int;comment:状态(-1:审批驳回 1:待审批 2:未完成 3:已完成);not null" json:"status"`
 	ProductionStatus      int     `gorm:"type:int;comment:生产状态(1:生产中 2:生产完成)" json:"productionStatus"`
@@ -48,6 +49,7 @@ type Contract struct {
 	ContractUnit Dictionary `gorm:"foreignKey:ContractUnitUID;references:UID" json:"contractUnit"`
 	Tasks        []Task     `gorm:"foreignKey:ContractUID;references:UID" json:"tasks"`
 	Invoices     []Invoice  `gorm:"foreignKey:ContractUID;references:UID" json:"invoices"`
+	Payments     []Payment  `gorm:"foreignKey:ContractUID;references:UID" json:"payments"`
 }
 
 type ContractQuery struct {
@@ -100,12 +102,19 @@ func DeleteContract(uid string) (code int) {
 }
 
 func SelectContract(uid string) (contract Contract, code int) {
-	err = db.Preload("Region").Preload("Office").Preload("Employee").
+	tdb := db
+	if contract.InvoiceType == 1 {
+		tdb = db.Preload("Payments")
+	} else {
+		tdb = db.Preload("Invoices.Payments")
+	}
+
+	err = tdb.Preload("Region").Preload("Office").Preload("Employee").
 		Preload("Customer.Company").Preload("ContractUnit").
 		Preload("Tasks.Product.Type").
 		Preload("Tasks.TechnicianMan").Preload("Tasks.PurchaseMan").
 		Preload("Tasks.InventoryMan").Preload("Tasks.ShipmentMan").
-		Preload("Invoices").Where("is_delete = ?", false).
+		Where("is_delete = ?", false).
 		First(&contract, "uid = ?", uid).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {

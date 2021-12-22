@@ -1,6 +1,12 @@
 package magic
 
 const (
+
+	//合同人民币回款
+	CONTRACT_PAYTYPE_CNY = 1
+	//合同美元回款
+	CONTRACT_PAYTYPE_USD = 2
+
 	//审批驳回
 	CONTRACT_STATUS_REJECT = -1
 	//审批中

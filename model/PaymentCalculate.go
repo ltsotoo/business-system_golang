@@ -31,8 +31,10 @@ func simple(payType int, endDeliveryDate time.Time, payment *Payment, task *Task
 	} else {
 		tempPrice = task.StandardPriceUSD
 	}
-	if task.Price > tempPrice {
+	if task.Price >= tempPrice {
+		//产品任务标准价总额
 		paymentTotalStandardPrice := task.StandardPrice * float64(task.Number)
+
 		if task.PaymentTotalPrice < paymentTotalStandardPrice {
 			difference := paymentTotalStandardPrice - task.PaymentTotalPrice
 			if difference >= payment.Money {
@@ -65,13 +67,6 @@ func simple(payType int, endDeliveryDate time.Time, payment *Payment, task *Task
 		fine = round(theoreticalPushMoney*rate, 3)
 	}
 
-	//汇率换算
-	if payType == 2 {
-		theoreticalPushMoney = round(theoreticalPushMoney*payment.Parities, 3)
-		businessMoney = round(businessMoney*payment.Parities, 3)
-		fine = round(fine*payment.Parities, 3)
-	}
-
 	realPushMoney = theoreticalPushMoney - fine
 
 	return
@@ -89,10 +84,7 @@ func special(payType int, endDeliveryDate time.Time, payment *Payment, task *Tas
 		}
 		fine = round(theoreticalPushMoney*rate, 3)
 	}
-	if payType == 2 {
-		theoreticalPushMoney = round(theoreticalPushMoney*payment.Parities, 3)
-		fine = round(fine*payment.Parities, 3)
-	}
+
 	realPushMoney = theoreticalPushMoney - fine
 
 	return
