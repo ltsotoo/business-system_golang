@@ -100,26 +100,10 @@ func UpdatePayment(payment *Payment) (code int) {
 	return msg.SUCCESS
 }
 
-func SelectPaymentsByContractUID(contractUID string) (payments []Payment, code int) {
+func SelectPayments(contractUID string) (payments []Payment, code int) {
 	err = db.Where("contract_uid = ?", contractUID).Find(&payments).Error
 	if err != nil {
 		return payments, msg.ERROR
 	}
 	return payments, msg.SUCCESS
-}
-
-func SelectContractAndPayments(uid string) (contract Contract, code int) {
-	err = db.Preload("ContractUnit").
-		Preload("Employee").Preload("Employee.Office").
-		Preload("Customer").Preload("Customer.Company").
-		Preload("Payments").
-		First(&contract, "uid = ?", uid).Error
-	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return contract, msg.ERROR_CONTRACT_NOT_EXIST
-		} else {
-			return contract, msg.ERROR_CONTRACT_SELECT
-		}
-	}
-	return contract, msg.SUCCESS
 }

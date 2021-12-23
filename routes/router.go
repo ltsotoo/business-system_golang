@@ -43,6 +43,7 @@ func InitRouter() {
 		auth.GET("resetPwd/:uid", v1.ResetEmployeePwd)
 		auth.POST("editMyPwd", v1.EditMyPwd)
 		//员工模块接口PLUS
+		auth.GET("topList", v1.TopList)
 		auth.POST("office", v1.EntryOffice)
 		auth.DELETE("office/:uid", v1.DelOffice)
 		auth.PUT("office", v1.EditOffice)
@@ -76,7 +77,7 @@ func InitRouter() {
 		//回款模块接口
 		auth.POST("payment", v1.AddPayment)
 		auth.PUT("payment", v1.EditPayment)
-		auth.GET("payments/:contractUID", v1.QueryPaymentsForContract)
+		auth.GET("payments/:contractUID", v1.QueryPayments)
 		auth.POST("finishPayments", v1.FinishPayments)
 		//客户模块接口
 		auth.POST("customer", v1.EntryCustomer)
@@ -134,7 +135,8 @@ func InitRouter() {
 		auth.DELETE("invoice/:uid", v1.DelInvoice)
 		auth.PUT("invoice", v1.EditInvoice)
 		auth.PUT("invoice/approve/:uid", v1.ApproveInvoice)
-		auth.POST("invoices", v1.QueryInvoices)
+		auth.GET("invoices/:contractUID", v1.QueryInvoices)
+		auth.POST("invoicesAndPayments", v1.QueryInvoicesAndPayments)
 	}
 
 	_ = r.Run(config.SystemConfig.Server.Port)

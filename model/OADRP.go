@@ -19,6 +19,8 @@ type Office struct {
 	TaskLoad      float64 `gorm:"type:decimal(20,6);comment:今年目标量(元)" json:"taskLoad"`
 	TargetLoad    float64 `gorm:"type:decimal(20,6);comment:今年完成量(元)" json:"targetLoad"`
 	IsDelete      bool    `gorm:"type:boolean;comment:是否删除" json:"isDelete"`
+
+	FinalPercentages float64 `gorm:"-" json:"finalPercentages"`
 }
 
 type Department struct {

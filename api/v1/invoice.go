@@ -3,7 +3,6 @@ package v1
 import (
 	"business-system_golang/model"
 	"business-system_golang/utils/msg"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -42,19 +41,26 @@ func ApproveInvoice(c *gin.Context) {
 func QueryInvoices(c *gin.Context) {
 	var invoices []model.Invoice
 	var invoice model.Invoice
-	var total int64
 
 	_ = c.ShouldBindJSON(&invoice)
 
-	pageSize, pageSizeErr := strconv.Atoi(c.Query("pageSize"))
-	pageNo, pageNoErr := strconv.Atoi(c.Query("pageNo"))
-	if pageSizeErr != nil || pageSize < 0 {
-		pageSize = 10
-	}
-	if pageNoErr != nil || pageNo < 0 {
-		pageNo = 1
+	invoices, code = model.SelectInvoices(&invoice)
+	msg.Message(c, code, invoices)
+}
+
+func QueryInvoicesAndPayments(c *gin.Context) {
+	var invoices []model.Invoice
+	var payment []model.Payment
+	var contract model.Contract
+
+	_ = c.ShouldBindJSON(&contract)
+
+	if contract.InvoiceType == 1 {
+		payment, code = model.SelectPayments(contract.UID)
+		msg.Message(c, code, payment)
+	} else {
+		invoices, code = model.SelectInvoicesAndPayments(contract.UID)
+		msg.Message(c, code, invoices)
 	}
 
-	invoices, code, total = model.SelectInvoices(pageSize, pageNo, &invoice)
-	msg.MessageForList(c, code, invoices, pageSize, pageNo, total)
 }

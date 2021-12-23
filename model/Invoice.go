@@ -59,7 +59,7 @@ func ApproveInvoice(uid string) (code int) {
 	return msg.SUCCESS
 }
 
-func SelectInvoices(pageSize int, pageNo int, invoice *Invoice) (invoices []Invoice, code int, total int64) {
+func SelectInvoices(invoice *Invoice) (invoices []Invoice, code int) {
 	var maps = make(map[string]interface{})
 	maps["is_delete"] = false
 
@@ -70,11 +70,17 @@ func SelectInvoices(pageSize int, pageNo int, invoice *Invoice) (invoices []Invo
 		maps["status"] = invoice.Status
 	}
 
-	err = db.Where(maps).Find(&invoices).Count(&total).
-		Preload("Contract.Employee").Limit(pageSize).Offset((pageNo - 1) * pageSize).
-		Find(&invoices).Error
+	err = db.Preload("Contract.Employee").Where(maps).Find(&invoices).Error
 	if err != nil {
-		return invoices, msg.ERROR, total
+		return invoices, msg.ERROR
 	}
-	return invoices, msg.SUCCESS, total
+	return invoices, msg.SUCCESS
+}
+
+func SelectInvoicesAndPayments(contractUID string) (invoices []Invoice, code int) {
+	err = db.Preload("Payments").Where("contract_uid = ?", contractUID).Find(&invoices).Error
+	if err != nil {
+		return invoices, msg.ERROR
+	}
+	return invoices, msg.SUCCESS
 }

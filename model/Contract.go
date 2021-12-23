@@ -50,6 +50,8 @@ type Contract struct {
 	Tasks        []Task     `gorm:"foreignKey:ContractUID;references:UID" json:"tasks"`
 	Invoices     []Invoice  `gorm:"foreignKey:ContractUID;references:UID" json:"invoices"`
 	Payments     []Payment  `gorm:"foreignKey:ContractUID;references:UID" json:"payments"`
+
+	IsFinalCollectionStatus bool `gorm:"-" json:"isFinalCollectionStatus"`
 }
 
 type ContractQuery struct {
@@ -102,14 +104,14 @@ func DeleteContract(uid string) (code int) {
 }
 
 func SelectContract(uid string) (contract Contract, code int) {
-	tdb := db
-	if contract.InvoiceType == 1 {
-		tdb = db.Preload("Payments")
-	} else {
-		tdb = db.Preload("Invoices.Payments")
-	}
+	// tdb := db
+	// if contract.InvoiceType == 1 {
+	// 	tdb = db.Preload("Payments")
+	// } else {
+	// 	tdb = db.Preload("Invoices.Payments")
+	// }
 
-	err = tdb.Preload("Region").Preload("Office").Preload("Employee").
+	err = db.Preload("Region").Preload("Office").Preload("Employee").
 		Preload("Customer.Company").Preload("ContractUnit").
 		Preload("Tasks.Product.Type").
 		Preload("Tasks.TechnicianMan").Preload("Tasks.PurchaseMan").
@@ -261,7 +263,11 @@ func UpdateContractProductionStatusToFinish(uid string) (code int) {
 //变更合同回款状态为已完成
 func UpdateContractCollectionStatusToFinish(contract *Contract) (code int) {
 	var maps = make(map[string]interface{})
-	maps["collection_status"] = magic.CONTATCT_COLLECTION_STATUS_FINISH
+	if contract.IsFinalCollectionStatus {
+		maps["collection_status"] = magic.CONTATCT_COLLECTION_STATUS_FINISH
+	} else {
+		maps["collection_status"] = magic.CONTATCT_COLLECTION_STATUS_ING
+	}
 	err = db.Model(&Contract{}).Where("uid = ?", contract.UID).Updates(maps).Error
 
 	if err != nil {

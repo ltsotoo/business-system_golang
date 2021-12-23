@@ -22,10 +22,10 @@ func EditPayment(c *gin.Context) {
 	msg.Message(c, code, nil)
 }
 
-func QueryPaymentsForContract(c *gin.Context) {
+func QueryPayments(c *gin.Context) {
 	var payments []model.Payment
 	contractUID := c.Param("contractUID")
-	payments, code = model.SelectPaymentsByContractUID(contractUID)
+	payments, code = model.SelectPayments(contractUID)
 	msg.Message(c, code, payments)
 }
 
