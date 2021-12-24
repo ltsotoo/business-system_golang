@@ -49,18 +49,9 @@ func QueryInvoices(c *gin.Context) {
 }
 
 func QueryInvoicesAndPayments(c *gin.Context) {
-	var invoices []model.Invoice
-	var payment []model.Payment
 	var contract model.Contract
-
 	_ = c.ShouldBindJSON(&contract)
-
-	if contract.InvoiceType == 1 {
-		payment, code = model.SelectPayments(contract.UID)
-		msg.Message(c, code, payment)
-	} else {
-		invoices, code = model.SelectInvoicesAndPayments(contract.UID)
-		msg.Message(c, code, invoices)
-	}
-
+	contract.Payments, code = model.SelectPayments(contract.UID)
+	contract.Invoices, code = model.SelectInvoicesAndPayments(contract.UID)
+	msg.Message(c, code, contract)
 }

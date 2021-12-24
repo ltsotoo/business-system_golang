@@ -4,6 +4,7 @@ import (
 	"business-system_golang/model"
 	"business-system_golang/utils/magic"
 	"business-system_golang/utils/msg"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -12,11 +13,21 @@ import (
 func QueryTasks(c *gin.Context) {
 	var tasks []model.Task
 	var task model.Task
+	var total int64
 
 	_ = c.ShouldBindJSON(&task)
 
-	tasks, code = model.SelectTasks(&task)
-	msg.Message(c, code, tasks)
+	pageSize, pageSizeErr := strconv.Atoi(c.Query("pageSize"))
+	pageNo, pageNoErr := strconv.Atoi(c.Query("pageNo"))
+	if pageSizeErr != nil || pageSize < 0 {
+		pageSize = 10
+	}
+	if pageNoErr != nil || pageNo < 0 {
+		pageNo = 1
+	}
+
+	tasks, code, total = model.SelectTasks(pageSize, pageNo, &task)
+	msg.MessageForList(c, code, tasks, pageSize, pageNo, total)
 }
 
 func ApproveTask(c *gin.Context) {

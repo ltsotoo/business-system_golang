@@ -101,7 +101,7 @@ func UpdatePayment(payment *Payment) (code int) {
 }
 
 func SelectPayments(contractUID string) (payments []Payment, code int) {
-	err = db.Where("contract_uid = ?", contractUID).Find(&payments).Error
+	err = db.Where("contract_uid = ? AND invoice_uid is null", contractUID).Find(&payments).Error
 	if err != nil {
 		return payments, msg.ERROR
 	}

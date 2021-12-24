@@ -39,7 +39,6 @@ func InitRouter() {
 		auth.PUT("employee", v1.EditEmployee)
 		auth.GET("employee/:uid", v1.QueryEmployee)
 		auth.POST("employees", v1.QueryEmployees)
-		auth.GET("my", v1.QueryMy)
 		auth.GET("resetPwd/:uid", v1.ResetEmployeePwd)
 		auth.POST("editMyPwd", v1.EditMyPwd)
 		//员工模块接口PLUS
@@ -70,15 +69,13 @@ func InitRouter() {
 		//任务模块接口
 		auth.POST("tasks", v1.QueryTasks)
 		auth.GET("taskRemarks", v1.QueryTaskRemarks)
-		auth.POST("mytasks", v1.QueryMyTasks)
 		//任务流程模块接口
 		auth.PUT("task/flow/approve", v1.ApproveTask)
 		auth.PUT("task/flow/next", v1.NextTask)
 		//回款模块接口
 		auth.POST("payment", v1.AddPayment)
 		auth.PUT("payment", v1.EditPayment)
-		auth.GET("payments/:contractUID", v1.QueryPayments)
-		auth.POST("finishPayments", v1.FinishPayments)
+		auth.POST("changeCollectionStatus", v1.ChangeContractCollectionStatus)
 		//客户模块接口
 		auth.POST("customer", v1.EntryCustomer)
 		auth.DELETE("customer/:uid", v1.DelCustomer)
@@ -114,7 +111,6 @@ func InitRouter() {
 		auth.PUT("expense", v1.ApprovalExpense)
 		auth.GET("expense/:uid", v1.QueryExpense)
 		auth.POST("expenses", v1.QueryExpenses)
-		auth.POST("myexpenses", v1.QueryMyExpenses)
 		//预研究模块
 		auth.POST("preResearch", v1.CreatePreResearch)
 		auth.DELETE("preResearch/:uid", v1.DelPreResearch)

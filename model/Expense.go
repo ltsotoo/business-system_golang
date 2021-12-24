@@ -37,6 +37,8 @@ type ExpenseQuery struct {
 	EmployeeUID   string
 	EmployeeName  string
 	EmployeePhone string
+	StartDate     string `json:"startDate"`
+	EndDate       string `json:"endDate"`
 }
 
 func InsertExpense(expense *Expense) (code int) {
@@ -120,6 +122,18 @@ func SelectExpenses(pageSize int, pageNo int, expenseQuery *ExpenseQuery) (expen
 	}
 
 	tDb := db.Joins("Employee").Where(maps)
+
+	if expenseQuery.StartDate != "" && expenseQuery.EndDate != "" {
+		tDb = tDb.Where("expense.created_at BETWEEN ? AND ?", expenseQuery.StartDate, expenseQuery.EndDate)
+	} else {
+		if expenseQuery.StartDate != "" {
+			tDb = tDb.Where("expense.created_at >= ?", expenseQuery.StartDate)
+		}
+		if expenseQuery.EndDate != "" {
+			tDb = tDb.Where("expense.created_at <= ?", expenseQuery.EndDate)
+		}
+	}
+
 	if expenseQuery.EmployeeName != "" {
 		tDb = tDb.Where("Employee.name LIKE ?", "%"+expenseQuery.EmployeeName+"%")
 	}

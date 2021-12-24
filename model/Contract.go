@@ -55,14 +55,21 @@ type Contract struct {
 }
 
 type ContractQuery struct {
+	RegionUID        string `json:"RegionUID"`
 	No               string `json:"no"`
 	CompanyName      string `json:"companyName"`
 	CustomerName     string `json:"customerName"`
+	PayType          int    `json:"payType"`
 	IsSpecial        int    `json:"isSpecial"`
+	IsPreDeposit     int    `json:"isPreDeposit"`
 	Status           int    `json:"status"`
 	ProductionStatus int    `json:"productionStatus"`
 	CollectionStatus int    `json:"collectionStatus"`
 	EmployeeUID      string `json:"employeeUID"`
+	StartDate        string `json:"startDate"`
+	EndDate          string `json:"endDate"`
+	EmployeeName     string `json:"employeeName"`
+	InvoiceType      int    `json:"invoiceType"`
 }
 
 type ContractFlowQuery struct {
@@ -104,13 +111,6 @@ func DeleteContract(uid string) (code int) {
 }
 
 func SelectContract(uid string) (contract Contract, code int) {
-	// tdb := db
-	// if contract.InvoiceType == 1 {
-	// 	tdb = db.Preload("Payments")
-	// } else {
-	// 	tdb = db.Preload("Invoices.Payments")
-	// }
-
 	err = db.Preload("Region").Preload("Office").Preload("Employee").
 		Preload("Customer.Company").Preload("ContractUnit").
 		Preload("Tasks.Product.Type").
@@ -130,13 +130,27 @@ func SelectContract(uid string) (contract Contract, code int) {
 
 func SelectContracts(pageSize int, pageNo int, contractQuery *ContractQuery) (contracts []Contract, code int, total int64) {
 	var maps = make(map[string]interface{})
+	if contractQuery.RegionUID != "" {
+		maps["region_uid"] = contractQuery.RegionUID
+	}
 	if contractQuery.EmployeeUID != "" {
 		maps["employee_uid"] = contractQuery.EmployeeUID
+	}
+	if contractQuery.PayType != 0 {
+		maps["pay_type"] = contractQuery.PayType
+	}
+	if contractQuery.InvoiceType != 0 {
+		maps["invoice_type"] = contractQuery.InvoiceType
 	}
 	if contractQuery.IsSpecial == 1 {
 		maps["is_special"] = true
 	} else if contractQuery.IsSpecial == 2 {
 		maps["is_special"] = false
+	}
+	if contractQuery.IsPreDeposit == 1 {
+		maps["is_pre_deposit"] = true
+	} else if contractQuery.IsPreDeposit == 2 {
+		maps["is_pre_deposit"] = false
 	}
 	if contractQuery.Status != 0 {
 		maps["status"] = contractQuery.Status
@@ -150,6 +164,17 @@ func SelectContracts(pageSize int, pageNo int, contractQuery *ContractQuery) (co
 
 	tDb := db.Where(maps).Where("contract.is_delete = ?", false)
 
+	if contractQuery.StartDate != "" && contractQuery.EndDate != "" {
+		tDb = tDb.Where("contract_date BETWEEN ? AND ?", contractQuery.StartDate, contractQuery.EndDate)
+	} else {
+		if contractQuery.StartDate != "" {
+			tDb = tDb.Where("contract_date >= ?", contractQuery.StartDate)
+		}
+		if contractQuery.EndDate != "" {
+			tDb = tDb.Where("contract_date <= ?", contractQuery.EndDate)
+		}
+	}
+
 	if contractQuery.CompanyName != "" {
 		tDb = tDb.Joins("Customer").
 			Joins("left join customer_company on Customer.company_uid = customer_company.uid").
@@ -158,6 +183,10 @@ func SelectContracts(pageSize int, pageNo int, contractQuery *ContractQuery) (co
 		if contractQuery.CustomerName != "" {
 			tDb = tDb.Joins("Customer").Where("Customer.name LIKE ?", "%"+contractQuery.CustomerName+"%")
 		}
+	}
+
+	if contractQuery.EmployeeName != "" {
+		tDb = tDb.Joins("Employee").Where("Employee.name LIKE ?", "%"+contractQuery.EmployeeName+"%")
 	}
 
 	if contractQuery.No != "" {
@@ -198,12 +227,20 @@ func ApproveContract(uid string, status int, employeeUID string) (code int) {
 				return tErr
 			}
 
+			//修改合同基础属性(编号、状态、生产状态、回款状态)
 			maps["No"] = CreateNo(&contract)
-
 			if tErr := tdb.Model(&Contract{}).Where("uid = ?", uid).Updates(maps).Error; tErr != nil {
 				return tErr
 			}
 
+			//若合同为预存款合同，给办事处累积任务量
+			if contract.IsPreDeposit {
+				if tErr := tdb.Exec("UPDATE office SET target_load = target_load + ? WHERE uid = ?", contract.PreDeposit, contract.OfficeUID).Error; tErr != nil {
+					return tErr
+				}
+			}
+
+			//产品可售库存减一
 			for i := range contract.Tasks {
 				if tErr := tdb.Exec("UPDATE product SET number = number - ? WHERE uid = ?", contract.Tasks[i].Number, contract.Tasks[i].ProductUID).Error; tErr != nil {
 					return tErr
@@ -218,6 +255,7 @@ func ApproveContract(uid string, status int, employeeUID string) (code int) {
 			}
 			t := time.Now().Format("2006-01-02 15:04:05")
 
+			//修改合同产品任务的开始时间
 			if tErr := tdb.Model(&Task{}).Where("contract_uid = ? AND type = ?", uid, 1).Update("inventory_start_date", t).Error; tErr != nil {
 				return tErr
 			}
@@ -255,13 +293,13 @@ func UpdateContractProductionStatusToFinish(uid string) (code int) {
 	if err != nil {
 		code = msg.ERROR_CONTRACT_UPDATE_P_STATUS
 	} else {
-		code = msg.SUCCESS
+		code = checkContractFinish(uid)
 	}
 	return
 }
 
 //变更合同回款状态为已完成
-func UpdateContractCollectionStatusToFinish(contract *Contract) (code int) {
+func UpdateContractCollectionStatus(contract *Contract) (code int) {
 	var maps = make(map[string]interface{})
 	if contract.IsFinalCollectionStatus {
 		maps["collection_status"] = magic.CONTATCT_COLLECTION_STATUS_FINISH
@@ -273,9 +311,31 @@ func UpdateContractCollectionStatusToFinish(contract *Contract) (code int) {
 	if err != nil {
 		code = msg.ERROR_CONTRACT_UPDATE_P_STATUS
 	} else {
-		code = msg.SUCCESS
+		if contract.IsFinalCollectionStatus {
+			code = checkContractFinish(contract.UID)
+		} else {
+			code = msg.SUCCESS
+		}
 	}
 	return
+}
+
+//检查合同是否完成
+func checkContractFinish(uid string) int {
+	var contract Contract
+	db.First(&contract, "uid = ?", uid)
+	if contract.UID != "" {
+		if contract.ProductionStatus == magic.CONTATCT_PRODUCTION_STATUS_FINISH &&
+			contract.CollectionStatus == magic.CONTATCT_COLLECTION_STATUS_FINISH {
+			err = db.Model(&Contract{}).Where("uid = ?", uid).Update("status", magic.CONTARCT_STATUS_FINISH).Error
+			if err != nil {
+				return msg.ERROR_CONTRACT_UPDATE_P_STATUS
+			} else {
+				return msg.SUCCESS
+			}
+		}
+	}
+	return msg.ERROR
 }
 
 //合同执行中途驳回

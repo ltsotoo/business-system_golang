@@ -51,6 +51,8 @@ type Task struct {
 	PurchaseMan   Employee `gorm:"foreignKey:PurchaseManUID;references:UID" json:"purchaseMan"`
 	InventoryMan  Employee `gorm:"foreignKey:InventoryManUID;references:UID" json:"inventoryMan"`
 	ShipmentMan   Employee `gorm:"foreignKey:ShipmentManUID;references:UID" json:"shipmentMan"`
+
+	EmployeeUID string `gorm:"-" json:"employeeUID"`
 }
 
 type TaskRemarks struct {
@@ -87,39 +89,28 @@ func SelectTask(uid string) (task Task, code int) {
 	return task, msg.SUCCESS
 }
 
-func SelectTasks(task *Task) (tasks []Task, code int) {
+func SelectTasks(pageSize int, pageNo int, task *Task) (tasks []Task, code int, total int64) {
 	var maps = make(map[string]interface{})
-
 	if task.ContractUID != "" {
 		maps["contract_uid"] = task.ContractUID
 	}
-
-	err = db.Preload("Contract").Preload("Product").
-		Preload("TechnicianMan").Preload("PurchaseMan").
-		Preload("InventoryMan").Preload("ShipmentMan").
-		Where(maps).Find(&tasks).Error
-	if err != nil {
-		code = msg.ERROR
-	} else {
-		code = msg.SUCCESS
-	}
-	return
-}
-
-func SelectMyTasks(pageSize int, pageNo int, task *Task, uid string) (tasks []Task, code int, total int64) {
-	var maps = make(map[string]interface{})
 	if task.Status != 0 {
 		maps["task.status"] = task.Status
 	}
-	maps["Contract.status"] = 2
-	maps["Contract.is_delete"] = false
+	if task.EmployeeUID != "" {
+		maps["Contract.status"] = 2
+		maps["Contract.production_status"] = 1
+		maps["Contract.is_delete"] = false
+	}
 
-	err = db.Joins("Contract").Where(maps).
-		Where(db.Where("technician_man_uid = ?", uid).
-			Or("purchase_man_uid = ?", uid).
-			Or("inventory_man_uid = ?", uid).
-			Or("shipment_man_uid = ?", uid)).
-		Find(&tasks).Count(&total).
+	tDb := db.Joins("Contract").Where(maps)
+	if task.EmployeeUID != "" {
+		tDb = tDb.Where(db.Where("technician_man_uid = ?", task.EmployeeUID).
+			Or("purchase_man_uid = ?", task.EmployeeUID).
+			Or("inventory_man_uid = ?", task.EmployeeUID).
+			Or("shipment_man_uid = ?", task.EmployeeUID))
+	}
+	err = tDb.Find(&tasks).Count(&total).
 		Preload("Product").Preload("TechnicianMan").
 		Preload("PurchaseMan").Preload("InventoryMan").Preload("ShipmentMan").
 		Limit(pageSize).Offset((pageNo - 1) * pageSize).

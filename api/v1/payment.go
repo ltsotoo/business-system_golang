@@ -22,18 +22,11 @@ func EditPayment(c *gin.Context) {
 	msg.Message(c, code, nil)
 }
 
-func QueryPayments(c *gin.Context) {
-	var payments []model.Payment
-	contractUID := c.Param("contractUID")
-	payments, code = model.SelectPayments(contractUID)
-	msg.Message(c, code, payments)
-}
-
-func FinishPayments(c *gin.Context) {
+func ChangeContractCollectionStatus(c *gin.Context) {
 	var contract model.Contract
 	_ = c.ShouldBindJSON(&contract)
 
-	code = model.UpdateContractCollectionStatusToFinish(&contract)
+	code = model.UpdateContractCollectionStatus(&contract)
 
 	msg.Message(c, code, nil)
 }
