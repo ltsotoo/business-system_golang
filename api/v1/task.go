@@ -10,6 +10,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func AddTask(c *gin.Context) {
+	var task model.Task
+	_ = c.ShouldBindJSON(&task)
+	code = model.InsertTask(&task)
+	msg.Message(c, code, task)
+}
+
 func QueryTasks(c *gin.Context) {
 	var tasks []model.Task
 	var task model.Task

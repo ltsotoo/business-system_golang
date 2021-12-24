@@ -4,7 +4,6 @@ import (
 	"business-system_golang/utils/magic"
 	"business-system_golang/utils/msg"
 	"business-system_golang/utils/uid"
-	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -83,7 +82,6 @@ func InsertContract(contract *Contract) (code int) {
 	if contract.IsEntryCustomer {
 		contract.Customer = Customer{}
 	} else {
-		fmt.Println(contract.Customer.Name)
 		contract.CustomerUID = ""
 		contract.Customer.UID = uid.Generate()
 		contract.Customer.Status = 0
@@ -330,10 +328,9 @@ func checkContractFinish(uid string) int {
 			err = db.Model(&Contract{}).Where("uid = ?", uid).Update("status", magic.CONTARCT_STATUS_FINISH).Error
 			if err != nil {
 				return msg.ERROR_CONTRACT_UPDATE_P_STATUS
-			} else {
-				return msg.SUCCESS
 			}
 		}
+		return msg.SUCCESS
 	}
 	return msg.ERROR
 }

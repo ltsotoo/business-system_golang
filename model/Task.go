@@ -81,6 +81,35 @@ type TaskFlowQuery struct {
 	PurchaseDays   int `json:"purchaseDays"`
 }
 
+func InsertTask(task *Task) (code int) {
+
+	var contract Contract
+	db.First(&contract, "uid = ?", task.ContractUID)
+	if contract.UID != "" {
+		//预存款合同添加任务
+		if contract.IsPreDeposit && contract.PreDeposit >= task.TotalPrice {
+			err = db.Transaction(func(tdb *gorm.DB) error {
+				//创建任务
+				task.UID = uidUtils.Generate()
+				if tErr := tdb.Create(&task).Error; tErr != nil {
+					return tErr
+				}
+				//减去合同预存款
+				if tErr := tdb.Exec("UPDATE contract SET pre_deposit = pre_deposit - ? WHERE uid = ?", task.TotalPrice, contract.UID).Error; tErr != nil {
+					return tErr
+				}
+				return nil
+			})
+		}
+	}
+
+	if err != nil {
+		return msg.ERROR
+	}
+
+	return msg.SUCCESS
+}
+
 func SelectTask(uid string) (task Task, code int) {
 	err = db.Where("uid = ?", uid).First(&task).Error
 	if err != nil {
