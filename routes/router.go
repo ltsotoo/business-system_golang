@@ -63,13 +63,14 @@ func InitRouter() {
 		auth.DELETE("contract/:uid", v1.DelContract)
 		auth.GET("contract/:uid", v1.QueryContract)
 		auth.POST("contracts", v1.QueryContracts)
-		auth.POST("rejectContract", v1.RejectContract)
+		auth.PUT("rejectContract", v1.RejectContract)
 		//合同流程模块接口
 		auth.PUT("task/contract/approve", v1.ApproveContract)
 		//任务模块接口
 		auth.POST("task", v1.AddTask)
 		auth.POST("tasks", v1.QueryTasks)
 		auth.GET("taskRemarks", v1.QueryTaskRemarks)
+		auth.PUT("rejectTask/:uid", v1.RejectTask)
 		//任务流程模块接口
 		auth.PUT("task/flow/approve", v1.ApproveTask)
 		auth.PUT("task/flow/next", v1.NextTask)

@@ -100,6 +100,8 @@ func InsertTask(task *Task) (code int) {
 				}
 				return nil
 			})
+		} else {
+			return msg.ERROR_TASK_NOT_MONEY
 		}
 	}
 
@@ -112,6 +114,13 @@ func InsertTask(task *Task) (code int) {
 
 func SelectTask(uid string) (task Task, code int) {
 	err = db.Where("uid = ?", uid).First(&task).Error
+	if err != nil {
+		return task, msg.ERROR
+	}
+	return task, msg.SUCCESS
+}
+func SelectTaskAndContract(uid string) (task Task, code int) {
+	err = db.Preload("Contract").Where("uid = ?", uid).First(&task).Error
 	if err != nil {
 		return task, msg.ERROR
 	}
@@ -318,4 +327,23 @@ func SelectTaskRemarks(taskUID string, to string) (taskRemarksList []TaskRemarks
 		code = msg.SUCCESS
 	}
 	return
+}
+
+func RejectTask(task *Task) (code int) {
+	err = db.Transaction(func(tdb *gorm.DB) error {
+		//驳回该任务
+		if tErr := tdb.Model(&Task{}).Where("uid = ?", task.UID).Update("status", magic.TASK_STATUS_REJECT).Error; tErr != nil {
+			return tErr
+		}
+		//退回该任务的预存款金额
+		if tErr := tdb.Exec("UPDATE contract SET pre_deposit = pre_deposit + ? WHERE uid = ?", task.TotalPrice, task.ContractUID).Error; tErr != nil {
+			return tErr
+		}
+		return nil
+	})
+	if err != nil {
+		return msg.ERROR
+	} else {
+		return msg.SUCCESS
+	}
 }

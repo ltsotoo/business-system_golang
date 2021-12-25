@@ -123,3 +123,13 @@ func QueryTaskRemarks(c *gin.Context) {
 	taskRemarksList, code = model.SelectTaskRemarks(taskUID, employeeUID)
 	msg.Message(c, code, taskRemarksList)
 }
+
+func RejectTask(c *gin.Context) {
+	var task model.Task
+	uid := c.Param("uid")
+	task, code = model.SelectTaskAndContract(uid)
+	if task.UID != "" && task.Contract.IsPreDeposit {
+		code = model.RejectTask(&task)
+	}
+	msg.Message(c, code, nil)
+}

@@ -3,27 +3,9 @@ package v1
 import (
 	"business-system_golang/model"
 	"business-system_golang/utils/msg"
-	"sort"
 
 	"github.com/gin-gonic/gin"
 )
-
-func TopList(c *gin.Context) {
-	var office model.Office
-	var offices []model.Office
-	offices, code = model.SelectOffices(&office)
-	for i := range offices {
-		if offices[i].TaskLoad == 0 {
-			offices[i].FinalPercentages = offices[i].TargetLoad
-		} else {
-			offices[i].FinalPercentages = offices[i].TargetLoad / offices[i].TaskLoad
-		}
-	}
-	sort.SliceStable(offices, func(i, j int) bool {
-		return offices[i].FinalPercentages > offices[j].FinalPercentages
-	})
-	msg.Message(c, code, offices)
-}
 
 func EntryOffice(c *gin.Context) {
 	var office model.Office

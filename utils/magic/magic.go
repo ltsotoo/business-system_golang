@@ -31,6 +31,8 @@ const (
 	//合同提成手动结算
 	CONTATCT_PUSHMONEY_MANUAL = 2
 
+	//驳回
+	TASK_STATUS_REJECT = -1
 	//待设计
 	TASK_STATUS_NOT_DESIGN = 1
 	//待采购
