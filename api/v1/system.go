@@ -21,7 +21,9 @@ func Login(c *gin.Context) {
 		permission_uid_set := model.SelectAllPermission(employee.UID, employee.DepartmentUID)
 		token, _ = middleware.SetToken(employee.UID, permission_uid_set)
 		token = "Bearer " + token
+		//router导航
 		urls = model.SelectUrls(permission_uid_set)
+		//前端权限
 		nos = model.SelectPermissionsNo(permission_uid_set)
 	}
 	msg.Message(c, code, gin.H{"employee": employee, "token": token, "urls": urls, "nos": nos})

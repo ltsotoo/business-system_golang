@@ -69,6 +69,7 @@ type ContractQuery struct {
 	EndDate          string `json:"endDate"`
 	EmployeeName     string `json:"employeeName"`
 	InvoiceType      int    `json:"invoiceType"`
+	OfficeUID        string `json:"officeUID"`
 }
 
 type ContractFlowQuery struct {
@@ -133,6 +134,9 @@ func SelectContracts(pageSize int, pageNo int, contractQuery *ContractQuery) (co
 	}
 	if contractQuery.EmployeeUID != "" {
 		maps["employee_uid"] = contractQuery.EmployeeUID
+	}
+	if contractQuery.OfficeUID != "" {
+		maps["office_uid"] = contractQuery.OfficeUID
 	}
 	if contractQuery.PayType != 0 {
 		maps["pay_type"] = contractQuery.PayType

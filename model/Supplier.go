@@ -10,15 +10,17 @@ import (
 // 供应商 Model
 type Supplier struct {
 	BaseModel
-	UID      string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	Name     string `gorm:"type:varchar(100);comment:名称;not null" json:"name"`
-	Address  string `gorm:"type:varchar(200);comment:地址" json:"address"`
-	Web      string `gorm:"type:varchar(100);comment:网站" json:"web"`
-	Linkman  string `gorm:"type:varchar(50);comment:联系人" json:"linkman"`
-	Phone    string `gorm:"type:varchar(100);comment:联系电话" json:"phone"`
-	WechatID string `gorm:"type:varchar(50);comment:微信号" json:"wechatID"`
-	Email    string `gorm:"type:varchar(50);comment:邮箱" json:"email"`
-	IsDelete bool   `gorm:"type:boolean;comment:是否删除" json:"isDelete"`
+	UID         string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
+	Name        string `gorm:"type:varchar(100);comment:名称;not null" json:"name"`
+	Address     string `gorm:"type:varchar(200);comment:地址" json:"address"`
+	Web         string `gorm:"type:varchar(100);comment:网站" json:"web"`
+	Linkman     string `gorm:"type:varchar(50);comment:联系人" json:"linkman"`
+	Phone       string `gorm:"type:varchar(100);comment:联系电话" json:"phone"`
+	WechatID    string `gorm:"type:varchar(50);comment:微信号" json:"wechatID"`
+	Email       string `gorm:"type:varchar(50);comment:邮箱" json:"email"`
+	Description string `gorm:"type:varchar(600);comment:主营产品概述" json:"description"`
+	Remark      string `gorm:"type:varchar(600);comment:备注" json:"remark"`
+	IsDelete    bool   `gorm:"type:boolean;comment:是否删除" json:"isDelete"`
 }
 
 type SupplierQuery struct {

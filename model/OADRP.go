@@ -46,9 +46,9 @@ type Role struct {
 type Permission struct {
 	ID     uint   `gorm:"primary_key" json:"ID"`
 	UID    string `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
-	Text   string `gorm:"type:varchar(20);comment:文本;not null" json:"text"`
-	No     string `gorm:"type:varchar(3);comment:序号" json:"no"`
-	UrlUID string `gorm:"type:varchar(32);comment:Url_UID" json:"urlUID"`
+	Text   string `gorm:"type:varchar(99);comment:文本;not null" json:"text"`
+	No     string `gorm:"type:varchar(9);comment:序号" json:"no"`
+	UrlUID string `gorm:"type:varchar(32);comment:Url_UID;default:(-)" json:"urlUID"`
 }
 
 type Url struct {
