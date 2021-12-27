@@ -65,17 +65,18 @@ type TaskRemarks struct {
 }
 
 type TaskFlowQuery struct {
-	UID                string `json:"UID"`
-	ContractUID        string `json:"contractUID"`
-	Status             int    `json:"status"`
-	Type               int    `json:"type"`
-	TechnicianManUID   string `json:"technicianManUID"`
-	PurchaseManUID     string `json:"purchaseManUID"`
-	InventoryManUID    string `json:"inventoryManUID"`
-	ShipmentManUID     string `json:"shipmentManUID"`
-	IsReset            bool   `json:"isReset"`
-	ARemarks           string `json:"aRemarks"`
-	CurrentRemarksText string ` json:"currentRemarksText"`
+	UID                  string  `json:"UID"`
+	ContractUID          string  `json:"contractUID"`
+	Status               int     `json:"status"`
+	Type                 int     `json:"type"`
+	TechnicianManUID     string  `json:"technicianManUID"`
+	PurchaseManUID       string  `json:"purchaseManUID"`
+	InventoryManUID      string  `json:"inventoryManUID"`
+	ShipmentManUID       string  `json:"shipmentManUID"`
+	IsReset              bool    `json:"isReset"`
+	ARemarks             string  `json:"aRemarks"`
+	CurrentRemarksText   string  ` json:"currentRemarksText"`
+	PushMoneyPercentages float64 ` json:"pushMoneyPercentages"`
 
 	TechnicianDays int `json:"technicianDays"`
 	PurchaseDays   int `json:"purchaseDays"`
@@ -168,7 +169,17 @@ func SelectTasksByContractUID(contractUID string) (tasks []Task, code int) {
 }
 
 func ApproveTask(taskFlowQuery *TaskFlowQuery) (code int) {
+
+	var contract Contract
+	db.First(&contract, "uid = ?", taskFlowQuery.ContractUID)
+	if contract.UID == "" {
+		return msg.ERROR
+	}
+
 	var maps = make(map[string]interface{})
+	if contract.IsPreDeposit {
+		maps["push_money_percentages"] = taskFlowQuery.PushMoneyPercentages
+	}
 	maps["type"] = taskFlowQuery.Type
 	maps["a_remarks"] = taskFlowQuery.ARemarks
 	switch taskFlowQuery.Type {

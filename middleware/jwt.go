@@ -14,15 +14,19 @@ var JwtKey = []byte(config.SystemConfig.Server.JwtKey)
 
 type MyClaims struct {
 	EmployeeUID        string
+	OfficeUID          string
+	DepartmentUID      string
 	Permission_uid_set []string
 	jwt.StandardClaims
 }
 
 //生成token
-func SetToken(EmployeeUID string, Permission_uid_set []string) (token string, code int) {
+func SetToken(EmployeeUID string, OfficeUID string, DepartmentUID string, Permission_uid_set []string) (token string, code int) {
 	expireTime := time.Now().Add(12 * time.Hour)
 	SetClaims := MyClaims{
 		EmployeeUID,
+		OfficeUID,
+		DepartmentUID,
 		Permission_uid_set,
 		jwt.StandardClaims{
 			ExpiresAt: expireTime.Unix(),
@@ -83,6 +87,8 @@ func JwtToken() gin.HandlerFunc {
 		}
 		c.Set("employeeUID", key.EmployeeUID)
 		c.Set("Permission_uid_set", key.Permission_uid_set)
+		c.Set("officeUID", key.OfficeUID)
+		c.Set("departmentUID", key.DepartmentUID)
 		c.Next()
 	}
 }

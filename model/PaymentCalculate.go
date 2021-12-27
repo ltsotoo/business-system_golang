@@ -67,6 +67,17 @@ func simple(payType int, endDeliveryDate time.Time, payment *Payment, task *Task
 		fine = round(theoreticalPushMoney*rate, 3)
 	}
 
+	//标准业务费
+	var tempBusinessMoney float64
+	if payType == 1 {
+		tempBusinessMoney = round(payment.Money/task.TotalPrice*task.Product.Type.BusinessMoneyPercentages, 3)
+	} else {
+		tempBusinessMoney = round(payment.MoneyUSD/task.TotalPrice*task.Product.Type.BusinessMoneyPercentages, 3)
+	}
+	//业务费合并
+	businessMoney = businessMoney + tempBusinessMoney
+
+	//实际提成
 	realPushMoney = theoreticalPushMoney - fine
 
 	return

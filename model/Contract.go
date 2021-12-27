@@ -30,6 +30,7 @@ type Contract struct {
 	IsSpecial             bool    `gorm:"type:boolean;comment:是否是特殊合同" json:"isSpecial"`
 	IsPreDeposit          bool    `gorm:"type:boolean;comment:是否是预存款合同" json:"isPreDeposit"`
 	PreDeposit            float64 `gorm:"type:decimal(20,6);comment:预存款金额" json:"preDeposit"`
+	PreDepositRecord      float64 `gorm:"type:decimal(20,6);comment:预存款金额（总数）" json:"preDepositRecord"`
 	PayType               int     `gorm:"type:int;comment:付款类型(1:人民币 2:美元)" json:"payType"`
 	TotalAmount           float64 `gorm:"type:decimal(20,6);comment:总金额" json:"totalAmount"`
 	PaymentTotalAmount    float64 `gorm:"type:decimal(20,6);comment:回款总金额(人民币)" json:"paymentTotalAmount"`
@@ -86,6 +87,9 @@ func InsertContract(contract *Contract) (code int) {
 		contract.CustomerUID = ""
 		contract.Customer.UID = uid.Generate()
 		contract.Customer.Status = 0
+	}
+	if contract.IsPreDeposit {
+		contract.PreDepositRecord = contract.PreDeposit
 	}
 	err = db.Create(&contract).Error
 	if err != nil {
@@ -342,13 +346,47 @@ func checkContractFinish(uid string) int {
 //合同执行中途驳回
 func Reject(uid string) (code int) {
 	err = db.Transaction(func(tdb *gorm.DB) error {
+		var payments []Payment
+		var contract Contract
+		if tErr := tdb.First(&contract).Where("uid = ?", uid).Error; tErr != nil {
+			return tErr
+		}
+		//业务费，提成，办事处任务额度扣除
+		if tErr := tdb.Find(&payments).Where("contract_uid = ?", uid).Error; tErr != nil {
+			return tErr
+		}
+		if contract.IsPreDeposit {
+			for k := range payments {
+				tempPushMoney1 := payments[k].PushMoney * 0.5
+				tempPushMoney2 := payments[k].PushMoney - tempPushMoney1
+				if tErr := tdb.Exec("UPDATE office SET money = money - ?, money_cold = money_cold - ?, business_money = business_money - ? WHERE uid = ?", tempPushMoney1, tempPushMoney2, payments[k].BusinessMoney, contract.OfficeUID).Error; tErr != nil {
+					return tErr
+				}
+			}
+			if tErr := tdb.Exec("UPDATE office SET target_load = target_load - ? WHERE uid = ?", contract.PreDepositRecord, contract.OfficeUID).Error; tErr != nil {
+				return tErr
+			}
+		} else {
+			for k := range payments {
+				tempPushMoney1 := payments[k].PushMoney * 0.5
+				tempPushMoney2 := payments[k].PushMoney - tempPushMoney1
+				if tErr := tdb.Exec("UPDATE office SET target_load = target_load - ?,money = money - ?, money_cold = money_cold - ?, business_money = business_money - ? WHERE uid = ?", payments[k].Money, tempPushMoney1, tempPushMoney2, payments[k].BusinessMoney, contract.OfficeUID).Error; tErr != nil {
+					return tErr
+				}
+			}
+		}
+		//合同状态删除
 		if tErr := tdb.Model(&Contract{}).Where("uid = ?", uid).Update("status", -1).Error; tErr != nil {
+			return tErr
+		}
+		//删除任务，回款记录，支票
+		if tErr := tdb.Delete(&Task{}, "contract_uid = ?", uid).Error; tErr != nil {
 			return tErr
 		}
 		if tErr := tdb.Delete(&Payment{}, "contract_uid = ?", uid).Error; tErr != nil {
 			return tErr
 		}
-		if tErr := tdb.Delete(&Task{}, "contract_uid = ?", uid).Error; tErr != nil {
+		if tErr := tdb.Model(&Invoice{}).Where("contract_uid = ?", uid).Update("is_delete", true).Error; tErr != nil {
 			return tErr
 		}
 		return nil

@@ -75,3 +75,16 @@ func RejectContract(c *gin.Context) {
 	code = model.Reject(contract.UID)
 	msg.Message(c, code, nil)
 }
+
+func ApproveContractProductionStatusToFinish(c *gin.Context) {
+	var contract model.Contract
+	_ = c.ShouldBindJSON(&contract)
+
+	contract, code = model.SelectContract(contract.UID)
+
+	if contract.ID != 0 {
+		code = model.UpdateContractProductionStatusToFinish(contract.UID)
+	}
+
+	msg.Message(c, code, nil)
+}

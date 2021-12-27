@@ -19,7 +19,7 @@ func Login(c *gin.Context) {
 	employee, code = model.CheckLogin(employee.Phone, employee.Password)
 	if code == msg.SUCCESS {
 		permission_uid_set := model.SelectAllPermission(employee.UID, employee.DepartmentUID)
-		token, _ = middleware.SetToken(employee.UID, permission_uid_set)
+		token, _ = middleware.SetToken(employee.UID, employee.OfficeUID, employee.DepartmentUID, permission_uid_set)
 		token = "Bearer " + token
 		//router导航
 		urls = model.SelectUrls(permission_uid_set)
@@ -43,11 +43,24 @@ func TopList(c *gin.Context) {
 	var office model.Office
 	var offices []model.Office
 	offices, code = model.SelectOffices(&office)
+	permissionUIDs := c.MustGet("Permission_uid_set").([]string)
+	officeUID := c.MustGet("officeUID").(string)
+	seeAll := false
+	for k := range permissionUIDs {
+		if permissionUIDs[k] == "55c96c98d62d48e29f0326e6185f21eb" {
+			seeAll = true
+			break
+		}
+	}
 	for i := range offices {
 		if offices[i].TaskLoad == 0 {
 			offices[i].FinalPercentages = offices[i].TargetLoad
 		} else {
 			offices[i].FinalPercentages = offices[i].TargetLoad / offices[i].TaskLoad
+		}
+		if !seeAll && officeUID != offices[i].UID {
+			offices[i].TargetLoad = 0
+			offices[i].TaskLoad = 0
 		}
 	}
 	sort.SliceStable(offices, func(i, j int) bool {
