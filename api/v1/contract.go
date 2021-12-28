@@ -9,20 +9,64 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func SaveContract(c *gin.Context) {
+	var contract model.Contract
+	_ = c.ShouldBindJSON(&contract)
+
+	contract.TotalAmount = 0
+	contract.Status = 0
+	contract.Tasks = nil
+	employee, _ := model.SelectEmployee(c.MustGet("employeeUID").(string))
+	contract.EmployeeUID = employee.UID
+	contract.OfficeUID = employee.OfficeUID
+	contract.Customer = model.Customer{}
+
+	if contract.IsPreDeposit {
+		contract.PreDepositRecord = contract.PreDeposit
+	}
+
+	if contract.IsOld && !contract.IsEntryCustomer {
+		code = msg.ERROR
+	} else {
+		code = model.SaveContract(&contract)
+	}
+	msg.Message(c, code, contract)
+}
+
 //录入合同
 func EntryContract(c *gin.Context) {
 	var contract model.Contract
 	_ = c.ShouldBindJSON(&contract)
+
 	contract.TotalAmount = 0
-	for i := range contract.Tasks {
-		contract.Tasks[i].UID = uid.Generate()
-		contract.TotalAmount += contract.Tasks[i].TotalPrice
-	}
+	contract.Status = 1
 	employee, _ := model.SelectEmployee(c.MustGet("employeeUID").(string))
 	contract.EmployeeUID = employee.UID
 	contract.OfficeUID = employee.OfficeUID
 
-	code = model.InsertContract(&contract)
+	if contract.IsPreDeposit {
+		contract.PreDepositRecord = contract.PreDeposit
+		contract.Tasks = nil
+	} else {
+		for i := range contract.Tasks {
+			contract.Tasks[i].UID = uid.Generate()
+			contract.TotalAmount += contract.Tasks[i].TotalPrice
+		}
+	}
+
+	if contract.IsEntryCustomer {
+		contract.Customer = model.Customer{}
+	} else {
+		contract.CustomerUID = ""
+		contract.Customer.UID = uid.Generate()
+		contract.Customer.Status = 0
+	}
+
+	if contract.IsOld && !contract.IsEntryCustomer {
+		code = msg.ERROR
+	} else {
+		code = model.InsertContract(&contract)
+	}
 	msg.Message(c, code, contract)
 }
 
@@ -49,8 +93,8 @@ func QueryContracts(c *gin.Context) {
 
 	_ = c.ShouldBindJSON(&contractQuery)
 
-	pageSize, pageSizeErr := strconv.Atoi(c.Query("pageSize"))
-	pageNo, pageNoErr := strconv.Atoi(c.Query("pageNo"))
+	pageSize, pageSizeErr := strconv.Atoi(c.DefaultQuery("pageSize", "0"))
+	pageNo, pageNoErr := strconv.Atoi(c.DefaultQuery("pageNo", "0"))
 	if pageSizeErr != nil || pageSize < 0 {
 		pageSize = 10
 	}

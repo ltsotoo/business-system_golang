@@ -40,11 +40,9 @@ func ApproveInvoice(c *gin.Context) {
 
 func QueryInvoices(c *gin.Context) {
 	var invoices []model.Invoice
-	var invoice model.Invoice
+	contractUID := c.Param("contractUID")
 
-	_ = c.ShouldBindJSON(&invoice)
-
-	invoices, code = model.SelectInvoices(&invoice)
+	invoices, code = model.SelectInvoices(contractUID)
 	msg.Message(c, code, invoices)
 }
 

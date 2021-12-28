@@ -59,16 +59,10 @@ func ApproveInvoice(uid string) (code int) {
 	return msg.SUCCESS
 }
 
-func SelectInvoices(invoice *Invoice) (invoices []Invoice, code int) {
+func SelectInvoices(contractUID string) (invoices []Invoice, code int) {
 	var maps = make(map[string]interface{})
 	maps["is_delete"] = false
-
-	if invoice.ContractUID != "" {
-		maps["contract_uid"] = invoice.ContractUID
-	}
-	if invoice.Status != 0 {
-		maps["status"] = invoice.Status
-	}
+	maps["contract_uid"] = contractUID
 
 	err = db.Preload("Contract.Employee").Where(maps).Find(&invoices).Error
 	if err != nil {

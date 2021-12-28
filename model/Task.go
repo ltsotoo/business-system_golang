@@ -83,7 +83,6 @@ type TaskFlowQuery struct {
 }
 
 func InsertTask(task *Task) (code int) {
-
 	var contract Contract
 	db.First(&contract, "uid = ?", task.ContractUID)
 	if contract.UID != "" {

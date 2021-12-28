@@ -20,7 +20,6 @@ func InitRouter() {
 	router := r.Group("api/v1")
 	{
 		//SYSTEM接口
-		router.POST("employee", v1.EntryEmployee)
 		router.POST("login", v1.Login)
 		router.POST("regist", v1.Regist)
 	}
@@ -35,10 +34,12 @@ func InitRouter() {
 		auth.GET("dictionaries", v1.QueryDictionaries)
 		auth.GET("dictionarieTypes", v1.QueryDictionarieTypes)
 		//员工模块接口
+		auth.POST("employee", v1.EntryEmployee)
 		auth.DELETE("employee/:uid", v1.DelEmployee)
 		auth.PUT("employee", v1.EditEmployee)
 		auth.GET("employee/:uid", v1.QueryEmployee)
 		auth.POST("employees", v1.QueryEmployees)
+		auth.POST("spEmployees", v1.QuerySPEmployees)
 		auth.GET("resetPwd/:uid", v1.ResetEmployeePwd)
 		auth.POST("editMyPwd", v1.EditMyPwd)
 		//员工模块接口PLUS
@@ -60,6 +61,7 @@ func InitRouter() {
 		auth.GET("permissions", v1.QueryPermissions)
 		//合同模块接口
 		auth.POST("contract", v1.EntryContract)
+		auth.POST("contractSave", v1.SaveContract)
 		auth.DELETE("contract/:uid", v1.DelContract)
 		auth.GET("contract/:uid", v1.QueryContract)
 		auth.POST("contracts", v1.QueryContracts)

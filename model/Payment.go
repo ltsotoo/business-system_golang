@@ -34,11 +34,13 @@ func InsertPayment(payment *Payment) (code int) {
 		return msg.ERROR
 	}
 
-	if contract.IsSpecial {
-		db.Find(&contract.Tasks, "contract_uid = ?", contract.UID)
-	} else {
-		db.Preload("Product.Type").Find(&contract.Tasks, "contract_uid = ?", contract.UID)
-	}
+	// if contract.IsSpecial {
+	// 	db.Find(&contract.Tasks, "contract_uid = ?", contract.UID)
+	// } else {
+	// 	db.Preload("Product.Type").Find(&contract.Tasks, "contract_uid = ?", contract.UID)
+	// }
+
+	db.Preload("Product.Type").Find(&contract.Tasks, "contract_uid = ?", contract.UID)
 
 	payment.UID = uid.Generate()
 	err = db.Transaction(func(tdb *gorm.DB) error {

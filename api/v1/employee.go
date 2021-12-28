@@ -54,8 +54,8 @@ func QueryEmployees(c *gin.Context) {
 
 	_ = c.ShouldBindJSON(&employeeQuery)
 
-	pageSize, pageSizeErr := strconv.Atoi(c.Query("pageSize"))
-	pageNo, pageNoErr := strconv.Atoi(c.Query("pageNo"))
+	pageSize, pageSizeErr := strconv.Atoi(c.DefaultQuery("pageSize", "0"))
+	pageNo, pageNoErr := strconv.Atoi(c.DefaultQuery("pageNo", "0"))
 
 	if pageSizeErr != nil || pageSize < 0 {
 		pageSize = 10
@@ -69,8 +69,21 @@ func QueryEmployees(c *gin.Context) {
 	msg.MessageForList(c, code, employees, pageSize, pageNo, total)
 }
 
+func QuerySPEmployees(c *gin.Context) {
+	var employees []model.Employee
+	var employeeQuery model.EmployeeQuery
+	_ = c.ShouldBindJSON(&employeeQuery)
+	employees, code = model.SelectSPEmployees(&employeeQuery)
+	msg.Message(c, code, employees)
+}
+
 func ResetEmployeePwd(c *gin.Context) {
 	uid := c.Param("uid")
 	code = model.ResetPwd(uid)
+	msg.Message(c, code, nil)
+}
+
+func ResetAllEmployeePwd(c *gin.Context) {
+	code = model.ResetAllPwd()
 	msg.Message(c, code, nil)
 }

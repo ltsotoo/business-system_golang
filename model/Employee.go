@@ -39,6 +39,7 @@ type EmployeeQuery struct {
 	Phone         string `json:"phone"`
 	OfficeUID     string `json:"officeUID"`
 	DepartmentUID string `json:"departmentUID"`
+	PermissionUID string `son:"permissionUID"`
 
 	UID    string `json:"uid"`
 	OldPWd string `json:"oldPwd"`
@@ -143,6 +144,21 @@ func SelectEmployee(uid string) (employee Employee, code int) {
 	return employee, msg.SUCCESS
 }
 
+func SelectSPEmployees(employeeQuery *EmployeeQuery) (employees []Employee, code int) {
+	err = db.Raw("SELECT distinct * FROM employee WHERE (uid IN ("+
+		"SELECT employee_uid FROM employee_role WHERE role_uid IN ("+
+		"SELECT role_uid FROM role_permission WHERE permission_uid = ?"+
+		")) OR department_uid IN (SELECT uid FROM department WHERE role_uid IN ("+
+		"SELECT role_uid FROM role_permission WHERE permission_uid = ?))) AND "+
+		"office_uid = ?", employeeQuery.PermissionUID, employeeQuery.PermissionUID, employeeQuery.OfficeUID).Scan(&employees).Error
+	if err != nil {
+		code = msg.ERROR
+	} else {
+		code = msg.SUCCESS
+	}
+	return
+}
+
 func SelectEmployees(pageSize int, pageNo int, employeeQuery *EmployeeQuery) (employees []Employee, code int, total int64) {
 	var maps = make(map[string]interface{})
 	maps["is_delete"] = false
@@ -185,14 +201,36 @@ func UpdatePwd(employeeQuery *EmployeeQuery) (code int) {
 func ResetPwd(uid string) (code int) {
 	var employee Employee
 	var tempPwd string
-	err = db.First(&employee, "uid = ?", uid).Error
-	tempPwd = employee.Number + employee.Phone
-	tempPwd, err = pwd.ScryptPwd(tempPwd)
-	err = db.Model(&Employee{}).Where("uid = ?", uid).Update("password", tempPwd).Error
-	if err != nil {
+	db.Preload("Office").First(&employee, "uid = ?", uid)
+	if employee.ID > 0 {
+		tempPwd = employee.Phone + employee.Office.Number + employee.Number
+		tempPwd, err = pwd.ScryptPwd(tempPwd)
+		err = db.Model(&Employee{}).Where("uid = ?", uid).Update("password", tempPwd).Error
+		if err != nil {
+			return msg.ERROR
+		}
+		return msg.SUCCESS
+	} else {
 		return msg.ERROR
 	}
-	return msg.SUCCESS
+}
+
+func ResetAllPwd() (code int) {
+	var employees []Employee
+	err = db.Preload("Office").Find(&employees).Error
+	if err == nil {
+		for i := range employees {
+			tempPwd := employees[i].Phone + employees[i].Office.Number + employees[i].Number
+			tempPwd, _ = pwd.ScryptPwd(tempPwd)
+			err = db.Model(&Employee{}).Where("uid = ?", employees[i].UID).Update("password", tempPwd).Error
+			if err != nil {
+				return msg.ERROR_EMPLOYEE_PASSWORD_FAIL
+			}
+		}
+		return msg.SUCCESS
+	} else {
+		return msg.ERROR
+	}
 }
 
 func UpdateAllAddMoney() {

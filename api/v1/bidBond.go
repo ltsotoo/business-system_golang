@@ -46,8 +46,8 @@ func QueryBidBonds(c *gin.Context) {
 
 	_ = c.ShouldBindJSON(&bidBondQuery)
 
-	pageSize, pageSizeErr := strconv.Atoi(c.Query("pageSize"))
-	pageNo, pageNoErr := strconv.Atoi(c.Query("pageNo"))
+	pageSize, pageSizeErr := strconv.Atoi(c.DefaultQuery("pageSize", "0"))
+	pageNo, pageNoErr := strconv.Atoi(c.DefaultQuery("pageNo", "0"))
 	if pageSizeErr != nil || pageSize < 0 {
 		pageSize = 10
 	}
