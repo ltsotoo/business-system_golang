@@ -53,8 +53,10 @@ func QueryEmployees(c *gin.Context) {
 	var employeeQuery model.EmployeeQuery
 
 	_ = c.ShouldBindJSON(&employeeQuery)
+
 	pageSize, pageSizeErr := strconv.Atoi(c.Query("pageSize"))
 	pageNo, pageNoErr := strconv.Atoi(c.Query("pageNo"))
+
 	if pageSizeErr != nil || pageSize < 0 {
 		pageSize = 10
 	}

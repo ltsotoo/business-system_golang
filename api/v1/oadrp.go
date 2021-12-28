@@ -78,7 +78,6 @@ func QueryDepartments(c *gin.Context) {
 func AddRole(c *gin.Context) {
 	var role model.Role
 	_ = c.ShouldBindJSON(&role)
-	println(role.Permissions[0].UID)
 	code = model.InsertRole(&role)
 	msg.Message(c, code, role)
 }

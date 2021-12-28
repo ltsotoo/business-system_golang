@@ -31,7 +31,7 @@ func Logger() gin.HandlerFunc {
 		filePath+"%Y%m%d.log",
 		rotatelogs.WithMaxAge(30*24*time.Hour),
 		rotatelogs.WithRotationTime(24*time.Hour),
-		// rotatelogs.WithLinkName("latest_log.log"),
+		rotatelogs.WithLinkName("latest_log.log"),
 	)
 
 	writeMap := lfshook.WriterMap{
