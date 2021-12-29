@@ -78,6 +78,7 @@ func InitRouter() {
 		auth.PUT("task/flow/approve", v1.ApproveTask)
 		auth.PUT("task/flow/next", v1.NextTask)
 		//回款模块接口
+		auth.GET("payments/:contractUID", v1.QueryPayments)
 		auth.POST("payment", v1.AddPayment)
 		auth.PUT("payment", v1.EditPayment)
 		auth.POST("changeCollectionStatus", v1.ChangeContractCollectionStatus)
@@ -135,9 +136,7 @@ func InitRouter() {
 		auth.POST("invoice", v1.AddInvoice)
 		auth.DELETE("invoice/:uid", v1.DelInvoice)
 		auth.PUT("invoice", v1.EditInvoice)
-		auth.PUT("invoice/approve/:uid", v1.ApproveInvoice)
 		auth.GET("invoices/:contractUID", v1.QueryInvoices)
-		auth.POST("invoicesAndPayments", v1.QueryInvoicesAndPayments)
 	}
 
 	_ = r.Run(config.SystemConfig.Server.Port)

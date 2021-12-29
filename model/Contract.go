@@ -34,7 +34,6 @@ type Contract struct {
 	PayType               int     `gorm:"type:int;comment:付款类型(1:人民币 2:美元)" json:"payType"`
 	TotalAmount           float64 `gorm:"type:decimal(20,6);comment:总金额" json:"totalAmount"`
 	PaymentTotalAmount    float64 `gorm:"type:decimal(20,6);comment:回款总金额(人民币)" json:"paymentTotalAmount"`
-	PaymentTotalAmountUSD float64 `gorm:"type:decimal(20,6);comment:回款总金额(美元)" json:"paymentTotalAmountUSD"`
 	Remarks               string  `gorm:"type:varchar(600);comment:备注" json:"remarks"`
 	Status                int     `gorm:"type:int;comment:状态(-1:审批驳回 1:待审批 2:未完成 3:已完成);not null" json:"status"`
 	ProductionStatus      int     `gorm:"type:int;comment:生产状态(1:生产中 2:生产完成)" json:"productionStatus"`
@@ -109,12 +108,20 @@ func InsertContract(contract *Contract) (code int) {
 func CreateNo(contract *Contract) (no string) {
 	office, _ := SelectOffice(contract.OfficeUID)
 	employee, _ := SelectEmployee(contract.EmployeeUID)
-	no = "bjscistar-" + strings.ReplaceAll(contract.ContractDate.Format("2006-01-02"), "-", "") + "-" + office.Number + employee.Number + strconv.Itoa(employee.ContractCount+1)
+	no = "Bjscistar" + strings.ReplaceAll(contract.ContractDate.Format("2006-01-02"), "-", "") + "-" + office.Number + employee.Number + strconv.Itoa(employee.ContractCount+1)
 	return
 }
 
 func DeleteContract(uid string) (code int) {
-	err = db.Model(&Contract{}).Where("uid = ? AND status = ?", uid, 1).Update("is_delete", true).Error
+	err = db.Transaction(func(tdb *gorm.DB) error {
+		if tErr := tdb.Model(&Contract{}).Where("uid = ? AND status = ?", uid, -1).Update("is_delete", true).Error; tErr != nil {
+			return tErr
+		}
+		if tErr := tdb.Delete(&Task{}, "contract_uid = ?", uid).Error; tErr != nil {
+			return tErr
+		}
+		return nil
+	})
 	if err != nil {
 		return msg.ERROR_CONTRACT_DELETE
 	}
@@ -142,38 +149,38 @@ func SelectContract(uid string) (contract Contract, code int) {
 func SelectContracts(pageSize int, pageNo int, contractQuery *ContractQuery) (contracts []Contract, code int, total int64) {
 	var maps = make(map[string]interface{})
 	if contractQuery.RegionUID != "" {
-		maps["region_uid"] = contractQuery.RegionUID
+		maps["contract.region_uid"] = contractQuery.RegionUID
 	}
 	if contractQuery.EmployeeUID != "" {
-		maps["employee_uid"] = contractQuery.EmployeeUID
+		maps["contract.employee_uid"] = contractQuery.EmployeeUID
 	}
 	if contractQuery.OfficeUID != "" {
-		maps["office_uid"] = contractQuery.OfficeUID
+		maps["contract.office_uid"] = contractQuery.OfficeUID
 	}
 	if contractQuery.PayType != 0 {
-		maps["pay_type"] = contractQuery.PayType
+		maps["contract.pay_type"] = contractQuery.PayType
 	}
 	if contractQuery.InvoiceType != 0 {
-		maps["invoice_type"] = contractQuery.InvoiceType
+		maps["contract.invoice_type"] = contractQuery.InvoiceType
 	}
 	if contractQuery.IsSpecial == 1 {
-		maps["is_special"] = true
+		maps["contract.is_special"] = true
 	} else if contractQuery.IsSpecial == 2 {
-		maps["is_special"] = false
+		maps["contract.is_special"] = false
 	}
 	if contractQuery.IsPreDeposit == 1 {
-		maps["is_pre_deposit"] = true
+		maps["contract.is_pre_deposit"] = true
 	} else if contractQuery.IsPreDeposit == 2 {
-		maps["is_pre_deposit"] = false
+		maps["contract.is_pre_deposit"] = false
 	}
 	if contractQuery.Status != 0 {
-		maps["status"] = contractQuery.Status
+		maps["contract.status"] = contractQuery.Status
 	}
 	if contractQuery.ProductionStatus != 0 {
-		maps["production_status"] = contractQuery.ProductionStatus
+		maps["contract.production_status"] = contractQuery.ProductionStatus
 	}
 	if contractQuery.CollectionStatus != 0 {
-		maps["collection_status"] = contractQuery.CollectionStatus
+		maps["contract.collection_status"] = contractQuery.CollectionStatus
 	}
 
 	tDb := db.Where(maps).Where("contract.is_delete = ?", false)
@@ -183,13 +190,13 @@ func SelectContracts(pageSize int, pageNo int, contractQuery *ContractQuery) (co
 	}
 
 	if contractQuery.StartDate != "" && contractQuery.EndDate != "" {
-		tDb = tDb.Where("contract_date BETWEEN ? AND ?", contractQuery.StartDate, contractQuery.EndDate)
+		tDb = tDb.Where("contract.contract_date BETWEEN ? AND ?", contractQuery.StartDate, contractQuery.EndDate)
 	} else {
 		if contractQuery.StartDate != "" {
-			tDb = tDb.Where("contract_date >= ?", contractQuery.StartDate)
+			tDb = tDb.Where("contract.contract_date >= ?", contractQuery.StartDate)
 		}
 		if contractQuery.EndDate != "" {
-			tDb = tDb.Where("contract_date <= ?", contractQuery.EndDate)
+			tDb = tDb.Where("contract.contract_date <= ?", contractQuery.EndDate)
 		}
 	}
 
@@ -246,7 +253,9 @@ func ApproveContract(uid string, status int, employeeUID string) (code int) {
 			}
 
 			//修改合同基础属性(编号、状态、生产状态、回款状态)
-			maps["No"] = CreateNo(&contract)
+			if contract.No == "" {
+				maps["No"] = CreateNo(&contract)
+			}
 			if tErr := tdb.Model(&Contract{}).Where("uid = ?", uid).Updates(maps).Error; tErr != nil {
 				return tErr
 			}

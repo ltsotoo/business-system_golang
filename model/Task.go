@@ -21,7 +21,6 @@ type Task struct {
 	StandardPriceUSD     float64 `gorm:"type:decimal(20,6);comment:下单时标准价格(美元)" json:"standardPriceUSD"`
 	Price                float64 `gorm:"type:decimal(20,6);comment:单价" json:"price"`
 	TotalPrice           float64 `gorm:"type:decimal(20,6);comment:总价" json:"totalPrice"`
-	PaymentTotalPriceUSD float64 `gorm:"type:decimal(20,6);comment:回款总金额(USD)" json:"paymentTotalPriceUSD"`
 	PaymentTotalPrice    float64 `gorm:"type:decimal(20,6);comment:回款总金额(CNY)" json:"paymentTotalPrice"`
 	Status               int     `gorm:"type:int;comment:状态(1:待设计 2:待采购 3:待入/出库 4:待装配 5:待发货 6:已发货)" json:"status"`
 	Type                 int     `gorm:"type:int;comment:类型(1:标准/第三方有库存 2:标准/第三方无库存 3:非标准定制)" json:"type"`
