@@ -3,6 +3,7 @@ package model
 import (
 	"business-system_golang/utils/magic"
 	"business-system_golang/utils/msg"
+	"business-system_golang/utils/uid"
 	uidUtils "business-system_golang/utils/uid"
 	"time"
 
@@ -73,6 +74,7 @@ type TaskFlowQuery struct {
 	InventoryManUID      string  `json:"inventoryManUID"`
 	ShipmentManUID       string  `json:"shipmentManUID"`
 	IsReset              bool    `json:"isReset"`
+	IsPre                bool    `json:"isPre"`
 	ARemarks             string  `json:"aRemarks"`
 	CurrentRemarksText   string  ` json:"currentRemarksText"`
 	PushMoneyPercentages float64 ` json:"pushMoneyPercentages"`
@@ -249,19 +251,63 @@ func ApproveTask(taskFlowQuery *TaskFlowQuery) (code int) {
 		contractMaps["production_status"] = 1
 		contractMaps["end_delivery_date"] = nil
 		err = db.Transaction(func(tdb *gorm.DB) error {
+			//任务重置
 			if tErr := tdb.Model(&Task{}).Where("uid = ?", taskFlowQuery.UID).Updates(maps).Error; tErr != nil {
 				return tErr
 			}
+			//删除改任务之前所有备注
 			if tErr := tdb.Where("task_uid = ?", taskFlowQuery.UID).Delete(&TaskRemarks{}).Error; tErr != nil {
 				return tErr
 			}
+			//重置合同状态和生产状态
 			if tErr := tdb.Model(&Contract{}).Where("uid = ?", taskFlowQuery.ContractUID).Statement.Updates(contractMaps).Error; tErr != nil {
 				return tErr
 			}
 			return nil
 		})
 	} else {
-		err = db.Model(&Task{}).Where("uid = ?", taskFlowQuery.UID).Updates(maps).Error
+		if taskFlowQuery.IsPre {
+			//预存款任务审批生成一条回款记录
+			err = db.Transaction(func(tdb *gorm.DB) error {
+				if tErr := tdb.Preload("Product.Type").Find(&contract.Tasks, "UID = ?", taskFlowQuery.UID).Error; tErr != nil {
+					return tErr
+				}
+				if len(contract.Tasks) != 1 {
+					return err
+				}
+				//任务信息更新
+				maps["payment_total_price"] = contract.Tasks[0].TotalPrice
+				if tErr := tdb.Model(&Task{}).Where("uid = ?", taskFlowQuery.UID).Updates(maps).Error; tErr != nil {
+					return tErr
+				}
+				//生成回款记录
+				var payment Payment
+				payment.UID = uid.Generate()
+				payment.ContractUID = contract.UID
+				payment.TaskUID = taskFlowQuery.UID
+				payment.PaymentDate.Time = time.Now()
+				payment.Money = contract.Tasks[0].TotalPrice
+				//1.计算提成并创建提成记录
+				payment.TheoreticalPushMoney, payment.Fine, payment.PushMoney, payment.BusinessMoney = calculate(&contract, &payment)
+				if tErr := tdb.Create(&payment).Error; tErr != nil {
+					return tErr
+				}
+				//2.合同回款金额更新
+				if tErr := tdb.Exec("UPDATE contract SET total_amount = total_amount + ?,payment_total_amount = payment_total_amount + ? WHERE uid = ?", payment.Money, payment.Money, payment.ContractUID).Error; tErr != nil {
+					return tErr
+				}
+				//3.办事处业务费，提成 UP
+				tempPushMoney1 := payment.PushMoney * 0.5
+				tempPushMoney2 := payment.PushMoney - tempPushMoney1
+				if tErr := tdb.Exec("UPDATE office SET money = money + ?, money_cold = money_cold + ?, business_money = business_money + ? WHERE uid = ?", tempPushMoney1, tempPushMoney2, payment.BusinessMoney, contract.OfficeUID).Error; tErr != nil {
+					return tErr
+				}
+				return nil
+			})
+		} else {
+			err = db.Model(&Task{}).Where("uid = ?", taskFlowQuery.UID).Updates(maps).Error
+		}
+
 	}
 
 	if err != nil {
@@ -275,18 +321,6 @@ func ApproveTask(taskFlowQuery *TaskFlowQuery) (code int) {
 func NextTaskStatus(uid string, lastStatus int, from string, to string, maps map[string]interface{}, currentRemarksText string) (code int) {
 	err = db.Transaction(func(tdb *gorm.DB) error {
 		if currentRemarksText != "" {
-			// remarksUID := uidUtils.Generate()
-			// if tErr := tdb.Model(&TaskRemarks{}).Create(map[string]interface{}{
-			// 	"UID":       remarksUID,
-			// 	"TaskUID":   uid,
-			// 	"Status":    lastStatus,
-			// 	"From":      from,
-			// 	"To":        to,
-			// 	"Text":      currentRemarksText,
-			// }).Error; tErr != nil {
-			// 	return tErr
-			// }
-
 			if tErr := tdb.Create(&TaskRemarks{
 				UID:     uidUtils.Generate(),
 				TaskUID: uid,

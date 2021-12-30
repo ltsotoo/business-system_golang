@@ -33,7 +33,10 @@ func InsertPayment(payment *Payment) (code int) {
 		return msg.ERROR
 	}
 
-	db.Preload("Product.Type").Find(&contract.Tasks, "contract_uid = ?", contract.UID)
+	db.Preload("Product.Type").Find(&contract.Tasks, "UID = ?", payment.TaskUID)
+	if len(contract.Tasks) != 1 {
+		return msg.ERROR
+	}
 
 	payment.UID = uid.Generate()
 	err = db.Transaction(func(tdb *gorm.DB) error {
@@ -50,10 +53,8 @@ func InsertPayment(payment *Payment) (code int) {
 		}
 
 		//产品任务回款金额更新
-		if payment.TaskUID != "" {
-			if tErr := tdb.Exec("UPDATE task SET payment_total_price = payment_total_price + ? WHERE uid = ?", payment.Money, payment.TaskUID).Error; tErr != nil {
-				return tErr
-			}
+		if tErr := tdb.Exec("UPDATE task SET payment_total_price = payment_total_price + ? WHERE uid = ?", payment.Money, payment.TaskUID).Error; tErr != nil {
+			return tErr
 		}
 
 		tempPushMoney1 := payment.PushMoney * 0.5

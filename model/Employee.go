@@ -234,7 +234,18 @@ func ResetAllPwd() (code int) {
 }
 
 func UpdateAllAddMoney() {
-	err = db.Exec("UPDATE employee SET money = money + credit WHERE is_delete = ?", false).Error
+	err = db.Transaction(func(tdb *gorm.DB) error {
+		if tErr := db.Exec("UPDATE employee SET money = money + credit WHERE is_delete = ?", false).Error; tErr != nil {
+			return tErr
+		}
+		if tErr := db.Exec("UPDATE employee SET money = money + office_credit WHERE is_delete = ?", false).Error; tErr != nil {
+			return tErr
+		}
+		if tErr := db.Exec("UPDATE office,(SELECT office_uid,sum(office_credit) AS sum FROM employee WHERE office_uid IS NOT NULL GROUP BY office_uid) AS a SET office.money = office.money - a.sum WHERE office.uid = a.office_uid").Error; tErr != nil {
+			return tErr
+		}
+		return nil
+	})
 	if err != nil {
 		fmt.Println(err)
 	}

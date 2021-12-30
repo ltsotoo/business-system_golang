@@ -13,7 +13,7 @@ func InitCronTabs() {
 func updateAllEmployeesMoney() {
 	cronTask := cron.New()
 
-	_, err := cronTask.AddFunc("0 0 1 * *", UpdateAllAddMoney)
+	_, err := cronTask.AddFunc("0 0 1 1 *", UpdateAllAddMoney)
 	if err != nil {
 		fmt.Println(err)
 	}

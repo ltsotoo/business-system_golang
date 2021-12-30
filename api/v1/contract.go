@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+//暂存合同
 func SaveContract(c *gin.Context) {
 	var contract model.Contract
 	_ = c.ShouldBindJSON(&contract)

@@ -90,11 +90,11 @@ const (
 	ERROR_PERMISSION_SELECT = 2114
 
 	//code = [2200-2300) 财务模块错误
-	ERROR_EXPENSE_INSERT              = 2211
-	ERROR_EXPENSE_DELETE              = 2212
-	ERROR_EXPENSE_UPDATE              = 2213
-	ERROR_EXPENSE_SELECT              = 2214
-	ERROR_EXPENSE_EMPLOYEE_MONEY_LESS = 2215
+	ERROR_EXPENSE_INSERT     = 2211
+	ERROR_EXPENSE_DELETE     = 2212
+	ERROR_EXPENSE_UPDATE     = 2213
+	ERROR_EXPENSE_SELECT     = 2214
+	ERROR_EXPENSE_MONEY_LESS = 2215
 
 	//code = [9900-10000) System模块错误
 	ERROR_SYSTE_DIC_TYPE_INSERT = 9911
@@ -183,11 +183,11 @@ var codeMsg = map[int]string{
 	ERROR_PERMISSION_SELECT: "权限信息查找失败",
 
 	//财务模块错误
-	ERROR_EXPENSE_INSERT:              "报销添加失败",
-	ERROR_EXPENSE_DELETE:              "报销删除失败",
-	ERROR_EXPENSE_UPDATE:              "报销信息编辑失败",
-	ERROR_EXPENSE_SELECT:              "报销信息查找失败",
-	ERROR_EXPENSE_EMPLOYEE_MONEY_LESS: "员工可用报销余额不足",
+	ERROR_EXPENSE_INSERT:     "报销添加失败",
+	ERROR_EXPENSE_DELETE:     "报销删除失败",
+	ERROR_EXPENSE_UPDATE:     "报销信息编辑失败",
+	ERROR_EXPENSE_SELECT:     "报销信息查找失败",
+	ERROR_EXPENSE_MONEY_LESS: "可用报销余额不足",
 
 	//System模块错误
 	ERROR_SYSTE_DIC_TYPE_INSERT: "系统字典类型添加失败",

@@ -384,9 +384,7 @@ func Reject(uid string) (code int) {
 		}
 		if contract.IsPreDeposit {
 			for k := range payments {
-				tempPushMoney1 := payments[k].PushMoney * 0.5
-				tempPushMoney2 := payments[k].PushMoney - tempPushMoney1
-				if tErr := tdb.Exec("UPDATE office SET money = money - ?, money_cold = money_cold - ?, business_money = business_money - ? WHERE uid = ?", tempPushMoney1, tempPushMoney2, payments[k].BusinessMoney, contract.OfficeUID).Error; tErr != nil {
+				if tErr := tdb.Exec("UPDATE office SET money = money - ?, business_money = business_money - ? WHERE uid = ?", payments[k].PushMoney, payments[k].BusinessMoney, contract.OfficeUID).Error; tErr != nil {
 					return tErr
 				}
 			}
@@ -395,14 +393,12 @@ func Reject(uid string) (code int) {
 			}
 		} else {
 			for k := range payments {
-				tempPushMoney1 := payments[k].PushMoney * 0.5
-				tempPushMoney2 := payments[k].PushMoney - tempPushMoney1
-				if tErr := tdb.Exec("UPDATE office SET target_load = target_load - ?,money = money - ?, money_cold = money_cold - ?, business_money = business_money - ? WHERE uid = ?", payments[k].Money, tempPushMoney1, tempPushMoney2, payments[k].BusinessMoney, contract.OfficeUID).Error; tErr != nil {
+				if tErr := tdb.Exec("UPDATE office SET target_load = target_load - ?,money = money - ?, business_money = business_money - ? WHERE uid = ?", payments[k].Money, payments[k].PushMoney, payments[k].BusinessMoney, contract.OfficeUID).Error; tErr != nil {
 					return tErr
 				}
 			}
 		}
-		//合同状态删除
+		//合同状态变更为驳回
 		if tErr := tdb.Model(&Contract{}).Where("uid = ?", uid).Update("status", -1).Error; tErr != nil {
 			return tErr
 		}

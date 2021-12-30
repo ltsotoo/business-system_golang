@@ -6,13 +6,7 @@ import (
 )
 
 func calculate(contract *Contract, payment *Payment) (theoreticalPushMoney float64, fine float64, pushMoney float64, businessMoney float64) {
-	var task Task
-	for i := range contract.Tasks {
-		if contract.Tasks[i].UID == payment.TaskUID {
-			task = contract.Tasks[i]
-			break
-		}
-	}
+	var task Task = contract.Tasks[0]
 
 	if task.UID != "" {
 		if contract.IsSpecial {
@@ -32,7 +26,7 @@ func simple(payType int, endDeliveryDate time.Time, payment *Payment, task *Task
 		tempPrice = task.StandardPriceUSD
 	}
 	percent := 0.01
-	if task.Price >= tempPrice {
+	if tempPrice > 0 && task.Price >= tempPrice {
 		//产品任务标准价总额
 		paymentTotalStandardPrice := task.StandardPrice * float64(task.Number)
 
