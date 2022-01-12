@@ -11,8 +11,10 @@ func main() {
 	model.InitDb()
 
 	//定时任务启动
-	// middleware.UpdateAllEmployeesMoney()
 	model.InitCronTabs()
+
+	//初始化系统变量
+	model.InitSystem()
 
 	//路由初始化
 	routes.InitRouter()

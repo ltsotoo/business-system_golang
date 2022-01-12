@@ -39,6 +39,7 @@ func UpdateInvoice(invoice *Invoice) (code int) {
 	var maps = make(map[string]interface{})
 	maps["code"] = invoice.Code
 	maps["money"] = invoice.Money
+	maps["employee_uid"] = invoice.EmployeeUID
 
 	err = db.Model(&Invoice{}).Where("uid = ?", invoice.UID).Updates(maps).Error
 
@@ -53,7 +54,7 @@ func SelectInvoices(contractUID string) (invoices []Invoice, code int) {
 	maps["is_delete"] = false
 	maps["contract_uid"] = contractUID
 
-	err = db.Preload("Contract.Employee").Where(maps).Find(&invoices).Error
+	err = db.Preload("Contract.Employee").Preload("Employee").Where(maps).Find(&invoices).Error
 	if err != nil {
 		return invoices, msg.ERROR
 	}

@@ -65,6 +65,7 @@ func InitRouter() {
 		auth.DELETE("contract/:uid", v1.DelContract)
 		auth.GET("contract/:uid", v1.QueryContract)
 		auth.POST("contracts", v1.QueryContracts)
+		auth.PUT("preContract", v1.EditContract)
 		//合同流程模块接口
 		auth.PUT("contract/flow/approve", v1.ApproveContract)
 		auth.PUT("contract/flow/reject", v1.RejectContract)
@@ -79,6 +80,7 @@ func InitRouter() {
 		auth.PUT("task/flow/next", v1.NextTask)
 		//回款模块接口
 		auth.GET("payments/:contractUID", v1.QueryPayments)
+		auth.GET("prePayments/:contractUID", v1.QueryPrePayments)
 		auth.POST("payment", v1.AddPayment)
 		auth.PUT("payment", v1.EditPayment)
 		auth.POST("changeCollectionStatus", v1.ChangeContractCollectionStatus)
@@ -137,6 +139,12 @@ func InitRouter() {
 		auth.DELETE("invoice/:uid", v1.DelInvoice)
 		auth.PUT("invoice", v1.EditInvoice)
 		auth.GET("invoices/:contractUID", v1.QueryInvoices)
+		//月度模型更新
+		auth.PUT("monthPlan", v1.EditMonthPlan)
+		auth.GET("monthPlans", v1.QueryMonthPlans)
+		//年度结算
+		auth.GET("startYearPlan", v1.StartYearPlan)
+		auth.PUT("yearOffice", v1.EditYearOffice)
 	}
 
 	_ = r.Run(config.SystemConfig.Server.Port)

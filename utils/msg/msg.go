@@ -103,6 +103,8 @@ const (
 	ERROR_SYSTE_DIC_INSERT      = 9921
 	ERROR_SYSTE_DIC_DELETE      = 9922
 	ERROR_SYSTE_DIC_SELECT      = 9923
+
+	ERROR_SYSTEM_SETTLEMENT = 9999
 )
 
 var codeMsg = map[int]string{
@@ -196,6 +198,8 @@ var codeMsg = map[int]string{
 	ERROR_SYSTE_DIC_INSERT:      "系统字典添加失败",
 	ERROR_SYSTE_DIC_DELETE:      "系统字典删除失败",
 	ERROR_SYSTE_DIC_SELECT:      "系统字典查找失败",
+
+	ERROR_SYSTEM_SETTLEMENT: "系统结算中",
 }
 
 func GetErrMsg(code int) string {
@@ -207,6 +211,14 @@ func Message(c *gin.Context, code int, data interface{}) {
 		"status":  code,
 		"message": GetErrMsg(code),
 		"data":    data,
+	})
+}
+
+func MessageForSystemSettlement(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{
+		"status":  ERROR_SYSTEM_SETTLEMENT,
+		"message": GetErrMsg(ERROR_SYSTEM_SETTLEMENT),
+		"data":    nil,
 	})
 }
 

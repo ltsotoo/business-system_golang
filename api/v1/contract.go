@@ -22,10 +22,6 @@ func SaveContract(c *gin.Context) {
 	contract.OfficeUID = employee.OfficeUID
 	contract.Customer = model.Customer{}
 
-	if contract.IsPreDeposit {
-		contract.PreDepositRecord = contract.PreDeposit
-	}
-
 	if contract.IsOld && !contract.IsEntryCustomer {
 		code = msg.ERROR
 	} else {
@@ -36,6 +32,12 @@ func SaveContract(c *gin.Context) {
 
 //录入合同
 func EntryContract(c *gin.Context) {
+
+	if model.SystemSettlement {
+		msg.MessageForSystemSettlement(c)
+		return
+	}
+
 	var contract model.Contract
 	_ = c.ShouldBindJSON(&contract)
 
@@ -46,7 +48,6 @@ func EntryContract(c *gin.Context) {
 	contract.OfficeUID = employee.OfficeUID
 
 	if contract.IsPreDeposit {
-		contract.PreDepositRecord = contract.PreDeposit
 		contract.Tasks = nil
 	} else {
 		for i := range contract.Tasks {
@@ -108,6 +109,12 @@ func QueryContracts(c *gin.Context) {
 }
 
 func ApproveContract(c *gin.Context) {
+
+	if model.SystemSettlement {
+		msg.MessageForSystemSettlement(c)
+		return
+	}
+
 	var contractFlowQuery model.ContractFlowQuery
 	_ = c.ShouldBindJSON(&contractFlowQuery)
 	code = model.ApproveContract(contractFlowQuery.UID, contractFlowQuery.Status, c.MustGet("employeeUID").(string))
@@ -115,13 +122,26 @@ func ApproveContract(c *gin.Context) {
 }
 
 func RejectContract(c *gin.Context) {
+
+	if model.SystemSettlement {
+		msg.MessageForSystemSettlement(c)
+		return
+	}
+
 	var contract model.Contract
 	_ = c.ShouldBindJSON(&contract)
 	code = model.Reject(contract.UID)
 	msg.Message(c, code, nil)
 }
 
+//预存款合同完成接口
 func ApproveContractProductionStatusToFinish(c *gin.Context) {
+
+	if model.SystemSettlement {
+		msg.MessageForSystemSettlement(c)
+		return
+	}
+
 	var contract model.Contract
 	_ = c.ShouldBindJSON(&contract)
 
@@ -131,5 +151,19 @@ func ApproveContractProductionStatusToFinish(c *gin.Context) {
 		code = model.UpdateContractProductionStatusToFinish(contract.UID)
 	}
 
+	msg.Message(c, code, nil)
+}
+
+func EditContract(c *gin.Context) {
+
+	if model.SystemSettlement {
+		msg.MessageForSystemSettlement(c)
+		return
+	}
+
+	var contract model.Contract
+	_ = c.ShouldBindJSON(&contract)
+
+	code = model.UpdatePre(&contract)
 	msg.Message(c, code, nil)
 }

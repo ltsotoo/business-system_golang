@@ -30,7 +30,6 @@ type Task struct {
 	InventoryManUID      string  `gorm:"type:varchar(32);comment:仓库负责人ID;default:(-)" json:"inventoryManUID"`
 	ShipmentManUID       string  `gorm:"type:varchar(32);comment:物流人员ID;default:(-)" json:"shipmentManUID"`
 	Remarks              string  `gorm:"type:varchar(600);comment:业务备注" json:"remarks"`
-	ARemarks             string  `gorm:"type:varchar(600);comment:审批备注" json:"aRemarks"`
 	PushMoney            float64 `gorm:"type:decimal(20,6);comment:提成(元)" json:"pushMoney"`
 	PushMoneyPercentages float64 `gorm:"type:decimal(20,6);comment:特殊合同提成百分比" json:"pushMoneyPercentages"`
 
@@ -53,6 +52,7 @@ type Task struct {
 	ShipmentMan   Employee `gorm:"foreignKey:ShipmentManUID;references:UID" json:"shipmentMan"`
 
 	EmployeeUID string `gorm:"-" json:"employeeUID"`
+	ContractNo  string `gorm:"-" json:"contractNo"`
 }
 
 type TaskRemarks struct {
@@ -65,17 +65,18 @@ type TaskRemarks struct {
 }
 
 type TaskFlowQuery struct {
-	UID                  string  `json:"UID"`
-	ContractUID          string  `json:"contractUID"`
-	Status               int     `json:"status"`
-	Type                 int     `json:"type"`
-	TechnicianManUID     string  `json:"technicianManUID"`
-	PurchaseManUID       string  `json:"purchaseManUID"`
-	InventoryManUID      string  `json:"inventoryManUID"`
-	ShipmentManUID       string  `json:"shipmentManUID"`
-	IsReset              bool    `json:"isReset"`
+	UID              string `json:"UID"`
+	ContractUID      string `json:"contractUID"`
+	Status           int    `json:"status"`
+	Type             int    `json:"type"`
+	TechnicianManUID string `json:"technicianManUID"`
+	PurchaseManUID   string `json:"purchaseManUID"`
+	InventoryManUID  string `json:"inventoryManUID"`
+	ShipmentManUID   string `json:"shipmentManUID"`
+	//是否重置
+	IsReset bool `json:"isReset"`
+	//是否是预存款任务审批
 	IsPre                bool    `json:"isPre"`
-	ARemarks             string  `json:"aRemarks"`
 	CurrentRemarksText   string  ` json:"currentRemarksText"`
 	PushMoneyPercentages float64 ` json:"pushMoneyPercentages"`
 
@@ -86,16 +87,16 @@ type TaskFlowQuery struct {
 func InsertTask(task *Task) (code int) {
 	var contract Contract
 	db.First(&contract, "uid = ?", task.ContractUID)
-	if contract.UID != "" {
+	if contract.UID != "" && contract.IsPreDeposit {
 		//预存款合同添加任务
-		if contract.IsPreDeposit && contract.PreDeposit >= task.TotalPrice {
+		if contract.PreDeposit >= task.TotalPrice {
 			err = db.Transaction(func(tdb *gorm.DB) error {
 				//创建任务
 				task.UID = uidUtils.Generate()
 				if tErr := tdb.Create(&task).Error; tErr != nil {
 					return tErr
 				}
-				//减去合同预存款
+				//减去合同预存款并加上合同总金额
 				if tErr := tdb.Exec("UPDATE contract SET pre_deposit = pre_deposit - ? WHERE uid = ?", task.TotalPrice, contract.UID).Error; tErr != nil {
 					return tErr
 				}
@@ -104,6 +105,8 @@ func InsertTask(task *Task) (code int) {
 		} else {
 			return msg.ERROR_TASK_NOT_MONEY
 		}
+	} else {
+		return msg.ERROR
 	}
 
 	if err != nil {
@@ -143,6 +146,9 @@ func SelectTasks(pageSize int, pageNo int, task *Task) (tasks []Task, code int, 
 	}
 
 	tDb := db.Joins("Contract").Where(maps)
+	if task.ContractNo != "" {
+		tDb = tDb.Where("Contract.no LIKE ?", "%"+task.ContractNo+"%")
+	}
 	if task.EmployeeUID != "" {
 		tDb = tDb.Where(db.Where("technician_man_uid = ?", task.EmployeeUID).
 			Or("purchase_man_uid = ?", task.EmployeeUID).
@@ -177,11 +183,10 @@ func ApproveTask(taskFlowQuery *TaskFlowQuery) (code int) {
 	}
 
 	var maps = make(map[string]interface{})
-	if contract.IsPreDeposit {
+	if contract.IsSpecial {
 		maps["push_money_percentages"] = taskFlowQuery.PushMoneyPercentages
 	}
 	maps["type"] = taskFlowQuery.Type
-	maps["a_remarks"] = taskFlowQuery.ARemarks
 	switch taskFlowQuery.Type {
 	case magic.TASK_TYPE_1:
 		maps["status"] = magic.TASK_STATUS_NOT_STORAGE
@@ -292,22 +297,28 @@ func ApproveTask(taskFlowQuery *TaskFlowQuery) (code int) {
 				if tErr := tdb.Create(&payment).Error; tErr != nil {
 					return tErr
 				}
-				//2.合同回款金额更新
-				if tErr := tdb.Exec("UPDATE contract SET total_amount = total_amount + ?,payment_total_amount = payment_total_amount + ? WHERE uid = ?", payment.Money, payment.Money, payment.ContractUID).Error; tErr != nil {
+				//2.合同总金额更新
+				if tErr := tdb.Exec("UPDATE contract SET total_amount = total_amount + ? WHERE uid = ?", payment.Money, payment.ContractUID).Error; tErr != nil {
 					return tErr
 				}
-				//3.办事处业务费，提成 UP
+				//3.办事处任务量，业务费，提成 更新
 				tempPushMoney1 := payment.PushMoney * 0.5
 				tempPushMoney2 := payment.PushMoney - tempPushMoney1
-				if tErr := tdb.Exec("UPDATE office SET money = money + ?, money_cold = money_cold + ?, business_money = business_money + ? WHERE uid = ?", tempPushMoney1, tempPushMoney2, payment.BusinessMoney, contract.OfficeUID).Error; tErr != nil {
-					return tErr
+				if contract.Tasks[0].Product.Type.IsTaskLoad {
+					if tErr := tdb.Exec("UPDATE office SET money = money + ?, money_cold = money_cold + ?, business_money = business_money + ? WHERE uid = ?", tempPushMoney1, tempPushMoney2, payment.BusinessMoney, contract.OfficeUID).Error; tErr != nil {
+						return tErr
+					}
+				} else {
+					if tErr := tdb.Exec("UPDATE office SET target_load = target_load - ?,money = money + ?, money_cold = money_cold + ?, business_money = business_money + ? WHERE uid = ?", payment.Money, tempPushMoney1, tempPushMoney2, payment.BusinessMoney, contract.OfficeUID).Error; tErr != nil {
+						return tErr
+					}
 				}
+
 				return nil
 			})
 		} else {
 			err = db.Model(&Task{}).Where("uid = ?", taskFlowQuery.UID).Updates(maps).Error
 		}
-
 	}
 
 	if err != nil {

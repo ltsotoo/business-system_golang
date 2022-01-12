@@ -8,6 +8,11 @@ import (
 )
 
 func AddInvoice(c *gin.Context) {
+	if model.SystemSettlement {
+		msg.MessageForSystemSettlement(c)
+		return
+	}
+
 	var invoice model.Invoice
 	_ = c.ShouldBindJSON(&invoice)
 
@@ -26,6 +31,7 @@ func DelInvoice(c *gin.Context) {
 func EditInvoice(c *gin.Context) {
 	var invoice model.Invoice
 	_ = c.ShouldBindJSON(&invoice)
+	invoice.EmployeeUID = c.MustGet("employeeUID").(string)
 
 	code = model.UpdateInvoice(&invoice)
 	msg.Message(c, code, invoice)

@@ -15,25 +15,25 @@ func AddExpense(c *gin.Context) {
 	_ = c.ShouldBindJSON(&expense)
 	expense.EmployeeUID = c.MustGet("employeeUID").(string)
 
-	can := true
+	canAdd := true
 
 	if expense.Type == magic.EXPENSE_TYPE_1 {
 		var employee model.Employee
 		employee, code = model.SelectEmployee(expense.EmployeeUID)
 		if employee.ID == 0 || employee.Money < expense.Amount {
-			can = false
+			canAdd = false
 			code = msg.ERROR_EXPENSE_MONEY_LESS
 		}
 	} else if expense.Type == magic.EXPENSE_TYPE_2 {
 		var employee model.Employee
 		employee, code = model.SelectEmployee(expense.EmployeeUID)
 		if employee.ID == 0 || employee.Office.Money < expense.Amount {
-			can = false
+			canAdd = false
 			code = msg.ERROR_EXPENSE_MONEY_LESS
 		}
 	}
 
-	if can {
+	if canAdd {
 		expense.Status = magic.EXPENSE_STATUS_NOT_APPROVAL_1
 		code = model.InsertExpense(&expense)
 	}
@@ -43,6 +43,12 @@ func AddExpense(c *gin.Context) {
 
 //审核报销
 func ApprovalExpense(c *gin.Context) {
+
+	if model.SystemSettlement {
+		msg.MessageForSystemSettlement(c)
+		return
+	}
+
 	var expense, expenseDB model.Expense
 	_ = c.ShouldBindJSON(&expense)
 	expenseDB, code = model.SelectExpense(expense.UID)

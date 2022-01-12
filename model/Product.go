@@ -34,10 +34,12 @@ type ProductType struct {
 	UID                        string  `gorm:"type:varchar(32);comment:唯一标识;not null;unique" json:"UID"`
 	Name                       string  `gorm:"type:varchar(20);comment:名称;not null" json:"name"`
 	PushMoneyPercentages       float64 `gorm:"type:decimal(20,6);comment:标准提成百分比" json:"pushMoneyPercentages"`
+	MinPushMoneyPercentages    float64 `gorm:"type:decimal(20,6);comment:标准提成百分比" json:"minPushMoneyPercentages"`
 	PushMoneyPercentagesUp     float64 `gorm:"type:decimal(20,6);comment:提成上涨百分比" json:"pushMoneyPercentagesUp"`
 	PushMoneyPercentagesDown   float64 `gorm:"type:decimal(20,6);comment:提成下降百分比" json:"pushMoneyPercentagesDown"`
 	BusinessMoneyPercentages   float64 `gorm:"type:decimal(20,6);comment:标准业务费用百分比" json:"businessMoneyPercentages"`
 	BusinessMoneyPercentagesUp float64 `gorm:"type:decimal(20,6);comment:业务费用上涨百分比" json:"businessMoneyPercentagesUp"`
+	IsTaskLoad                 bool    `gorm:"type:boolean;comment:是否删除" json:"isTaskLoad"`
 
 	IsDelete bool `gorm:"type:boolean;comment:是否删除" json:"isDelete"`
 }
@@ -170,10 +172,12 @@ func UpdateProductType(productType *ProductType) (code int) {
 	var maps = make(map[string]interface{})
 	maps["name"] = productType.Name
 	maps["push_money_percentages"] = productType.PushMoneyPercentages
+	maps["min_push_money_percentages"] = productType.MinPushMoneyPercentages
 	maps["push_money_percentages_up"] = productType.PushMoneyPercentagesUp
 	maps["push_money_percentages_down"] = productType.PushMoneyPercentagesDown
 	maps["business_money_percentages"] = productType.BusinessMoneyPercentages
 	maps["business_money_percentages_up"] = productType.BusinessMoneyPercentagesUp
+	maps["is_task_load"] = productType.IsTaskLoad
 	err = db.Model(&ProductType{}).Where("uid = ?", productType.UID).Updates(maps).Error
 	if err != nil {
 		return msg.ERROR

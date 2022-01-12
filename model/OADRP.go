@@ -18,9 +18,19 @@ type Office struct {
 	MoneyCold     float64 `gorm:"type:decimal(20,6);comment:办事处今年冻结报销额度(元)" json:"moneyCold"`
 	TaskLoad      float64 `gorm:"type:decimal(20,6);comment:今年目标量(元)" json:"taskLoad"`
 	TargetLoad    float64 `gorm:"type:decimal(20,6);comment:今年完成量(元)" json:"targetLoad"`
-	IsDelete      bool    `gorm:"type:boolean;comment:是否删除" json:"isDelete"`
+
+	NewBusinessMoney float64 `gorm:"type:decimal(20,6);comment:业务费用(元)" json:"newBusinessMoney"`
+	NewMoney         float64 `gorm:"type:decimal(20,6);comment:办事处目前可报销额度(元)" json:"newMoney"`
+	NewMoneyCold     float64 `gorm:"type:decimal(20,6);comment:办事处今年冻结报销额度(元)" json:"newMoneyCold"`
+	NewTaskLoad      float64 `gorm:"type:decimal(20,6);comment:今年目标量(元)" json:"newTaskLoad"`
+	NewTargetLoad    float64 `gorm:"type:decimal(20,6);comment:今年完成量(元)" json:"newTargetLoad"`
+
+	IsSubmit bool `gorm:"type:boolean;comment:今年结算是否提交" json:"isSubmit"`
+
+	IsDelete bool `gorm:"type:boolean;comment:是否删除" json:"isDelete"`
 
 	FinalPercentages float64 `gorm:"-" json:"finalPercentages"`
+	NotPayment       float64 `gorm:"-" json:"notPayment"`
 }
 
 type Department struct {
@@ -81,6 +91,11 @@ func UpdateOffice(office *Office) (code int) {
 	var maps = make(map[string]interface{})
 	maps["number"] = office.Number
 	maps["name"] = office.Name
+	maps["business_money"] = office.BusinessMoney
+	maps["money"] = office.Money
+	maps["money_cold"] = office.MoneyCold
+	maps["task_load"] = office.TaskLoad
+	maps["target_load"] = office.TargetLoad
 	err = db.Model(&Office{}).Where("uid = ?", office.UID).Updates(maps).Error
 	if err != nil {
 		return msg.ERROR_OFFICE_UPDATE
@@ -112,6 +127,12 @@ func SelectOffices(office *Office) (offices []Office, code int) {
 		return offices, msg.ERROR_OFFICE_SELECT
 	}
 	return offices, msg.SUCCESS
+}
+
+func SelectTopList() (offices1 []Office, offices2 []Office) {
+	db.Raw("SELECT office_uid uid,sum(total_amount - payment_total_amount) money FROM contract WHERE is_delete IS FALSE AND is_pre_deposit IS FALSE GROUP BY office_uid").Scan(&offices1)
+	db.Raw("SELECT office_uid uid,sum(pre_deposit_record - payment_total_amount) money FROM contract WHERE is_delete IS FALSE AND is_pre_deposit IS TRUE GROUP BY office_uid").Scan(&offices2)
+	return
 }
 
 func InsertDepartment(department *Department) (code int) {

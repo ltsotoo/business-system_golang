@@ -26,19 +26,23 @@ func simple(payType int, endDeliveryDate time.Time, payment *Payment, task *Task
 		tempPrice = task.StandardPriceUSD
 	}
 	percent := 0.01
-	if tempPrice > 0 && task.Price >= tempPrice {
-		//产品任务标准价总额
+	if tempPrice == 0 || task.Price == tempPrice {
+		theoreticalPushMoney = round(payment.Money*task.Product.Type.PushMoneyPercentages*percent, 3)
+		businessMoney = round(payment.Money*task.Product.Type.BusinessMoneyPercentages*percent, 3)
+	} else if task.Price > tempPrice {
+		//产品任务标准总价
 		paymentTotalStandardPrice := task.StandardPrice * float64(task.Number)
 
+		//任务总回款小于标准价
 		if task.PaymentTotalPrice < paymentTotalStandardPrice {
 			difference := paymentTotalStandardPrice - task.PaymentTotalPrice
 			if difference >= payment.Money {
-				//回款没达到标准价格
+				//该次回款没达到标准价格
 				theoreticalPushMoney = round(payment.Money*task.Product.Type.PushMoneyPercentages*percent, 3)
 				businessMoney = round(payment.Money*task.Product.Type.BusinessMoneyPercentages*percent, 3)
 			} else {
-				//回款达到标准价格计算两部分提成
-				//标准提出
+				//该次回款达到标准价格计算两部分提成
+				//标准提成
 				theoreticalPushMoney1 := round(difference*task.Product.Type.PushMoneyPercentages*percent, 3)
 				businessMoney1 := round(difference*task.Product.Type.BusinessMoneyPercentages*percent, 3)
 				//高出部分提成
@@ -48,11 +52,16 @@ func simple(payType int, endDeliveryDate time.Time, payment *Payment, task *Task
 				businessMoney = businessMoney1 + businessMoney2
 			}
 		} else {
+			//回款大于或等于标准价
 			theoreticalPushMoney = round(payment.Money*task.Product.Type.PushMoneyPercentagesUp*percent, 3)
 			businessMoney = round(payment.Money*task.Product.Type.BusinessMoneyPercentagesUp*percent, 3)
 		}
-	} else {
-		theoreticalPushMoney = round(payment.Money*task.Product.Type.PushMoneyPercentages*percent, 3)
+	} else if task.Price < tempPrice {
+		tempPushMoneyPercentages := task.Product.Type.PushMoneyPercentages - (tempPrice-task.Price)/tempPrice*100*task.Product.Type.PushMoneyPercentagesDown
+		if tempPushMoneyPercentages < task.Product.Type.MinPushMoneyPercentages {
+			tempPushMoneyPercentages = task.Product.Type.MinPushMoneyPercentages
+		}
+		theoreticalPushMoney = round(payment.Money*tempPushMoneyPercentages*percent, 3)
 		businessMoney = round(payment.Money*task.Product.Type.BusinessMoneyPercentages*percent, 3)
 	}
 

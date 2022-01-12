@@ -8,6 +8,11 @@ import (
 )
 
 func AddPayment(c *gin.Context) {
+	if model.SystemSettlement {
+		msg.MessageForSystemSettlement(c)
+		return
+	}
+
 	var payment model.Payment
 	_ = c.ShouldBindJSON(&payment)
 	payment.EmployeeUID = c.MustGet("employeeUID").(string)
@@ -36,5 +41,13 @@ func QueryPayments(c *gin.Context) {
 	contractUID := c.Param("contractUID")
 
 	payments, code = model.SelectPayments(contractUID)
+	msg.Message(c, code, payments)
+}
+
+func QueryPrePayments(c *gin.Context) {
+	var payments []model.Payment
+	contractUID := c.Param("contractUID")
+
+	payments, code = model.SelectPrePayments(contractUID)
 	msg.Message(c, code, payments)
 }

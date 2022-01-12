@@ -10,7 +10,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+//预存款合同添加产品
 func AddTask(c *gin.Context) {
+
+	if model.SystemSettlement {
+		msg.MessageForSystemSettlement(c)
+		return
+	}
+
 	var task model.Task
 	_ = c.ShouldBindJSON(&task)
 	code = model.InsertTask(&task)
@@ -38,6 +45,12 @@ func QueryTasks(c *gin.Context) {
 }
 
 func ApproveTask(c *gin.Context) {
+
+	if model.SystemSettlement {
+		msg.MessageForSystemSettlement(c)
+		return
+	}
+
 	var taskFlowQuery model.TaskFlowQuery
 	_ = c.ShouldBindJSON(&taskFlowQuery)
 	task, _ := model.SelectTask(taskFlowQuery.UID)
@@ -47,6 +60,12 @@ func ApproveTask(c *gin.Context) {
 }
 
 func NextTask(c *gin.Context) {
+
+	if model.SystemSettlement {
+		msg.MessageForSystemSettlement(c)
+		return
+	}
+
 	var taskFlowQuery model.TaskFlowQuery
 	var dbTask model.Task
 	_ = c.ShouldBindJSON(&taskFlowQuery)
@@ -124,7 +143,14 @@ func QueryTaskRemarks(c *gin.Context) {
 	msg.Message(c, code, taskRemarksList)
 }
 
+//驳回预存款合同的任务
 func RejectTask(c *gin.Context) {
+
+	if model.SystemSettlement {
+		msg.MessageForSystemSettlement(c)
+		return
+	}
+
 	var task model.Task
 	uid := c.Param("uid")
 	task, code = model.SelectTaskAndContract(uid)

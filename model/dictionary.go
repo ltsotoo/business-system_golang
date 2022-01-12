@@ -64,7 +64,6 @@ func InsertDictionary(dictionary *Dictionary) (code int) {
 }
 
 func DeleteDictionary(uid string) (code int) {
-	// err = db.Where("uid = ?", uid).Delete(&Dictionary{}).Error
 	err = db.Model(&Dictionary{}).Where("uid = ?", uid).Update("is_delete", true).Error
 	if err != nil {
 		return msg.ERROR_SYSTE_DIC_DELETE

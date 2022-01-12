@@ -25,12 +25,14 @@ type Contract struct {
 	ContractUnitUID       string  `gorm:"type:varchar(32);comment:签订单位;default:(-)" json:"contractUnitUID"`
 	EstimatedDeliveryDate XDate   `gorm:"type:date;comment:合同交货日期" json:"estimatedDeliveryDate"`
 	EndDeliveryDate       XTime   `gorm:"type:datetime;comment:实际交货日期;default:(-)" json:"endDeliveryDate"`
+	EndPaymentDate        XTime   `gorm:"type:datetime;comment:最后回款日期;default:(-)" json:"endPaymentDate"`
 	InvoiceType           int     `gorm:"type:int;comment:开票类型" json:"invoiceType"`
 	InvoiceContent        string  `gorm:"type:varchar(600);comment:开票内容" json:"invoiceContent"`
+	PaymentContent        string  `gorm:"type:varchar(600);comment:付款方式" json:"paymentContent"`
 	IsSpecial             bool    `gorm:"type:boolean;comment:是否是特殊合同" json:"isSpecial"`
 	IsPreDeposit          bool    `gorm:"type:boolean;comment:是否是预存款合同" json:"isPreDeposit"`
-	PreDeposit            float64 `gorm:"type:decimal(20,6);comment:预存款金额" json:"preDeposit"`
-	PreDepositRecord      float64 `gorm:"type:decimal(20,6);comment:预存款金额（总数）" json:"preDepositRecord"`
+	PreDeposit            float64 `gorm:"type:decimal(20,6);comment:可用预存款金额" json:"preDeposit"`
+	PreDepositRecord      float64 `gorm:"type:decimal(20,6);comment:合同预存款金额" json:"preDepositRecord"`
 	PayType               int     `gorm:"type:int;comment:付款类型(1:人民币 2:美元)" json:"payType"`
 	TotalAmount           float64 `gorm:"type:decimal(20,6);comment:总金额" json:"totalAmount"`
 	PaymentTotalAmount    float64 `gorm:"type:decimal(20,6);comment:回款总金额(人民币)" json:"paymentTotalAmount"`
@@ -247,36 +249,23 @@ func ApproveContract(uid string, status int, employeeUID string) (code int) {
 				return tErr
 			}
 
-			//业务员累计合同数目+1
-			if tErr := tdb.Exec("UPDATE employee SET contract_count = contract_count + 1 WHERE uid = ?", contract.EmployeeUID).Error; tErr != nil {
-				return tErr
-			}
-
 			//修改合同基础属性(编号、状态、生产状态、回款状态)
 			if contract.No == "" {
+				//业务员累计合同数目+1
+				if tErr := tdb.Exec("UPDATE employee SET contract_count = contract_count + 1 WHERE uid = ?", contract.EmployeeUID).Error; tErr != nil {
+					return tErr
+				}
+
 				maps["No"] = CreateNo(&contract)
 			}
 			if tErr := tdb.Model(&Contract{}).Where("uid = ?", uid).Updates(maps).Error; tErr != nil {
 				return tErr
 			}
 
-			//若合同为预存款合同，给办事处累积任务量
-			if contract.IsPreDeposit {
-				if tErr := tdb.Exec("UPDATE office SET target_load = target_load + ? WHERE uid = ?", contract.PreDeposit, contract.OfficeUID).Error; tErr != nil {
-					return tErr
-				}
-			}
-
 			for i := range contract.Tasks {
 				//产品可售库存减一
 				if tErr := tdb.Exec("UPDATE product SET number = number - ? WHERE uid = ?", contract.Tasks[i].Number, contract.Tasks[i].ProductUID).Error; tErr != nil {
 					return tErr
-				}
-				//检查售价是否低于标准价格，承担损失
-				if contract.PayType == 1 && contract.Tasks[i].Price < contract.Tasks[i].StandardPrice {
-					if tErr := tdb.Exec("UPDATE office SET money = money - ? WHERE uid = ?", round((contract.Tasks[i].StandardPrice-contract.Tasks[i].Price)*float64(contract.Tasks[i].Number)*contract.Tasks[i].Product.Type.PushMoneyPercentagesDown*0.01, 3), contract.OfficeUID).Error; tErr != nil {
-						return tErr
-					}
 				}
 			}
 
@@ -300,12 +289,20 @@ func ApproveContract(uid string, status int, employeeUID string) (code int) {
 			}
 			return nil
 		})
-
 	} else if status == magic.CONTRACT_STATUS_REJECT {
 		//驳回
 		maps["status"] = status
 		maps["auditor_uid"] = employeeUID
-		err = db.Model(&Contract{}).Where("uid = ?", uid).Updates(maps).Error
+		err = db.Transaction(func(tdb *gorm.DB) error {
+			if tErr := tdb.Model(&Contract{}).Where("uid = ?", uid).Updates(maps).Error; tErr != nil {
+				return tErr
+			}
+			if tErr := tdb.Delete(&Task{}, "contract_uid = ?", uid).Error; tErr != nil {
+				return tErr
+			}
+			return nil
+		})
+
 	}
 
 	if err != nil {
@@ -379,22 +376,37 @@ func Reject(uid string) (code int) {
 			return tErr
 		}
 		//业务费，提成，办事处任务额度扣除
-		if tErr := tdb.Find(&payments).Where("contract_uid = ?", uid).Error; tErr != nil {
+		if tErr := tdb.Preload("Task.Product.Type").Find(&payments).Where("contract_uid = ?", uid).Error; tErr != nil {
 			return tErr
 		}
+		var tempMoney, tempMoneyCold float64
 		if contract.IsPreDeposit {
+			tempTargetLoad := contract.PaymentTotalAmount
 			for k := range payments {
-				if tErr := tdb.Exec("UPDATE office SET money = money - ?, business_money = business_money - ? WHERE uid = ?", payments[k].PushMoney, payments[k].BusinessMoney, contract.OfficeUID).Error; tErr != nil {
+				tempMoney = payments[k].PushMoney * 0.5
+				tempMoneyCold = payments[k].PushMoney - tempMoney
+				if tErr := tdb.Exec("UPDATE office SET money = money - ?, money_cold = money_cold - ?, business_money = business_money - ? WHERE uid = ?", tempMoney, tempMoneyCold, payments[k].BusinessMoney, contract.OfficeUID).Error; tErr != nil {
 					return tErr
 				}
+				if payments[k].Task.Product.Type.IsTaskLoad {
+					tempTargetLoad = tempTargetLoad - payments[k].Money
+				}
 			}
-			if tErr := tdb.Exec("UPDATE office SET target_load = target_load - ? WHERE uid = ?", contract.PreDepositRecord, contract.OfficeUID).Error; tErr != nil {
+			if tErr := tdb.Exec("UPDATE office SET target_load = target_load - ? WHERE uid = ?", tempTargetLoad, contract.OfficeUID).Error; tErr != nil {
 				return tErr
 			}
 		} else {
 			for k := range payments {
-				if tErr := tdb.Exec("UPDATE office SET target_load = target_load - ?,money = money - ?, business_money = business_money - ? WHERE uid = ?", payments[k].Money, payments[k].PushMoney, payments[k].BusinessMoney, contract.OfficeUID).Error; tErr != nil {
-					return tErr
+				tempMoney = payments[k].PushMoney * 0.5
+				tempMoneyCold = payments[k].PushMoney - tempMoney
+				if payments[k].Task.Product.Type.IsTaskLoad {
+					if tErr := tdb.Exec("UPDATE office SET target_load = target_load - ?,money = money - ?, money_cold = money_cold - ? ,business_money = business_money - ? WHERE uid = ?", payments[k].Money, tempMoney, tempMoneyCold, payments[k].BusinessMoney, contract.OfficeUID).Error; tErr != nil {
+						return tErr
+					}
+				} else {
+					if tErr := tdb.Exec("UPDATE office SET money = money - ?, money_cold = money_cold - ? ,business_money = business_money - ? WHERE uid = ?", tempMoney, tempMoneyCold, payments[k].BusinessMoney, contract.OfficeUID).Error; tErr != nil {
+						return tErr
+					}
 				}
 			}
 		}
@@ -414,6 +426,19 @@ func Reject(uid string) (code int) {
 		}
 		return nil
 	})
+	if err != nil {
+		return msg.ERROR
+	}
+	return msg.SUCCESS
+}
+
+func UpdatePre(contract *Contract) (code int) {
+	var maps = make(map[string]interface{})
+	maps["pre_deposit"] = contract.PreDeposit
+	maps["pre_deposit_record"] = contract.PreDepositRecord
+	maps["payment_total_amount"] = contract.PaymentTotalAmount
+
+	err = db.Model(&Contract{}).Where("uid = ?", contract.UID).Updates(maps).Error
 	if err != nil {
 		return msg.ERROR
 	}

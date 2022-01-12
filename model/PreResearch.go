@@ -87,6 +87,10 @@ func SelectPreReasearchs(pageSize int, pageNo int, preResearchQuery *PreResearch
 	if preResearchQuery.Status != 0 {
 		maps["pre_research.status"] = preResearchQuery.Status
 	}
+	if preResearchQuery.EmployeeUID != "" {
+		maps["pre_research.employee_uid"] = preResearchQuery.EmployeeUID
+	}
+
 	err = db.Joins("Employee").Where(maps).
 		Where("Employee.name Like ?", "%"+preResearchQuery.EmployeeName+"%").
 		Preload("Employee.Office").Preload("Auditor").Find(&preResearchs).Count(&total).
@@ -110,6 +114,9 @@ func SelectPreReasearchTasks(pageSize int, pageNo int, preResearchTask *PreResea
 	var maps = make(map[string]interface{})
 	if preResearchTask.Status != 0 {
 		maps["status"] = preResearchTask.Status
+	}
+	if preResearchTask.EmployeeUID != "" {
+		maps["pre_research_task.employee_uid"] = preResearchTask.EmployeeUID
 	}
 	err = db.Joins("Employee").Where(maps).
 		Where("Employee.name Like ?", "%"+preResearchTask.EmployeeUID+"%").
