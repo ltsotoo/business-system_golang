@@ -47,6 +47,7 @@ func InitRouter() {
 		auth.POST("office", v1.EntryOffice)
 		auth.DELETE("office/:uid", v1.DelOffice)
 		auth.PUT("office", v1.EditOffice)
+		auth.PUT("officeMoney", v1.EditOfficeMoney)
 		auth.GET("office/:uid", v1.QueryOffice)
 		auth.POST("offices", v1.QueryOffices)
 		auth.POST("department", v1.EntryDepartment)
@@ -74,6 +75,7 @@ func InitRouter() {
 		auth.POST("task", v1.AddTask)
 		auth.POST("tasks", v1.QueryTasks)
 		auth.GET("taskRemarks", v1.QueryTaskRemarks)
+		auth.GET("lastTaskRemarks", v1.QueryLastTaskRemarks)
 		auth.PUT("rejectTask/:uid", v1.RejectTask)
 		//任务流程模块接口
 		auth.PUT("task/flow/approve", v1.ApproveTask)
@@ -144,7 +146,13 @@ func InitRouter() {
 		auth.GET("monthPlans", v1.QueryMonthPlans)
 		//年度结算
 		auth.GET("startYearPlan", v1.StartYearPlan)
+		auth.GET("endYearPlan", v1.EndYearPlan)
 		auth.PUT("yearOffice", v1.EditYearOffice)
+		//采购计划
+		auth.POST("procurementPlan", v1.AddProcurementPlan)
+		auth.PUT("procurementPlan", v1.EditProcurementPlan)
+		auth.GET("procurementPlan/:uid", v1.QueryProcurementPlan)
+		auth.POST("procurementPlans", v1.QueryProcurementPlans)
 	}
 
 	_ = r.Run(config.SystemConfig.Server.Port)

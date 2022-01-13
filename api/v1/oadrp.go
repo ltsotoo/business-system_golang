@@ -27,6 +27,13 @@ func EditOffice(c *gin.Context) {
 	msg.Message(c, code, office)
 }
 
+func EditOfficeMoney(c *gin.Context) {
+	var office model.Office
+	_ = c.ShouldBindJSON(&office)
+	code = model.UpdateOfficeMoney(&office)
+	msg.Message(c, code, office)
+}
+
 func QueryOffice(c *gin.Context) {
 	var office model.Office
 	uid := c.Param("uid")

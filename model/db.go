@@ -59,7 +59,10 @@ func InitDb() {
 		&Invoice{},
 
 		&MonthPlan{},
+		&YearPlan{},
 		&System{},
+
+		&ProcurementPlan{},
 	)
 
 	sqlDB, _ := db.DB()

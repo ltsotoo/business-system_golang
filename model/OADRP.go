@@ -91,12 +91,17 @@ func UpdateOffice(office *Office) (code int) {
 	var maps = make(map[string]interface{})
 	maps["number"] = office.Number
 	maps["name"] = office.Name
-	maps["business_money"] = office.BusinessMoney
-	maps["money"] = office.Money
-	maps["money_cold"] = office.MoneyCold
 	maps["task_load"] = office.TaskLoad
 	maps["target_load"] = office.TargetLoad
 	err = db.Model(&Office{}).Where("uid = ?", office.UID).Updates(maps).Error
+	if err != nil {
+		return msg.ERROR_OFFICE_UPDATE
+	}
+	return msg.SUCCESS
+}
+
+func UpdateOfficeMoney(office *Office) (code int) {
+	err = db.Exec("UPDATE office SET money = money + ?, money_cold = money_cold + ?, business_money = business_money + ? WHERE uid = ?", office.Money, office.MoneyCold, office.BusinessMoney, office.UID).Error
 	if err != nil {
 		return msg.ERROR_OFFICE_UPDATE
 	}
@@ -118,9 +123,9 @@ func SelectOffice(uid string) (office Office, code int) {
 func SelectOffices(office *Office) (offices []Office, code int) {
 
 	if office.Name != "" {
-		err = db.Where("name LIKE ?", "%"+office.Name+"%").Find(&offices).Error
+		err = db.Where("name LIKE ? AND is_delete is false", "%"+office.Name+"%").Find(&offices).Error
 	} else {
-		err = db.Find(&offices).Error
+		err = db.Where("is_delete is false").Find(&offices).Error
 	}
 
 	if err != nil {
@@ -130,8 +135,8 @@ func SelectOffices(office *Office) (offices []Office, code int) {
 }
 
 func SelectTopList() (offices1 []Office, offices2 []Office) {
-	db.Raw("SELECT office_uid uid,sum(total_amount - payment_total_amount) money FROM contract WHERE is_delete IS FALSE AND is_pre_deposit IS FALSE GROUP BY office_uid").Scan(&offices1)
-	db.Raw("SELECT office_uid uid,sum(pre_deposit_record - payment_total_amount) money FROM contract WHERE is_delete IS FALSE AND is_pre_deposit IS TRUE GROUP BY office_uid").Scan(&offices2)
+	db.Raw("SELECT office_uid uid,sum(total_amount - payment_total_amount) money FROM contract WHERE is_delete IS FALSE AND is_pre_deposit IS FALSE AND STATUS > 1 GROUP BY office_uid").Scan(&offices1)
+	db.Raw("SELECT office_uid uid,sum(pre_deposit_record - payment_total_amount) money FROM contract WHERE is_delete IS FALSE AND is_pre_deposit IS TRUE AND STATUS > 1 GROUP BY office_uid").Scan(&offices2)
 	return
 }
 

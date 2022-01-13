@@ -143,6 +143,12 @@ func QueryTaskRemarks(c *gin.Context) {
 	msg.Message(c, code, taskRemarksList)
 }
 
+func QueryLastTaskRemarks(c *gin.Context) {
+	taskUID := c.Query("taskUID")
+	taskRemarks := model.SelectTaskLastRemarks(taskUID)
+	msg.Message(c, msg.SUCCESS, taskRemarks)
+}
+
 //驳回预存款合同的任务
 func RejectTask(c *gin.Context) {
 

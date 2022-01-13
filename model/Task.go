@@ -158,6 +158,7 @@ func SelectTasks(pageSize int, pageNo int, task *Task) (tasks []Task, code int, 
 	err = tDb.Find(&tasks).Count(&total).
 		Preload("Product").Preload("TechnicianMan").
 		Preload("PurchaseMan").Preload("InventoryMan").Preload("ShipmentMan").
+		Preload("Contract.Tasks").
 		Limit(pageSize).Offset((pageNo - 1) * pageSize).
 		Find(&tasks).Error
 	if err != nil {
@@ -380,6 +381,11 @@ func SelectTaskRemarks(taskUID string, to string) (taskRemarksList []TaskRemarks
 	} else {
 		code = msg.SUCCESS
 	}
+	return
+}
+
+func SelectTaskLastRemarks(taskUID string) (taskRemarks TaskRemarks) {
+	db.Where("task_uid = ? AND status = 5", taskUID).First(&taskRemarks)
 	return
 }
 

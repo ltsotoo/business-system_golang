@@ -12,6 +12,11 @@ func StartYearPlan(c *gin.Context) {
 	msg.Message(c, code, nil)
 }
 
+func EndYearPlan(c *gin.Context) {
+	code = model.EndYearPlan()
+	msg.Message(c, code, nil)
+}
+
 func EditYearOffice(c *gin.Context) {
 	var office model.Office
 	_ = c.ShouldBindJSON(&office)

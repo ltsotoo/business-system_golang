@@ -335,6 +335,7 @@ func UpdateContractCollectionStatus(contract *Contract) (code int) {
 		maps["collection_status"] = magic.CONTATCT_COLLECTION_STATUS_FINISH
 	} else {
 		maps["collection_status"] = magic.CONTATCT_COLLECTION_STATUS_ING
+		maps["status"] = magic.CONTRACT_STATUS_UNFINISHED
 	}
 	err = db.Model(&Contract{}).Where("uid = ?", contract.UID).Updates(maps).Error
 
