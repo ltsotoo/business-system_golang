@@ -156,9 +156,8 @@ func SelectTasks(pageSize int, pageNo int, task *Task) (tasks []Task, code int, 
 			Or("shipment_man_uid = ?", task.EmployeeUID))
 	}
 	err = tDb.Find(&tasks).Count(&total).
-		Preload("Product").Preload("TechnicianMan").
+		Preload("Product.Type").Preload("TechnicianMan").
 		Preload("PurchaseMan").Preload("InventoryMan").Preload("ShipmentMan").
-		Preload("Contract.Tasks").
 		Limit(pageSize).Offset((pageNo - 1) * pageSize).
 		Find(&tasks).Error
 	if err != nil {

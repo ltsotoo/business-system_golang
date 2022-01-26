@@ -56,6 +56,7 @@ func ApprovalExpense(c *gin.Context) {
 	if code == msg.SUCCESS && expense.Status == expenseDB.Status &&
 		expense.Status > 0 && expense.Status < 4 {
 		var maps = make(map[string]interface{})
+		oldStatus := expense.Status
 
 		switch expense.Status {
 		case magic.EXPENSE_STATUS_NOT_APPROVAL_1:
@@ -72,7 +73,7 @@ func ApprovalExpense(c *gin.Context) {
 			expense.Status = -1
 		}
 		maps["status"] = expense.Status
-		code = model.ApprovalExpense(&expense, maps)
+		code = model.ApprovalExpense(oldStatus, &expense, maps)
 	}
 
 	msg.Message(c, code, expense)

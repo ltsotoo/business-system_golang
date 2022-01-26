@@ -110,7 +110,13 @@ func InsertContract(contract *Contract) (code int) {
 func CreateNo(contract *Contract) (no string) {
 	office, _ := SelectOffice(contract.OfficeUID)
 	employee, _ := SelectEmployee(contract.EmployeeUID)
-	no = "Bjscistar" + strings.ReplaceAll(contract.ContractDate.Format("2006-01-02"), "-", "") + "-" + office.Number + employee.Number + strconv.Itoa(employee.ContractCount+1)
+	employeeCount := strconv.Itoa(employee.ContractCount + 1)
+	if len(employeeCount) == 1 {
+		employeeCount = "00" + employeeCount
+	} else if len(employeeCount) == 2 {
+		employeeCount = "0" + employeeCount
+	}
+	no = "Bjscistar" + strings.ReplaceAll(contract.CreatedAt.Format("2006-01-02"), "-", "") + "-" + office.Number + employee.Number + employeeCount
 	return
 }
 
@@ -188,7 +194,7 @@ func SelectContracts(pageSize int, pageNo int, contractQuery *ContractQuery) (co
 	tDb := db.Where(maps).Where("contract.is_delete = ?", false)
 
 	if contractQuery.EmployeeUID == "" {
-		tDb = tDb.Where("contract.status != ?", 0)
+		tDb = tDb.Where("contract.status > ?", 0)
 	}
 
 	if contractQuery.StartDate != "" && contractQuery.EndDate != "" {
@@ -223,7 +229,7 @@ func SelectContracts(pageSize int, pageNo int, contractQuery *ContractQuery) (co
 	err = tDb.Find(&contracts).Count(&total).Preload("Region").Preload("Office").
 		Preload("Customer.Company").Preload("Employee").
 		Limit(pageSize).Offset((pageNo - 1) * pageSize).
-		Find(&contracts).Error
+		Order("created_at desc").Find(&contracts).Error
 
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return contracts, msg.ERROR, total

@@ -50,9 +50,47 @@ func InsertExpense(expense *Expense) (code int) {
 	return msg.SUCCESS
 }
 
-func ApprovalExpense(expense *Expense, maps map[string]interface{}) (code int) {
-	if expense.Status == magic.EXPENSE_STATUS_FAIL ||
-		expense.Status == magic.EXPENSE_STATUS_NOT_APPROVAL_2 ||
+func ApprovalExpense(oldStatus int, expense *Expense, maps map[string]interface{}) (code int) {
+	if expense.Status == magic.EXPENSE_STATUS_FAIL {
+		if oldStatus == magic.EXPENSE_STATUS_NOT_PAYMENT {
+			switch expense.Type {
+			case magic.EXPENSE_TYPE_1:
+				err = db.Transaction(func(tdb *gorm.DB) error {
+					if tErr := tdb.Exec("UPDATE employee SET money = money + ? WHERE uid = ?", expense.Amount, expense.EmployeeUID).Error; tErr != nil {
+						return tErr
+					}
+					if tErr := tdb.Model(&Expense{}).Where("uid = ?", expense.UID).Updates(maps).Error; tErr != nil {
+						return tErr
+					}
+					return nil
+				})
+			case magic.EXPENSE_TYPE_2:
+				err = db.Transaction(func(tdb *gorm.DB) error {
+					if tErr := tdb.Exec("UPDATE office SET money = money + ? WHERE uid = ?", expense.Amount, expense.Employee.Office.UID).Error; tErr != nil {
+						return tErr
+					}
+					if tErr := tdb.Model(&Expense{}).Where("uid = ?", expense.UID).Updates(maps).Error; tErr != nil {
+						return tErr
+					}
+					return nil
+				})
+			case magic.EXPENSE_TYPE_3:
+				err = db.Transaction(func(tdb *gorm.DB) error {
+					if tErr := tdb.Exec("UPDATE office SET business_money = business_money + ? WHERE uid = ?", expense.Amount, expense.Employee.Office.UID).Error; tErr != nil {
+						return tErr
+					}
+					if tErr := tdb.Model(&Expense{}).Where("uid = ?", expense.UID).Updates(maps).Error; tErr != nil {
+						return tErr
+					}
+					return nil
+				})
+			case magic.EXPENSE_TYPE_4:
+				err = db.Model(&Expense{}).Where("uid = ?", expense.UID).Updates(maps).Error
+			}
+		} else {
+			err = db.Model(&Expense{}).Where("uid = ?", expense.UID).Updates(maps).Error
+		}
+	} else if expense.Status == magic.EXPENSE_STATUS_NOT_APPROVAL_2 ||
 		expense.Status == magic.EXPENSE_STATUS_FINISH {
 		err = db.Model(&Expense{}).Where("uid = ?", expense.UID).Updates(maps).Error
 	} else if expense.Status == magic.EXPENSE_STATUS_NOT_PAYMENT {
@@ -98,7 +136,7 @@ func ApprovalExpense(expense *Expense, maps map[string]interface{}) (code int) {
 }
 
 func SelectExpense(uid string) (expense Expense, code int) {
-	err = db.Preload("ExpenseType").Preload("Employee.Office").Preload("Approver").
+	err = db.Preload("ExpenseType").Preload("Employee.Office").Preload("Approver1").Preload("Approver2").Preload("Approver3").
 		Where("uid = ?", uid).First(&expense).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return expense, msg.ERROR_EXPENSE_SELECT
