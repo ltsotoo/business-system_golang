@@ -41,6 +41,17 @@ func InsertProcurementPlan(procurementPlan *ProcurementPlan) (code int) {
 	return msg.SUCCESS
 }
 
+func InsertProcurementPlans(procurementPlans []ProcurementPlan) (code int) {
+	// for _, procurementPlans := range procurementPlans {
+	// 	err = db.Create(&procurementPlans).Error
+	// }
+	err = db.Create(&procurementPlans).Error
+	if err != nil {
+		return msg.ERROR
+	}
+	return msg.SUCCESS
+}
+
 func UpdateProcurementPlan(procurementPlan *ProcurementPlan) (code int) {
 	var maps = make(map[string]interface{})
 	maps["customer"] = procurementPlan.Customer
@@ -92,7 +103,7 @@ func SelectProcurementPlans(pageSize int, pageNo int, procurementPlan *Procureme
 		tdb = tdb.Where("product like ?", "%"+procurementPlan.Product+"%")
 	}
 	err = tdb.Preload("Employee").Find(&procurementPlans).Count(&total).
-		Limit(pageSize).Offset((pageNo - 1) * pageSize).
+		Limit(pageSize).Offset((pageNo - 1) * pageSize).Find(&procurementPlans).
 		Error
 	if err != nil {
 		code = msg.ERROR

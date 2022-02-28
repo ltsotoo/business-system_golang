@@ -20,6 +20,7 @@ require (
 	github.com/robfig/cron/v3 v3.0.0 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/ugorji/go v1.2.6 // indirect
+	github.com/xuri/excelize/v2 v2.5.0 // indirect
 	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97
 	golang.org/x/sys v0.0.0-20211124211545-fe61309f8881 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect

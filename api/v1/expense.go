@@ -41,6 +41,13 @@ func AddExpense(c *gin.Context) {
 	msg.Message(c, code, expense)
 }
 
+//删除报销
+func DelExpense(c *gin.Context) {
+	uid := c.Param("uid")
+	code = model.DeleteExpense(uid)
+	msg.Message(c, code, nil)
+}
+
 //审核报销
 func ApprovalExpense(c *gin.Context) {
 

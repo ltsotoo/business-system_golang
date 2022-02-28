@@ -12,6 +12,7 @@ func InitRouter() {
 	gin.SetMode(config.SystemConfig.Server.Mode)
 	// r := gin.Default()
 	r := gin.New()
+	r.MaxMultipartMemory = 8 << 20
 	r.Use(middleware.Logger())
 	r.Use(gin.Recovery())
 
@@ -65,6 +66,7 @@ func InitRouter() {
 		auth.POST("contractSave", v1.SaveContract)
 		auth.DELETE("contract/:uid", v1.DelContract)
 		auth.GET("contract/:uid", v1.QueryContract)
+		auth.GET("simpleContract/:uid", v1.QuerySimpleContract)
 		auth.POST("contracts", v1.QueryContracts)
 		auth.PUT("preContract", v1.EditContract)
 		//合同流程模块接口
@@ -118,6 +120,7 @@ func InitRouter() {
 		auth.POST("suppliers", v1.QuerySuppliers)
 		//财务模块接口
 		auth.POST("expense", v1.AddExpense)
+		auth.DELETE("expense/:uid", v1.DelExpense)
 		auth.PUT("expense", v1.ApprovalExpense)
 		auth.GET("expense/:uid", v1.QueryExpense)
 		auth.POST("expenses", v1.QueryExpenses)
@@ -153,6 +156,8 @@ func InitRouter() {
 		auth.PUT("procurementPlan", v1.EditProcurementPlan)
 		auth.GET("procurementPlan/:uid", v1.QueryProcurementPlan)
 		auth.POST("procurementPlans", v1.QueryProcurementPlans)
+		//excel
+		auth.POST("uploadExcelToProcurementPlan", v1.UploadExcelToProcurementPlan)
 	}
 
 	_ = r.Run(config.SystemConfig.Server.Port)

@@ -50,6 +50,14 @@ func InsertExpense(expense *Expense) (code int) {
 	return msg.SUCCESS
 }
 
+func DeleteExpense(uid string) (code int) {
+	err = db.Model(&Expense{}).Where("uid = ? AND status = ?", uid, -1).Update("is_delete", true).Error
+	if err != nil {
+		return msg.ERROR_EXPENSE_DELETE
+	}
+	return msg.SUCCESS
+}
+
 func ApprovalExpense(oldStatus int, expense *Expense, maps map[string]interface{}) (code int) {
 	if expense.Status == magic.EXPENSE_STATUS_FAIL {
 		if oldStatus == magic.EXPENSE_STATUS_NOT_PAYMENT {
@@ -137,7 +145,7 @@ func ApprovalExpense(oldStatus int, expense *Expense, maps map[string]interface{
 
 func SelectExpense(uid string) (expense Expense, code int) {
 	err = db.Preload("ExpenseType").Preload("Employee.Office").Preload("Approver1").Preload("Approver2").Preload("Approver3").
-		Where("uid = ?", uid).First(&expense).Error
+		Where("uid = ?", uid).Where("is_delete = ?", false).First(&expense).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return expense, msg.ERROR_EXPENSE_SELECT
 	}
@@ -159,7 +167,7 @@ func SelectExpenses(pageSize int, pageNo int, expenseQuery *ExpenseQuery) (expen
 		maps["Employee.office_uid"] = expenseQuery.OfficeUID
 	}
 
-	tDb := db.Joins("Employee").Where(maps)
+	tDb := db.Joins("Employee").Where(maps).Where("expense.is_delete = ?", false)
 
 	if expenseQuery.StartDate != "" && expenseQuery.EndDate != "" {
 		tDb = tDb.Where("expense.created_at BETWEEN ? AND ?", expenseQuery.StartDate, expenseQuery.EndDate)

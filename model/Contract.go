@@ -136,6 +136,18 @@ func DeleteContract(uid string) (code int) {
 	return msg.SUCCESS
 }
 
+func SelectSimpleContract(uid string) (contract Contract, code int) {
+	err = db.Preload("Customer.Company").First(&contract, "uid = ?", uid).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return contract, msg.ERROR_CONTRACT_NOT_EXIST
+		} else {
+			return contract, msg.ERROR_CONTRACT_SELECT
+		}
+	}
+	return contract, msg.SUCCESS
+}
+
 func SelectContract(uid string) (contract Contract, code int) {
 	err = db.Preload("Region").Preload("Office").Preload("Employee").
 		Preload("Customer.Company").Preload("ContractUnit").

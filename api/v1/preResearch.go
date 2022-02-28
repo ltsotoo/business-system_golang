@@ -60,9 +60,9 @@ func QueryPreResearchTask(c *gin.Context) {
 func QueryPreResearchTasks(c *gin.Context) {
 	var preResearchTasks []model.PreResearchTask
 	var total int64
-	var preResearchTask model.PreResearchTask
+	var preResearchQuery model.PreResearchQuery
 
-	_ = c.ShouldBindJSON(&preResearchTask)
+	_ = c.ShouldBindJSON(&preResearchQuery)
 
 	pageSize, pageSizeErr := strconv.Atoi(c.DefaultQuery("pageSize", "0"))
 	pageNo, pageNoErr := strconv.Atoi(c.DefaultQuery("pageNo", "0"))
@@ -73,7 +73,7 @@ func QueryPreResearchTasks(c *gin.Context) {
 		pageNo = 1
 	}
 
-	preResearchTasks, code, total = model.SelectPreReasearchTasks(pageSize, pageNo, &preResearchTask)
+	preResearchTasks, code, total = model.SelectPreReasearchTasks(pageSize, pageNo, &preResearchQuery)
 	msg.MessageForList(c, code, preResearchTasks, pageSize, pageNo, total)
 }
 

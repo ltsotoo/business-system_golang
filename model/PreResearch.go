@@ -91,8 +91,12 @@ func SelectPreReasearchs(pageSize int, pageNo int, preResearchQuery *PreResearch
 		maps["pre_research.employee_uid"] = preResearchQuery.EmployeeUID
 	}
 
-	err = db.Joins("Employee").Where(maps).
-		Where("Employee.name Like ?", "%"+preResearchQuery.EmployeeName+"%").
+	tDb := db.Joins("Employee")
+	if preResearchQuery.EmployeeName != "" {
+		tDb = tDb.Where("Employee.name Like ?", "%"+preResearchQuery.EmployeeName+"%")
+	}
+
+	err = tDb.Where(maps).
 		Preload("Employee.Office").Preload("Auditor").Find(&preResearchs).Count(&total).
 		Limit(pageSize).Offset((pageNo - 1) * pageSize).Error
 
@@ -110,16 +114,19 @@ func SelectPreReasearchTask(uid string) (preResearchTask PreResearchTask, code i
 	return preResearchTask, msg.SUCCESS
 }
 
-func SelectPreReasearchTasks(pageSize int, pageNo int, preResearchTask *PreResearchTask) (preResearchTasks []PreResearchTask, code int, total int64) {
+func SelectPreReasearchTasks(pageSize int, pageNo int, preResearchQuery *PreResearchQuery) (preResearchTasks []PreResearchTask, code int, total int64) {
 	var maps = make(map[string]interface{})
-	if preResearchTask.Status != 0 {
-		maps["status"] = preResearchTask.Status
+	if preResearchQuery.Status != 0 {
+		maps["status"] = preResearchQuery.Status
 	}
-	if preResearchTask.EmployeeUID != "" {
-		maps["pre_research_task.employee_uid"] = preResearchTask.EmployeeUID
+	if preResearchQuery.EmployeeUID != "" {
+		maps["pre_research_task.employee_uid"] = preResearchQuery.EmployeeUID
 	}
-	err = db.Joins("Employee").Where(maps).
-		Where("Employee.name Like ?", "%"+preResearchTask.EmployeeUID+"%").
+	tDb := db.Joins("Employee")
+	if preResearchQuery.EmployeeName != "" {
+		tDb = tDb.Where("Employee.name Like ?", "%"+preResearchQuery.EmployeeName+"%")
+	}
+	err = tDb.Where(maps).
 		Preload("Auditor").Find(&preResearchTasks).Count(&total).
 		Limit(pageSize).Offset((pageNo - 1) * pageSize).Error
 

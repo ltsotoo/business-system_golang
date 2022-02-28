@@ -79,6 +79,13 @@ func DelContract(c *gin.Context) {
 	msg.Message(c, code, nil)
 }
 
+func QuerySimpleContract(c *gin.Context) {
+	var contract model.Contract
+	uid := c.Param("uid")
+	contract, code = model.SelectSimpleContract(uid)
+	msg.Message(c, code, contract)
+}
+
 //查询合同
 func QueryContract(c *gin.Context) {
 	var contract model.Contract
