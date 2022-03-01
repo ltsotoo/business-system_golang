@@ -174,7 +174,7 @@ func SelectTasksByContractUID(contractUID string) (tasks []Task, code int) {
 	return tasks, msg.SUCCESS
 }
 
-func ApproveTask(taskFlowQuery *TaskFlowQuery) (code int) {
+func ApproveTask(taskFlowQuery *TaskFlowQuery, employeeUID string) (code int) {
 
 	var contract Contract
 	db.First(&contract, "uid = ?", taskFlowQuery.ContractUID)
@@ -304,11 +304,28 @@ func ApproveTask(taskFlowQuery *TaskFlowQuery) (code int) {
 				//3.办事处任务量，业务费，提成 更新
 				tempPushMoney1 := payment.PushMoney * 0.5
 				tempPushMoney2 := payment.PushMoney - tempPushMoney1
+
+				var historyOffice HistoryOffice
+				//办事处变更记录HistoryOffice
+				historyOffice.OfficeUID = contract.OfficeUID
+				historyOffice.ChangeBusinessMoney = payment.BusinessMoney
+				historyOffice.ChangeMoney = tempPushMoney1
+				historyOffice.ChangeMoneyCold = tempPushMoney2
+				historyOffice.Remarks = "预存款合同(" + contract.No + ")采购商品"
+				historyOffice.EmployeeUID = employeeUID
+
 				if contract.Tasks[0].Product.Type.IsTaskLoad {
+					if tErr := InsertHistoryOffice(&historyOffice, tdb); tErr != nil {
+						return tErr
+					}
 					if tErr := tdb.Exec("UPDATE office SET money = money + ?, money_cold = money_cold + ?, business_money = business_money + ? WHERE uid = ?", tempPushMoney1, tempPushMoney2, payment.BusinessMoney, contract.OfficeUID).Error; tErr != nil {
 						return tErr
 					}
 				} else {
+					historyOffice.ChangeTargetLoad = -payment.Money
+					if tErr := InsertHistoryOffice(&historyOffice, tdb); tErr != nil {
+						return tErr
+					}
 					if tErr := tdb.Exec("UPDATE office SET target_load = target_load - ?,money = money + ?, money_cold = money_cold + ?, business_money = business_money + ? WHERE uid = ?", payment.Money, tempPushMoney1, tempPushMoney2, payment.BusinessMoney, contract.OfficeUID).Error; tErr != nil {
 						return tErr
 					}

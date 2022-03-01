@@ -55,7 +55,7 @@ func ApproveTask(c *gin.Context) {
 	_ = c.ShouldBindJSON(&taskFlowQuery)
 	task, _ := model.SelectTask(taskFlowQuery.UID)
 	taskFlowQuery.ContractUID = task.ContractUID
-	code = model.ApproveTask(&taskFlowQuery)
+	code = model.ApproveTask(&taskFlowQuery, c.MustGet("employeeUID").(string))
 	msg.Message(c, code, nil)
 }
 
@@ -110,7 +110,10 @@ func NextTask(c *gin.Context) {
 		}
 		code = model.NextTaskStatus(dbTask.UID, dbTask.Status, from, to, maps, taskFlowQuery.CurrentRemarksText)
 		if code == msg.SUCCESS {
-			code = checkTasksUpdateContract(dbTask.ContractUID)
+			contract, _ := model.SelectContract(dbTask.ContractUID)
+			if contract.UID != "" && !contract.IsPreDeposit {
+				code = checkTasksUpdateContract(dbTask.ContractUID)
+			}
 		}
 		msg.Message(c, code, nil)
 	} else {

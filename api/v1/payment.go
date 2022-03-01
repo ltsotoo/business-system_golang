@@ -23,7 +23,7 @@ func AddPayment(c *gin.Context) {
 func EditPayment(c *gin.Context) {
 	var payment model.Payment
 	_ = c.ShouldBindJSON(&payment)
-	code = model.UpdatePayment(&payment)
+	code = model.UpdatePayment(&payment, c.MustGet("employeeUID").(string))
 	msg.Message(c, code, nil)
 }
 

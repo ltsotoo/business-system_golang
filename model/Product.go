@@ -39,7 +39,7 @@ type ProductType struct {
 	PushMoneyPercentagesDown   float64 `gorm:"type:decimal(20,6);comment:提成下降百分比" json:"pushMoneyPercentagesDown"`
 	BusinessMoneyPercentages   float64 `gorm:"type:decimal(20,6);comment:标准业务费用百分比" json:"businessMoneyPercentages"`
 	BusinessMoneyPercentagesUp float64 `gorm:"type:decimal(20,6);comment:业务费用上涨百分比" json:"businessMoneyPercentagesUp"`
-	IsTaskLoad                 bool    `gorm:"type:boolean;comment:是否删除" json:"isTaskLoad"`
+	IsTaskLoad                 bool    `gorm:"type:boolean;comment:是否计算任务量" json:"isTaskLoad"`
 
 	IsDelete bool `gorm:"type:boolean;comment:是否删除" json:"isDelete"`
 }

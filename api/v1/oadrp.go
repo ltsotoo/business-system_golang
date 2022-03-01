@@ -30,7 +30,7 @@ func EditOffice(c *gin.Context) {
 func EditOfficeMoney(c *gin.Context) {
 	var office model.Office
 	_ = c.ShouldBindJSON(&office)
-	code = model.UpdateOfficeMoney(&office)
+	code = model.UpdateOfficeMoney(&office, c.MustGet("employeeUID").(string))
 	msg.Message(c, code, office)
 }
 

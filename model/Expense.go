@@ -58,12 +58,20 @@ func DeleteExpense(uid string) (code int) {
 	return msg.SUCCESS
 }
 
-func ApprovalExpense(oldStatus int, expense *Expense, maps map[string]interface{}) (code int) {
+func ApprovalExpense(oldStatus int, expense *Expense, maps map[string]interface{}, employeeUID string, expenseDB Expense) (code int) {
 	if expense.Status == magic.EXPENSE_STATUS_FAIL {
 		if oldStatus == magic.EXPENSE_STATUS_NOT_PAYMENT {
 			switch expense.Type {
 			case magic.EXPENSE_TYPE_1:
 				err = db.Transaction(func(tdb *gorm.DB) error {
+					var historyEmployee HistoryEmployee
+					historyEmployee.UserUID = expense.EmployeeUID
+					historyEmployee.ChangeMoney = expense.Amount
+					historyEmployee.Remarks = "[" + expenseDB.Employee.Office.Name + "]的员工[" + expenseDB.Employee.Name + "]发起的[补助]在待出纳付款时被驳回"
+					historyEmployee.EmployeeUID = employeeUID
+					if tErr := InsertHistoryEmployee(&historyEmployee, tdb); tErr != nil {
+						return tErr
+					}
 					if tErr := tdb.Exec("UPDATE employee SET money = money + ? WHERE uid = ?", expense.Amount, expense.EmployeeUID).Error; tErr != nil {
 						return tErr
 					}
@@ -74,6 +82,14 @@ func ApprovalExpense(oldStatus int, expense *Expense, maps map[string]interface{
 				})
 			case magic.EXPENSE_TYPE_2:
 				err = db.Transaction(func(tdb *gorm.DB) error {
+					var historyOffice HistoryOffice
+					historyOffice.OfficeUID = expense.Employee.Office.UID
+					historyOffice.ChangeMoney = expense.Amount
+					historyOffice.Remarks = "[" + expenseDB.Employee.Office.Name + "]的员工[" + expenseDB.Employee.Name + "]发起的[提成]在待出纳付款时被驳回"
+					historyOffice.EmployeeUID = employeeUID
+					if tErr := InsertHistoryOffice(&historyOffice, tdb); tErr != nil {
+						return tErr
+					}
 					if tErr := tdb.Exec("UPDATE office SET money = money + ? WHERE uid = ?", expense.Amount, expense.Employee.Office.UID).Error; tErr != nil {
 						return tErr
 					}
@@ -84,6 +100,14 @@ func ApprovalExpense(oldStatus int, expense *Expense, maps map[string]interface{
 				})
 			case magic.EXPENSE_TYPE_3:
 				err = db.Transaction(func(tdb *gorm.DB) error {
+					var historyOffice HistoryOffice
+					historyOffice.OfficeUID = expense.Employee.Office.UID
+					historyOffice.ChangeBusinessMoney = expense.Amount
+					historyOffice.Remarks = "[" + expenseDB.Employee.Office.Name + "]的员工[" + expenseDB.Employee.Name + "]发起的[业务费]在待出纳付款时被驳回"
+					historyOffice.EmployeeUID = employeeUID
+					if tErr := InsertHistoryOffice(&historyOffice, tdb); tErr != nil {
+						return tErr
+					}
 					if tErr := tdb.Exec("UPDATE office SET business_money = business_money + ? WHERE uid = ?", expense.Amount, expense.Employee.Office.UID).Error; tErr != nil {
 						return tErr
 					}
@@ -105,6 +129,14 @@ func ApprovalExpense(oldStatus int, expense *Expense, maps map[string]interface{
 		switch expense.Type {
 		case magic.EXPENSE_TYPE_1:
 			err = db.Transaction(func(tdb *gorm.DB) error {
+				var historyEmployee HistoryEmployee
+				historyEmployee.UserUID = expense.EmployeeUID
+				historyEmployee.ChangeMoney = -expense.Amount
+				historyEmployee.Remarks = "[" + expenseDB.Employee.Office.Name + "]的员工[" + expenseDB.Employee.Name + "]发起的[补助]财务审批通过"
+				historyEmployee.EmployeeUID = employeeUID
+				if tErr := InsertHistoryEmployee(&historyEmployee, tdb); tErr != nil {
+					return tErr
+				}
 				if tErr := tdb.Exec("UPDATE employee SET money = money - ? WHERE uid = ?", expense.Amount, expense.EmployeeUID).Error; tErr != nil {
 					return tErr
 				}
@@ -115,6 +147,14 @@ func ApprovalExpense(oldStatus int, expense *Expense, maps map[string]interface{
 			})
 		case magic.EXPENSE_TYPE_2:
 			err = db.Transaction(func(tdb *gorm.DB) error {
+				var historyOffice HistoryOffice
+				historyOffice.OfficeUID = expense.Employee.Office.UID
+				historyOffice.ChangeMoney = -expense.Amount
+				historyOffice.Remarks = "[" + expenseDB.Employee.Office.Name + "]的员工[" + expenseDB.Employee.Name + "]发起的[提成]财务审批通过"
+				historyOffice.EmployeeUID = employeeUID
+				if tErr := InsertHistoryOffice(&historyOffice, tdb); tErr != nil {
+					return tErr
+				}
 				if tErr := tdb.Exec("UPDATE office SET money = money - ? WHERE uid = ?", expense.Amount, expense.Employee.Office.UID).Error; tErr != nil {
 					return tErr
 				}
@@ -125,6 +165,14 @@ func ApprovalExpense(oldStatus int, expense *Expense, maps map[string]interface{
 			})
 		case magic.EXPENSE_TYPE_3:
 			err = db.Transaction(func(tdb *gorm.DB) error {
+				var historyOffice HistoryOffice
+				historyOffice.OfficeUID = expense.Employee.Office.UID
+				historyOffice.ChangeBusinessMoney = -expense.Amount
+				historyOffice.Remarks = "[" + expenseDB.Employee.Office.Name + "]的员工[" + expenseDB.Employee.Name + "]发起的[业务费]财务审批通过"
+				historyOffice.EmployeeUID = employeeUID
+				if tErr := InsertHistoryOffice(&historyOffice, tdb); tErr != nil {
+					return tErr
+				}
 				if tErr := tdb.Exec("UPDATE office SET business_money = business_money - ? WHERE uid = ?", expense.Amount, expense.Employee.Office.UID).Error; tErr != nil {
 					return tErr
 				}

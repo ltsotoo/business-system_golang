@@ -5,6 +5,7 @@ import (
 	"business-system_golang/utils/pwd"
 	"business-system_golang/utils/uid"
 	"fmt"
+	"strconv"
 
 	"gorm.io/gorm"
 )
@@ -93,26 +94,36 @@ func DeleteEmployee(uid string) (code int) {
 	return msg.SUCCESS
 }
 
-func UpdateEmployee(employee *Employee) (code int) {
+func UpdateEmployee(employee *Employee, employeeUID string) (code int) {
 	var maps = make(map[string]interface{})
 	if employee.EditType == 1 {
 		maps["name"] = employee.Name
 		maps["phone"] = employee.Phone
 		maps["wechat_id"] = employee.WechatID
 		maps["email"] = employee.Email
+		err = db.Model(&Employee{}).Where("uid = ?", employee.UID).Updates(maps).Error
 	} else if employee.EditType == 2 {
 		maps["money"] = employee.Money
 		maps["credit"] = employee.Credit
 		maps["office_credit"] = employee.OfficeCredit
+		err = db.Transaction(func(tdb *gorm.DB) error {
+			var historyEmployee HistoryEmployee
+			historyEmployee.EmployeeUID = employeeUID
+			historyEmployee.UserUID = employee.UID
+			historyEmployee.NewMoney = employee.Money
+			historyEmployee.Remarks = "直接修改了补助"
+			if tErr := InsertHistoryEmployee2(&historyEmployee, tdb); tErr != nil {
+				return tErr
+			}
+			if tErr := tdb.Model(&Employee{}).Where("uid = ?", employee.UID).Updates(maps).Error; tErr != nil {
+				return tErr
+			}
+			return nil
+		})
 	} else if employee.EditType == 3 {
 		maps["office_uid"] = employee.OfficeUID
 		maps["department_uid"] = employee.DepartmentUID
 		maps["number"] = employee.Number
-	}
-
-	if employee.EditType != 3 {
-		err = db.Model(&Employee{}).Where("uid = ?", employee.UID).Updates(maps).Error
-	} else {
 		err = db.Transaction(func(tdb *gorm.DB) error {
 			if tErr := tdb.Model(&Employee{}).Where("uid = ?", employee.UID).Updates(maps).Error; tErr != nil {
 				return tErr
@@ -235,13 +246,52 @@ func ResetAllPwd() (code int) {
 
 func UpdateAllAddMoney() {
 	err = db.Transaction(func(tdb *gorm.DB) error {
-		if tErr := db.Exec("UPDATE employee SET money = money + credit WHERE is_delete = ?", false).Error; tErr != nil {
+		var employees []Employee
+		if tErr := tdb.Find(&employees, "is_delete = ?", false).Error; tErr != nil {
 			return tErr
 		}
-		if tErr := db.Exec("UPDATE employee SET money = money + office_credit WHERE is_delete = ?", false).Error; tErr != nil {
+		for i := range employees {
+			var historyEmployee HistoryEmployee
+			historyEmployee.UserUID = employees[i].UID
+			historyEmployee.ChangeMoney = employees[i].Credit + employees[i].OfficeCredit
+			historyEmployee.Remarks = "发放了基本补助[" + strconv.FormatFloat(employees[i].Credit, 'f', 3, 64) + "]元、办事处补助[" + strconv.FormatFloat(employees[i].OfficeCredit, 'f', 3, 64) + "]"
+			if tErr := InsertHistoryEmployee(&historyEmployee, tdb); tErr != nil {
+				return tErr
+			}
+		}
+
+		if tErr := tdb.Exec("UPDATE employee SET money = money + credit WHERE is_delete = ?", false).Error; tErr != nil {
 			return tErr
 		}
-		if tErr := db.Exec("UPDATE office,(SELECT office_uid,sum(office_credit) AS sum FROM employee WHERE office_uid IS NOT NULL GROUP BY office_uid) AS a SET office.money = office.money - a.sum WHERE office.uid = a.office_uid").Error; tErr != nil {
+		if tErr := tdb.Exec("UPDATE employee SET money = money + office_credit WHERE is_delete = ?", false).Error; tErr != nil {
+			return tErr
+		}
+		var offices []Office
+		if tErr := tdb.Raw("SELECT office_uid AS uid,sum(office_credit) AS money FROM employee WHERE office_uid IS NOT NULL GROUP BY office_uid").Scan(&offices).Error; tErr != nil {
+			return tErr
+		}
+		for i := range offices {
+			var historyOffice HistoryOffice
+			historyOffice.OfficeUID = offices[i].UID
+			historyOffice.ChangeMoney = offices[i].Money
+			historyOffice.Remarks = "发放了该月的业务员补贴"
+			if tErr := InsertHistoryOffice(&historyOffice, tdb); tErr != nil {
+				return tErr
+			}
+		}
+		if tErr := tdb.Exec("UPDATE office,(SELECT office_uid,sum(office_credit) AS sum FROM employee WHERE office_uid IS NOT NULL GROUP BY office_uid) AS a SET office.money = office.money - a.sum WHERE office.uid = a.office_uid").Error; tErr != nil {
+			return tErr
+		}
+		return nil
+	})
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+
+func UpdateAllAddTest() {
+	err = db.Transaction(func(tdb *gorm.DB) error {
+		if tErr := db.Exec("UPDATE employee SET money = money + 1 WHERE uid = ?", "test").Error; tErr != nil {
 			return tErr
 		}
 		return nil

@@ -137,8 +137,10 @@ func RejectContract(c *gin.Context) {
 
 	var contract model.Contract
 	_ = c.ShouldBindJSON(&contract)
-	code = model.Reject(contract.UID)
-	msg.Message(c, code, nil)
+	if contract.UID != "" {
+		code = model.Reject(contract.UID, c.MustGet("employeeUID").(string))
+	}
+	msg.Message(c, code, contract.UID)
 }
 
 //预存款合同完成接口

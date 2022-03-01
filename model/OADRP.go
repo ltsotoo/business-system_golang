@@ -100,8 +100,24 @@ func UpdateOffice(office *Office) (code int) {
 	return msg.SUCCESS
 }
 
-func UpdateOfficeMoney(office *Office) (code int) {
-	err = db.Exec("UPDATE office SET money = money + ?, money_cold = money_cold + ?, business_money = business_money + ? WHERE uid = ?", office.Money, office.MoneyCold, office.BusinessMoney, office.UID).Error
+func UpdateOfficeMoney(office *Office, employeeUID string) (code int) {
+	var historyOffice HistoryOffice
+	historyOffice.OfficeUID = office.UID
+	historyOffice.ChangeBusinessMoney = office.BusinessMoney
+	historyOffice.ChangeMoney = office.Money
+	historyOffice.ChangeMoneyCold = office.MoneyCold
+	historyOffice.Remarks = "直接修改了办事处的业务费、可提成金额、年底提成金额"
+	historyOffice.EmployeeUID = employeeUID
+	err = db.Transaction(func(tdb *gorm.DB) error {
+		if tErr := InsertHistoryOffice(&historyOffice, tdb); tErr != nil {
+			return tErr
+		}
+		if tErr := tdb.Exec("UPDATE office SET money = money + ?, money_cold = money_cold + ?, business_money = business_money + ? WHERE uid = ?", office.Money, office.MoneyCold, office.BusinessMoney, office.UID).Error; tErr != nil {
+			return tErr
+		}
+		return nil
+	})
+
 	if err != nil {
 		return msg.ERROR_OFFICE_UPDATE
 	}

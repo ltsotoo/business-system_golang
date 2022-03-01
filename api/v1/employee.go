@@ -34,7 +34,7 @@ func DelEmployee(c *gin.Context) {
 func EditEmployee(c *gin.Context) {
 	var employee model.Employee
 	_ = c.ShouldBindJSON(&employee)
-	code = model.UpdateEmployee(&employee)
+	code = model.UpdateEmployee(&employee, c.MustGet("employeeUID").(string))
 	msg.Message(c, code, employee)
 }
 

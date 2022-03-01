@@ -35,6 +35,11 @@ func UploadExcelToProcurementPlan(c *gin.Context) {
 	procurementPlans := make([]model.ProcurementPlan, rowsLength)
 
 	for i, row := range rows {
+
+		if i == 0 {
+			continue
+		}
+
 		var procurementPlan model.ProcurementPlan
 		procurementPlan.No = no
 		procurementPlan.Customer = customer

@@ -80,7 +80,7 @@ func ApprovalExpense(c *gin.Context) {
 			expense.Status = -1
 		}
 		maps["status"] = expense.Status
-		code = model.ApprovalExpense(oldStatus, &expense, maps)
+		code = model.ApprovalExpense(oldStatus, &expense, maps, c.MustGet("employeeUID").(string), expenseDB)
 	}
 
 	msg.Message(c, code, expense)

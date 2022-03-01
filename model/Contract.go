@@ -387,47 +387,59 @@ func checkContractFinish(uid string) int {
 }
 
 //合同执行中途驳回
-func Reject(uid string) (code int) {
+func Reject(uid string, employeeUID string) (code int) {
 	err = db.Transaction(func(tdb *gorm.DB) error {
 		var payments []Payment
 		var contract Contract
-		if tErr := tdb.First(&contract).Where("uid = ?", uid).Error; tErr != nil {
+		if tErr := tdb.First(&contract, "uid = ?", uid).Error; tErr != nil {
 			return tErr
 		}
-		//业务费，提成，办事处任务额度扣除
-		if tErr := tdb.Preload("Task.Product.Type").Find(&payments).Where("contract_uid = ?", uid).Error; tErr != nil {
+		if tErr := tdb.Preload("Task.Product.Type").Where("contract_uid = ?", uid).Find(&payments).Error; tErr != nil {
 			return tErr
 		}
-		var tempMoney, tempMoneyCold float64
+
+		//回款记录统计
+		var tempTargetLoad, tempMoney, tempMoneyCold, tempBusinessMoney float64
 		if contract.IsPreDeposit {
-			tempTargetLoad := contract.PaymentTotalAmount
 			for k := range payments {
-				tempMoney = payments[k].PushMoney * 0.5
-				tempMoneyCold = payments[k].PushMoney - tempMoney
-				if tErr := tdb.Exec("UPDATE office SET money = money - ?, money_cold = money_cold - ?, business_money = business_money - ? WHERE uid = ?", tempMoney, tempMoneyCold, payments[k].BusinessMoney, contract.OfficeUID).Error; tErr != nil {
-					return tErr
+				if payments[k].TaskUID != "" {
+					tempMoney += payments[k].PushMoney * 0.5
+					tempMoneyCold += payments[k].PushMoney - payments[k].PushMoney*0.5
+					tempBusinessMoney += payments[k].BusinessMoney
+					if !payments[k].Task.Product.Type.IsTaskLoad {
+						tempTargetLoad -= payments[k].Money
+					}
+				} else {
+					tempTargetLoad += payments[k].Money
 				}
-				if payments[k].Task.Product.Type.IsTaskLoad {
-					tempTargetLoad = tempTargetLoad - payments[k].Money
-				}
-			}
-			if tErr := tdb.Exec("UPDATE office SET target_load = target_load - ? WHERE uid = ?", tempTargetLoad, contract.OfficeUID).Error; tErr != nil {
-				return tErr
 			}
 		} else {
 			for k := range payments {
-				tempMoney = payments[k].PushMoney * 0.5
-				tempMoneyCold = payments[k].PushMoney - tempMoney
+				tempMoney += payments[k].PushMoney * 0.5
+				tempMoneyCold += payments[k].PushMoney - payments[k].PushMoney*0.5
+				tempBusinessMoney += payments[k].BusinessMoney
 				if payments[k].Task.Product.Type.IsTaskLoad {
-					if tErr := tdb.Exec("UPDATE office SET target_load = target_load - ?,money = money - ?, money_cold = money_cold - ? ,business_money = business_money - ? WHERE uid = ?", payments[k].Money, tempMoney, tempMoneyCold, payments[k].BusinessMoney, contract.OfficeUID).Error; tErr != nil {
-						return tErr
-					}
-				} else {
-					if tErr := tdb.Exec("UPDATE office SET money = money - ?, money_cold = money_cold - ? ,business_money = business_money - ? WHERE uid = ?", tempMoney, tempMoneyCold, payments[k].BusinessMoney, contract.OfficeUID).Error; tErr != nil {
-						return tErr
-					}
+					tempTargetLoad += payments[k].Money
 				}
 			}
+		}
+
+		//办事处变更记录
+		var historyOffice HistoryOffice
+		historyOffice.OfficeUID = contract.OfficeUID
+		historyOffice.ChangeBusinessMoney = -tempBusinessMoney
+		historyOffice.ChangeMoney = -tempMoney
+		historyOffice.ChangeMoneyCold = -tempMoneyCold
+		historyOffice.ChangeTargetLoad = -tempTargetLoad
+		historyOffice.Remarks = "合同(" + contract.No + ")驳回"
+		historyOffice.EmployeeUID = employeeUID
+		if tErr := InsertHistoryOffice(&historyOffice, tdb); tErr != nil {
+			return tErr
+		}
+
+		//办事处记录变更
+		if tErr := tdb.Exec("UPDATE office SET target_load = target_load - ?,money = money - ?, money_cold = money_cold - ?, business_money = business_money - ? WHERE uid = ?", tempTargetLoad, tempMoney, tempMoneyCold, tempBusinessMoney, contract.OfficeUID).Error; tErr != nil {
+			return tErr
 		}
 		//合同状态变更为驳回
 		if tErr := tdb.Model(&Contract{}).Where("uid = ?", uid).Update("status", -1).Error; tErr != nil {

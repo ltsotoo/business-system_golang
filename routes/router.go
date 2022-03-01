@@ -10,11 +10,13 @@ import (
 
 func InitRouter() {
 	gin.SetMode(config.SystemConfig.Server.Mode)
+
 	// r := gin.Default()
 	r := gin.New()
-	r.MaxMultipartMemory = 8 << 20
 	r.Use(middleware.Logger())
 	r.Use(gin.Recovery())
+
+	r.MaxMultipartMemory = 8 << 20
 
 	r.Use(middleware.Cors())
 
