@@ -160,6 +160,9 @@ func InitRouter() {
 		auth.POST("procurementPlans", v1.QueryProcurementPlans)
 		//excel
 		auth.POST("uploadExcelToProcurementPlan", v1.UploadExcelToProcurementPlan)
+		//history
+		auth.POST("historyOffices", v1.QueryHistoryOffices)
+		auth.POST("historyEmployees", v1.QueryHistoryEmployees)
 	}
 
 	_ = r.Run(config.SystemConfig.Server.Port)

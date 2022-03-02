@@ -196,7 +196,7 @@ func UpdatePayment(payment *Payment, employeeUID string) (code int) {
 			historyOffice.ChangeBusinessMoney = tempBusinessMoney
 			historyOffice.ChangeMoney = tempPushMoney1
 			historyOffice.ChangeMoneyCold = tempPushMoney2
-			historyOffice.Remarks = "存款合同(" + contract.No + ")回款编辑"
+			historyOffice.Remarks = "普通合同(" + contract.No + ")回款编辑"
 			historyOffice.EmployeeUID = employeeUID
 
 			//办事处业务费，提成，任务量 UP

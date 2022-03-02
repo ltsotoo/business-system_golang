@@ -159,6 +159,7 @@ func SelectTasks(pageSize int, pageNo int, task *Task) (tasks []Task, code int, 
 		Preload("Product.Type").Preload("TechnicianMan").
 		Preload("PurchaseMan").Preload("InventoryMan").Preload("ShipmentMan").
 		Limit(pageSize).Offset((pageNo - 1) * pageSize).
+		Order("task.updated_at desc").
 		Find(&tasks).Error
 	if err != nil {
 		return tasks, msg.ERROR, total

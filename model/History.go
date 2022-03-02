@@ -1,6 +1,8 @@
 package model
 
 import (
+	"business-system_golang/utils/msg"
+
 	"gorm.io/gorm"
 )
 
@@ -22,12 +24,15 @@ type HistoryOffice struct {
 	NewBusinessMoney    float64 `gorm:"type:decimal(20,6);comment:新业务费用(元)" json:"newBusinessMoney"`
 	NewMoney            float64 `gorm:"type:decimal(20,6);comment:新办事处目前可报销额度(元)" json:"newMoney"`
 	NewMoneyCold        float64 `gorm:"type:decimal(20,6);comment:新办事处今年冻结报销额度(元)" json:"newMoneyCold"`
-	NewTargetLoad       float64 `gorm:"type:decimal(20,6);comment:新今年目标量(元)" json:"newtTargetLoad"`
+	NewTargetLoad       float64 `gorm:"type:decimal(20,6);comment:新今年目标量(元)" json:"newTargetLoad"`
 
 	Remarks string `gorm:"type:varchar(200);comment:备注" json:"remarks"`
 
 	Office   Office   `gorm:"foreignKey:OfficeUID;references:UID" json:"office"`
 	Employee Employee `gorm:"foreignKey:EmployeeUID;references:UID" json:"employee"`
+
+	StartDate string `gorm:"-" json:"startDate"`
+	EndDate   string `gorm:"-" json:"endDate"`
 }
 
 type HistoryEmployee struct {
@@ -42,6 +47,10 @@ type HistoryEmployee struct {
 
 	Employee Employee `gorm:"foreignKey:EmployeeUID;references:UID" json:"employee"`
 	User     Employee `gorm:"foreignKey:UserUID;references:UID" json:"user"`
+
+	OfficeUID string `gorm:"-" json:"officeUID"`
+	StartDate string `gorm:"-" json:"startDate"`
+	EndDate   string `gorm:"-" json:"endDate"`
 }
 
 func InsertHistoryOffice(historyOffice *HistoryOffice, tdb *gorm.DB) (err error) {
@@ -88,4 +97,75 @@ func InsertHistoryEmployee2(historyEmployee *HistoryEmployee, tdb *gorm.DB) (err
 	historyEmployee.OldMoney = user.Money
 	err = tdb.Create(&historyEmployee).Error
 	return err
+}
+
+func SelectHistoryOffices(pageSize int, pageNo int, historyOffice *HistoryOffice) (historyOffices []HistoryOffice, code int, total int64) {
+	var maps = make(map[string]interface{})
+	if historyOffice.OfficeUID != "" {
+		maps["office_uid"] = historyOffice.OfficeUID
+	}
+
+	tDb := db.Where(maps)
+	if historyOffice.Remarks != "" {
+		tDb = tDb.Where("remarks LIKE ?", "%"+historyOffice.Remarks+"%")
+	}
+
+	if historyOffice.StartDate != "" && historyOffice.EndDate != "" {
+		tDb = tDb.Where("created_at BETWEEN ? AND ?", historyOffice.StartDate, historyOffice.EndDate)
+	} else {
+		if historyOffice.StartDate != "" {
+			tDb = tDb.Where("created_at >= ?", historyOffice.StartDate)
+		}
+		if historyOffice.EndDate != "" {
+			tDb = tDb.Where("created_at <= ?", historyOffice.EndDate)
+		}
+	}
+
+	err = tDb.Find(&historyOffices).Count(&total).
+		Order("id desc").
+		Preload("Office").Preload("Employee").
+		Limit(pageSize).Offset((pageNo - 1) * pageSize).
+		Find(&historyOffices).Error
+	if err != nil {
+		return historyOffices, msg.ERROR, total
+	}
+	return historyOffices, msg.SUCCESS, total
+}
+
+func SelectHistoryEmployees(pageSize int, pageNo int, historyEmployee *HistoryEmployee) (historyEmployees []HistoryEmployee, code int, total int64) {
+	var maps = make(map[string]interface{})
+	if historyEmployee.UserUID != "" {
+		maps["history_employee.user_uid"] = historyEmployee.UserUID
+	}
+
+	tDb := db.Where(maps)
+
+	if historyEmployee.OfficeUID != "" && historyEmployee.UserUID == "" {
+		tDb = tDb.Joins("User").Joins("left join office on User.office_uid = office.uid").Where("office.uid = ?", historyEmployee.OfficeUID)
+	}
+
+	if historyEmployee.Remarks != "" {
+		tDb = tDb.Where("history_employee.remarks LIKE ?", "%"+historyEmployee.Remarks+"%")
+	}
+
+	if historyEmployee.StartDate != "" && historyEmployee.EndDate != "" {
+		tDb = tDb.Where("history_employee.created_at BETWEEN ? AND ?", historyEmployee.StartDate, historyEmployee.EndDate)
+	} else {
+		if historyEmployee.StartDate != "" {
+			tDb = tDb.Where("history_employee.created_at >= ?", historyEmployee.StartDate)
+		}
+		if historyEmployee.EndDate != "" {
+			tDb = tDb.Where("history_employee.created_at <= ?", historyEmployee.EndDate)
+		}
+	}
+
+	err = tDb.Find(&historyEmployees).Count(&total).
+		Preload("User").Preload("Employee").
+		Limit(pageSize).Offset((pageNo - 1) * pageSize).
+		Order("history_employee.id desc").
+		Find(&historyEmployees).Error
+	if err != nil {
+		return historyEmployees, msg.ERROR, total
+	}
+	return historyEmployees, msg.SUCCESS, total
 }
