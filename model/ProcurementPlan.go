@@ -95,13 +95,29 @@ func SelectProcurementPlan(uid string) (procurementPlan ProcurementPlan, code in
 
 func SelectProcurementPlans(pageSize int, pageNo int, procurementPlan *ProcurementPlan) (procurementPlans []ProcurementPlan, code int, total int64) {
 	var maps = make(map[string]interface{})
+	if procurementPlan.BuyNumber != 0 {
+		maps["buy_number"] = procurementPlan.BuyNumber
+	}
 	tdb := db.Where(maps)
 	if procurementPlan.No != "" {
 		tdb = tdb.Where("no like ?", "%"+procurementPlan.No+"%")
 	}
+	if procurementPlan.Type != "" {
+		tdb = tdb.Where("type like ?", "%"+procurementPlan.Type+"%")
+	}
 	if procurementPlan.Product != "" {
 		tdb = tdb.Where("product like ?", "%"+procurementPlan.Product+"%")
 	}
+	if procurementPlan.Specification != "" {
+		tdb = tdb.Where("specification like ?", "%"+procurementPlan.Specification+"%")
+	}
+	if procurementPlan.Unit != "" {
+		tdb = tdb.Where("unit like ?", "%"+procurementPlan.Unit+"%")
+	}
+	if procurementPlan.Description != "" {
+		tdb = tdb.Where("description like ?", "%"+procurementPlan.Description+"%")
+	}
+
 	err = tdb.Preload("Employee").Find(&procurementPlans).Count(&total).
 		Limit(pageSize).Offset((pageNo - 1) * pageSize).Find(&procurementPlans).
 		Error

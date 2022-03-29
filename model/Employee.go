@@ -288,15 +288,3 @@ func UpdateAllAddMoney() {
 		fmt.Println(err)
 	}
 }
-
-func UpdateAllAddTest() {
-	err = db.Transaction(func(tdb *gorm.DB) error {
-		if tErr := db.Exec("UPDATE employee SET money = money + 1 WHERE uid = ?", "test").Error; tErr != nil {
-			return tErr
-		}
-		return nil
-	})
-	if err != nil {
-		fmt.Println(err)
-	}
-}
