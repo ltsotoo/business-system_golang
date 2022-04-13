@@ -140,8 +140,7 @@ func SelectTasks(pageSize int, pageNo int, task *Task) (tasks []Task, code int, 
 		maps["task.status"] = task.Status
 	}
 	if task.EmployeeUID != "" {
-		maps["Contract.status"] = 2
-		maps["Contract.production_status"] = 1
+		// maps["Contract.status"] = 2
 		maps["Contract.is_delete"] = false
 	}
 
@@ -154,6 +153,8 @@ func SelectTasks(pageSize int, pageNo int, task *Task) (tasks []Task, code int, 
 			Or("purchase_man_uid = ?", task.EmployeeUID).
 			Or("inventory_man_uid = ?", task.EmployeeUID).
 			Or("shipment_man_uid = ?", task.EmployeeUID))
+
+		tDb = tDb.Where("Contract.status > ?", 0)
 	}
 	err = tDb.Find(&tasks).Count(&total).
 		Preload("Product.Type").Preload("TechnicianMan").

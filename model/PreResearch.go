@@ -69,12 +69,13 @@ func DeletePreResearch(uid string) (code int) {
 }
 
 func SelectPreReasearch(uid string) (preResearch PreResearch, code int) {
-	err = db.Preload("Employee.Office").Preload("Auditor").Where("is_delete = ?", false).First(&preResearch, "uid = ?", uid).Error
+	err = db.Preload("Employee.Office").Preload("Auditor").
+		Where("is_delete = ?", false).First(&preResearch, "uid = ?", uid).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return preResearch, msg.ERROR
 	}
 	var preResearchTasks []PreResearchTask
-	err = db.Where("pre_research_uid = ?", uid).Find(&preResearchTasks).Error
+	err = db.Preload("Employee").Preload("Auditor").Where("pre_research_uid = ?", uid).Find(&preResearchTasks).Error
 	if err == nil {
 		preResearch.PreResearchTasks = preResearchTasks
 	}
@@ -98,7 +99,9 @@ func SelectPreReasearchs(pageSize int, pageNo int, preResearchQuery *PreResearch
 
 	err = tDb.Where(maps).
 		Preload("Employee.Office").Preload("Auditor").Find(&preResearchs).Count(&total).
-		Limit(pageSize).Offset((pageNo - 1) * pageSize).Error
+		Limit(pageSize).Offset((pageNo - 1) * pageSize).
+		Order("pre_research.created_at desc").
+		Find(&preResearchs).Error
 
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return preResearchs, msg.ERROR, total
@@ -128,7 +131,9 @@ func SelectPreReasearchTasks(pageSize int, pageNo int, preResearchQuery *PreRese
 	}
 	err = tDb.Where(maps).
 		Preload("Auditor").Find(&preResearchTasks).Count(&total).
-		Limit(pageSize).Offset((pageNo - 1) * pageSize).Error
+		Limit(pageSize).Offset((pageNo - 1) * pageSize).
+		Order("pre_research_task.created_at desc").
+		Find(&preResearchTasks).Error
 
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return preResearchTasks, msg.ERROR, total

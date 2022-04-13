@@ -240,7 +240,7 @@ func UpdatePayment(payment *Payment, employeeUID string) (code int) {
 }
 
 func SelectPayments(contractUID string) (payments []Payment, code int) {
-	err = db.Preload("Task.Product").Preload("Employee").Where("contract_uid = ? AND task_uid is not null", contractUID).Find(&payments).Error
+	err = db.Preload("Task.Product.Type").Preload("Employee").Where("contract_uid = ? AND task_uid is not null", contractUID).Find(&payments).Error
 	if err != nil {
 		return payments, msg.ERROR
 	}

@@ -267,19 +267,19 @@ func UpdateAllAddMoney() {
 			return tErr
 		}
 		var offices []Office
-		if tErr := tdb.Raw("SELECT office_uid AS uid,sum(office_credit) AS money FROM employee WHERE office_uid IS NOT NULL GROUP BY office_uid").Scan(&offices).Error; tErr != nil {
+		if tErr := tdb.Raw("SELECT office_uid AS uid,sum(office_credit) AS money FROM employee WHERE office_uid IS NOT NULL AND is_delete IS false GROUP BY office_uid").Scan(&offices).Error; tErr != nil {
 			return tErr
 		}
 		for i := range offices {
 			var historyOffice HistoryOffice
 			historyOffice.OfficeUID = offices[i].UID
-			historyOffice.ChangeMoney = offices[i].Money
+			historyOffice.ChangeMoney = 0 - offices[i].Money
 			historyOffice.Remarks = "发放了该月的业务员补贴"
 			if tErr := InsertHistoryOffice(&historyOffice, tdb); tErr != nil {
 				return tErr
 			}
 		}
-		if tErr := tdb.Exec("UPDATE office,(SELECT office_uid,sum(office_credit) AS sum FROM employee WHERE office_uid IS NOT NULL GROUP BY office_uid) AS a SET office.money = office.money - a.sum WHERE office.uid = a.office_uid").Error; tErr != nil {
+		if tErr := tdb.Exec("UPDATE office,(SELECT office_uid,sum(office_credit) AS sum FROM employee WHERE office_uid IS NOT NULL AND is_delete IS false GROUP BY office_uid) AS a SET office.money = office.money - a.sum WHERE office.uid = a.office_uid").Error; tErr != nil {
 			return tErr
 		}
 		return nil
